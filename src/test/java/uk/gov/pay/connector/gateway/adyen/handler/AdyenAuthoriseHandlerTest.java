@@ -23,11 +23,15 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.adyen.AdyenAuthoriseRequestToGatewayOrderConverter;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequestFixture;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
@@ -40,6 +44,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
@@ -71,8 +76,15 @@ class AdyenAuthoriseHandlerTest {
     private GatewayClient mockClient;
     @Mock
     private ConnectorConfiguration mockConfig;
+    @Mock
+    private AdyenGatewayConfig mockAdyenGatewayConfig;
+
     private final JsonObjectMapper jsonObjectMapper = new JsonObjectMapper(new ObjectMapper());
+    private final AdyenAuthoriseRequestToGatewayOrderConverter adyenAuthoriseRequestToGatewayOrderConverter =
+            new AdyenAuthoriseRequestToGatewayOrderConverter(jsonObjectMapper);
+
     private AdyenAuthoriseHandler authoriseHandler;
+ 
     @Mock
     private GatewayClient.Response mockGatewayClientResponse;
 
@@ -83,12 +95,8 @@ class AdyenAuthoriseHandlerTest {
 
     @BeforeEach
     void setUp() {
-        when(mockConfig.getLinks()).thenReturn(new LinksConfig());
-
         BaseUrls mockBaseUrls = mock(BaseUrls.class);
         when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls(TEST_ADYEN_CHECKOUT_BASE_URL, LIVE_ADYEN_CHECKOUT_BASE_URL));
-        AdyenGatewayConfig mockAdyenGatewayConfig = mock(AdyenGatewayConfig.class);
-        when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(new AdyenIds("test", "live"));
         when(mockAdyenGatewayConfig.getBaseUrls()).thenReturn(mockBaseUrls);
 
         ApiKeys mockApiKeys = mock(ApiKeys.class);
@@ -98,11 +106,14 @@ class AdyenAuthoriseHandlerTest {
         when(mockAdyenGatewayConfig.getApiKeys()).thenReturn(mockApiKeys);
         when(mockConfig.getAdyenGatewayConfig()).thenReturn(mockAdyenGatewayConfig);
 
-        authoriseHandler = new AdyenAuthoriseHandler(mockClient, mockConfig, jsonObjectMapper);
+        authoriseHandler = new AdyenAuthoriseHandler(mockClient, mockConfig,
+                adyenAuthoriseRequestToGatewayOrderConverter, jsonObjectMapper);
     }
 
     @Test
     void should_send_request_to_Adyen_with_api_key_and_idempotency_key_headers() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        when(mockConfig.getLinks()).thenReturn(new LinksConfig());
+        when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(new AdyenIds("test", "live"));
         givenAdyenReturnsASuccessResponse();
 
         var authoriseRequest = aCardAuthorisationGatewayRequest()
@@ -121,6 +132,8 @@ class AdyenAuthoriseHandlerTest {
 
     @Test
     void should_send_request_to_Adyen_with_full_billing_address() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        when(mockConfig.getLinks()).thenReturn(new LinksConfig());
+        when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(new AdyenIds("test", "live"));
         givenAdyenReturnsASuccessResponse();
 
         var authoriseRequest = aCardAuthorisationGatewayRequest()
@@ -142,6 +155,8 @@ class AdyenAuthoriseHandlerTest {
 
     @Test
     void should_send_request_to_Adyen_with_no_billing_address() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        when(mockConfig.getLinks()).thenReturn(new LinksConfig());
+        when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(new AdyenIds("test", "live"));
         givenAdyenReturnsASuccessResponse();
 
         var authoriseRequest = aCardAuthorisationGatewayRequest()
@@ -159,6 +174,8 @@ class AdyenAuthoriseHandlerTest {
 
     @Test
     void should_send_request_to_Adyen_with_partial_billing_address() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        when(mockConfig.getLinks()).thenReturn(new LinksConfig());
+        when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(new AdyenIds("test", "live"));
         givenAdyenReturnsASuccessResponse();
 
         var partialBillingAddress = new Address();
@@ -181,6 +198,8 @@ class AdyenAuthoriseHandlerTest {
 
     @Test
     void should_log_when_calling_Adyen_authorisation_of_charge() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        when(mockConfig.getLinks()).thenReturn(new LinksConfig());
+        when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(new AdyenIds("test", "live"));
         givenAdyenReturnsASuccessResponse();
         var request = aCardAuthorisationGatewayRequest()
                 .withCredentials(ADYEN_CREDENTIALS)
@@ -193,6 +212,8 @@ class AdyenAuthoriseHandlerTest {
 
     @Test
     void should_return_a_GatewayResponse_for_successful_Authorisation() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        when(mockConfig.getLinks()).thenReturn(new LinksConfig());
+        when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(new AdyenIds("test", "live"));
         givenAdyenReturnsASuccessResponse();
 
         var authoriseRequest = aCardAuthorisationGatewayRequest()
@@ -210,6 +231,8 @@ class AdyenAuthoriseHandlerTest {
 
     @Test
     void should_not_authorise_when_payment_provider_returns_unexpected_status_code() throws Exception {
+        when(mockConfig.getLinks()).thenReturn(new LinksConfig());
+        when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(new AdyenIds("test", "live"));
         givenAdyenReturnsAnUnexpectedResponse();
         var authoriseRequest = aCardAuthorisationGatewayRequest()
                 .withAuthCardDetails(anAuthCardDetails()
@@ -228,6 +251,8 @@ class AdyenAuthoriseHandlerTest {
 
     @Test
     void should_send_request_to_Adyen_for_user_not_present_recurring_payment() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        when(mockConfig.getLinks()).thenReturn(new LinksConfig());
+        when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(new AdyenIds("test", "live"));
         givenAdyenReturnsASuccessResponse();
 
         var agreementId = "some-agreement-id";
@@ -259,6 +284,8 @@ class AdyenAuthoriseHandlerTest {
 
     @Test
     void should_return_gateway_error_for_recurring_payment_when_adyen_returns_unexpected_status_code() throws Exception {
+        when(mockConfig.getLinks()).thenReturn(new LinksConfig());
+        when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(new AdyenIds("test", "live"));
         givenAdyenReturnsAnUnexpectedResponse();
         var agreementId = "some-agreement-id";
         var agreement = anAgreementEntity()
@@ -280,7 +307,23 @@ class AdyenAuthoriseHandlerTest {
                 containsString("server error"));
         assertThat(response.getGatewayError().get().getErrorType(), Is.is(GATEWAY_ERROR));
 
-        logger.assertContains("GatewayException occurred when authorising user not present payment");
+        logger.assertContains("GatewayException occurred when authorising user-not-present payment");
+    }
+
+    @Test
+    void should_return_a_GatewayResponse_for_successful_AydenAuthoriseRequest_authorisation() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        givenAdyenReturnsASuccessResponse();
+ 
+        AdyenAuthoriseRequest adyenAuthoriseRequest = AdyenApplePayAuthoriseRequestFixture.anAdyenApplePayAuthoriseRequestFixture().build();
+
+        GatewayResponse<BaseAuthoriseResponse> response = authoriseHandler.authorise(adyenAuthoriseRequest, GatewayAccountType.TEST);
+
+        then(mockClient).should().postRequestFor(captor.capture());
+        String payload = captor.getValue().getGatewayOrder().getPayload();
+        JsonAssert.with(payload).assertThat("$.reference", notNullValue());
+        assertThat(response.getBaseResponse().isPresent(), is(true));
+        assertThat(response.getBaseResponse().get(), hasProperty("transactionId", equalTo("adyen-PSP-reference")));
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
     }
 
     private static ChargeEntity setupChargeEntityForRecurringPayment(AgreementEntity agreement, PaymentInstrumentEntity paymentInstrument) {

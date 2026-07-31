@@ -46,6 +46,8 @@ class AdyenPaymentProviderTest {
     @Mock
     private MetricRegistry metricRegistry;
     @Mock
+    private AdyenAuthoriseRequestToGatewayOrderConverter adyenAuthoriseRequestToGatewayOrderConverter;
+    @Mock
     JsonObjectMapper jsonObjectMapper;
 
     @BeforeEach
@@ -54,7 +56,8 @@ class AdyenPaymentProviderTest {
         when(gatewayClientFactory.createGatewayClient(eq(ADYEN), any(MetricRegistry.class))).thenReturn(gatewayClient);
         when(environment.metrics()).thenReturn(metricRegistry);
 
-        this.provider = new AdyenPaymentProvider(configuration, environment, gatewayClientFactory, refundEntityFactory, jsonObjectMapper);
+        this.provider = new AdyenPaymentProvider(configuration, environment, gatewayClientFactory, refundEntityFactory,
+                adyenAuthoriseRequestToGatewayOrderConverter, jsonObjectMapper);
     }
 
     @Test

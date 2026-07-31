@@ -59,10 +59,11 @@ public class AdyenPaymentProvider implements PaymentProvider {
             Environment environment,
             GatewayClientFactory gatewayClientFactory,
             @Named("DefaultRefundEntityFactory") RefundEntityFactory refundEntityFactory,
+            AdyenAuthoriseRequestToGatewayOrderConverter adyenAuthoriseRequestToGatewayOrderConverter,
             JsonObjectMapper jsonObjectMapper) {
         AdyenGatewayConfig adyenGatewayConfig = connectorConfiguration.getAdyenGatewayConfig();
         GatewayClient client = gatewayClientFactory.createGatewayClient(ADYEN, environment.metrics());
-        adyenAuthoriseHandler = new AdyenAuthoriseHandler(client, connectorConfiguration, jsonObjectMapper);
+        adyenAuthoriseHandler = new AdyenAuthoriseHandler(client, connectorConfiguration, adyenAuthoriseRequestToGatewayOrderConverter, jsonObjectMapper);
         adyenAuthorise3dsHandler = new AdyenAuthorise3dsHandler(client, connectorConfiguration, jsonObjectMapper);
         adyenCaptureHandler = new AdyenCaptureHandler(client, connectorConfiguration, jsonObjectMapper);
         adyenCancelHandler = new AdyenCancelHandler(client, adyenGatewayConfig, new AdyenRequestFactory(connectorConfiguration), jsonObjectMapper);
