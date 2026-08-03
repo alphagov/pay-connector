@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.adyen;
+package uk.gov.pay.connector.gateway.adyen.utils;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.MediaType;

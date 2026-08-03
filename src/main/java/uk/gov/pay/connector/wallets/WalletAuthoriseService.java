@@ -16,10 +16,10 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.adyen.AdyenPaymentProvider;
+import uk.gov.pay.connector.gateway.model.ApplePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequest;
-import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
@@ -59,7 +59,7 @@ public class WalletAuthoriseService {
     public WalletAuthoriseService(PaymentProviders paymentProviders,
                                   ChargeService chargeService,
                                   AuthorisationService authorisationService,
-                                  ApplePayAuthoriseRequestFactory  applePayAuthoriseRequestFactory,
+                                  ApplePayAuthoriseRequestFactory applePayAuthoriseRequestFactory,
                                   WalletPaymentInfoToAuthCardDetailsConverter walletPaymentInfoToAuthCardDetailsConverter,
                                   AuthorisationLogger authorisationLogger,
                                   Environment environment) {

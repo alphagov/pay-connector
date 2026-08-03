@@ -1,8 +1,10 @@
-package uk.gov.pay.connector.gateway.model.request.records;
+package uk.gov.pay.connector.gateway.model;
 
 import jakarta.inject.Inject;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.records.CardAuthoriseRequest;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayCardAuthoriseRequestFactory;
 
 import java.util.Optional;
 

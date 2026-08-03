@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.model.request.records;
+package uk.gov.pay.connector.gateway.worldpay;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,6 +8,8 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayCardAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequest;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.util.Optional;

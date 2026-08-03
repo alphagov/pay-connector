@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.model.request.records;
+package uk.gov.pay.connector.gateway.worldpay.utils;
 
 
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,7 @@ class WorldpayAuthoriseDescriptionHelperTest {
 
     public static final String DESCRIPTION = "abcdef";
     public static final String REFERENCE = "reference";
-    private WorldpayAuthoriseDescriptionHelper descriptionHelper = new WorldpayAuthoriseDescriptionHelper();
+    private final WorldpayAuthoriseDescriptionHelper descriptionHelper = new WorldpayAuthoriseDescriptionHelper();
     
     @Test
     void returnsDescriptionWhenSendReferenceToGatewayIsFalse(){

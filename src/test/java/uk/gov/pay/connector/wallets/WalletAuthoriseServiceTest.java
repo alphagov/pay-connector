@@ -36,11 +36,11 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutExc
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.adyen.AdyenPaymentProvider;
+import uk.gov.pay.connector.gateway.model.ApplePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequestFixture;
 import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequest;
-import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;

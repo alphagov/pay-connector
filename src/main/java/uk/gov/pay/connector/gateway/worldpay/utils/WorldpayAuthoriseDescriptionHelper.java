@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.model.request.records;
+package uk.gov.pay.connector.gateway.worldpay.utils;
 
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 

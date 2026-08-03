@@ -1,10 +1,7 @@
-package uk.gov.pay.connector.gateway.model.request.records;
+package uk.gov.pay.connector.gateway.adyen.utils;
 
-import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
-import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
-import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 public class AdyenCredentialsHelper {
 

@@ -14,6 +14,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
+import uk.gov.pay.connector.gateway.adyen.utils.AdyenAuthoriseRequestToGatewayOrderConverter;
 import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 

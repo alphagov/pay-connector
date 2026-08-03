@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.model.request.records;
+package uk.gov.pay.connector.gateway.gateway.worldpay;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +11,10 @@ import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.client.cardid.model.CardInformationFixture;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequest;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayMotoAuthoriseRequestFactory;
+import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseCredentialsHelper;
+import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseDescriptionHelper;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
 import uk.gov.pay.connector.paymentprocessor.model.MotoApiAuthoriseRequest;
 
@@ -44,7 +48,7 @@ class WorldpayMotoAuthoriseRequestFactoryTest {
         String orderCode = "order_code";
         String descriptionOrReference = "description or reference";
         String username = "username";
-        String password = "password";
+        String password = "password"; // pragma: allowlist secret
         String merchantCode = "merchant_code";
         long amountInPence = 2000L;
         

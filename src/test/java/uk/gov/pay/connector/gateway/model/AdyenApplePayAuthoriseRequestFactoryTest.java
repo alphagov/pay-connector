@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.model.request.records;
+package uk.gov.pay.connector.gateway.model;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.Test;
@@ -7,8 +7,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.gateway.adyen.AdyenApplePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.request.json.AdyenApplePayPaymentMethod;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
+import uk.gov.pay.connector.gateway.adyen.utils.AdyenCredentialsHelper;
+import uk.gov.pay.connector.gateway.adyen.utils.AdyenMerchantAccountHelper;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.util.ChargeFrontendUrlHelper;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.model.domain.applepay.ApplePayAuthRequestFixture;

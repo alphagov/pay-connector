@@ -22,6 +22,7 @@ import uk.gov.pay.connector.gateway.adyen.handler.AdyenCancelHandler;
 import uk.gov.pay.connector.gateway.adyen.handler.AdyenCaptureHandler;
 import uk.gov.pay.connector.gateway.adyen.handler.AdyenDeleteStoredPaymentHandler;
 import uk.gov.pay.connector.gateway.adyen.handler.AdyenRefundHandler;
+import uk.gov.pay.connector.gateway.adyen.utils.AdyenAuthoriseRequestToGatewayOrderConverter;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;

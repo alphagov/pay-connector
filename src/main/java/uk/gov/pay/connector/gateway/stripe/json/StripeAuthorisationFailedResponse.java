@@ -4,13 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
-import uk.gov.pay.connector.gateway.model.StripeAuthorisationRejectedCodeMapper;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
+import uk.gov.pay.connector.gateway.stripe.util.StripeAuthorisationRejectedCodeMapper;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Optional;
 import java.util.StringJoiner;
-import java.util.stream.Stream;
 
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.ERROR;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REJECTED;
