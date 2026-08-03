@@ -47,9 +47,6 @@ class AdyenNotificationValidatorTest {
     public static final String INVALID_HMAC_SIGNATURE = "invalidHmacSignature";
     private AdyenNotificationValidator adyenNotificationValidator;
 
-    @Captor
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
-
     @Mock
     private IpDomainMatcher ipDomainMatcher;
 
@@ -152,9 +149,9 @@ class AdyenNotificationValidatorTest {
             var result = adyenNotificationValidator.isValidHmac(item, INVALID_HMAC_SIGNATURE);
 
             assertFalse(result);
-            verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+            verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
 
-            List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+            List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
             assertThat(loggingEvents
                     .stream()
                     .anyMatch(event -> event
@@ -170,9 +167,9 @@ class AdyenNotificationValidatorTest {
                     adyenNotificationValidator.isValidHmac(new NotificationRequestItem(), validHmacSignature)
             );
 
-            verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+            verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
 
-            List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+            List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
             assertThat(loggingEvents
                     .stream()
                     .anyMatch(event -> event
@@ -198,7 +195,7 @@ class AdyenNotificationValidatorTest {
         private final String payload = "Validpayload";
 
         @Test
-        void shouldReturnTrueForTokenSignature() throws SignatureException {
+        void shouldReturnTrueForValidTokenSignature() throws SignatureException {
             when(hmacValidator.validateHMAC(validHmacSignature, hmacKey, payload)).thenReturn(true);
 
             var result = adyenNotificationValidator.isValidHmac(validHmacSignature, hmacKey, payload);
@@ -206,11 +203,30 @@ class AdyenNotificationValidatorTest {
         }
 
         @Test
-        void shouldReturnFalseForTokenSignature() throws SignatureException {
+        void shouldReturnFalseForInvalidTokenSignature() throws SignatureException {
             when(hmacValidator.validateHMAC(validHmacSignature, hmacKey, payload)).thenReturn(false);
 
             var result = adyenNotificationValidator.isValidHmac(validHmacSignature, hmacKey, payload);
             assertFalse(result);
+        }
+
+        @Test
+        void shouldThrowExceptionWhenAdyenPaymentTokenNotificationIsNotValid() throws SignatureException {
+            when(hmacValidator.validateHMAC(any(), any(), any())).thenThrow(IllegalArgumentException.class);
+
+            assertThrows(AdyenNotificationException.class, () ->
+                    adyenNotificationValidator.isValidHmac("some signature", "some hmac key", 
+                            "some payload")
+            );
+
+            verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
+
+            List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
+            assertThat(loggingEvents
+                    .stream()
+                    .anyMatch(event -> event
+                            .getFormattedMessage()
+                            .equals("Failed to validate HMAC signature for token notification")), is(true));
         }
     }
 
