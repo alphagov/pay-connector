@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.model.request.records;
+package uk.gov.pay.connector.gateway.worldpay.utils;
 
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;

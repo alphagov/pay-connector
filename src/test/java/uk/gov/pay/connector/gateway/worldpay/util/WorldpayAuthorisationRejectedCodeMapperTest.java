@@ -1,6 +1,8 @@
-package uk.gov.pay.connector.gateway.model;
+package uk.gov.pay.connector.gateway.worldpay.util;
 
 import org.junit.jupiter.api.Test;
+import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
+import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthorisationRejectedCodeMapper;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

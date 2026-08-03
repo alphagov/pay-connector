@@ -6,10 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
-import uk.gov.pay.connector.gateway.model.WorldpayAuthorisationRejectedCodeMapper;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
+import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthorisationRejectedCodeMapper;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.YearMonth;

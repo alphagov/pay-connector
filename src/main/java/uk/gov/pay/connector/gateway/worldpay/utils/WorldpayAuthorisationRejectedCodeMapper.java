@@ -1,4 +1,6 @@
-package uk.gov.pay.connector.gateway.model;
+package uk.gov.pay.connector.gateway.worldpay.utils;
+
+import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 
 import java.util.Map;
 

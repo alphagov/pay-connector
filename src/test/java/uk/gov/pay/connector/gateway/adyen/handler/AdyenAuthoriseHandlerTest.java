@@ -23,7 +23,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
-import uk.gov.pay.connector.gateway.adyen.AdyenAuthoriseRequestToGatewayOrderConverter;
+import uk.gov.pay.connector.gateway.adyen.utils.AdyenAuthoriseRequestToGatewayOrderConverter;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequestFixture;

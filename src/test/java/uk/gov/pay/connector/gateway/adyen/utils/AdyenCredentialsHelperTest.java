@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.model.request.records;
+package uk.gov.pay.connector.gateway.adyen.utils;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

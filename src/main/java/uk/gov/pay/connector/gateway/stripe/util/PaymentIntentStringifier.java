@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe.util;
 
-import uk.gov.pay.connector.gateway.model.StripeAuthorisationRejectedCodeMapper;
 import uk.gov.pay.connector.gateway.stripe.json.LastPaymentError;
 import uk.gov.pay.connector.gateway.stripe.json.Outcome;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;

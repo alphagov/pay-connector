@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.model.request.records;
+package uk.gov.pay.connector.gateway.adyen.utils;
 
 import jakarta.inject.Inject;
 import uk.gov.pay.connector.app.ConnectorConfiguration;

@@ -5,8 +5,8 @@ import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.adyen.request.AdyenDeleteStoredPaymentDetailsRequest;
+import uk.gov.pay.connector.gateway.adyen.utils.AdyenMerchantAccountHelper;
 import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.records.AdyenMerchantAccountHelper;
 
 import java.util.Map;
 

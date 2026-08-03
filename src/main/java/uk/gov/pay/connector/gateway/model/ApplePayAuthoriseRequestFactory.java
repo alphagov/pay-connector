@@ -1,14 +1,16 @@
-package uk.gov.pay.connector.gateway.model.request.records;
+package uk.gov.pay.connector.gateway.model;
 
 import jakarta.inject.Inject;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.adyen.AdyenApplePayAuthoriseRequestFactory;
+import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequest;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 
 import java.util.Optional;
 
 public class ApplePayAuthoriseRequestFactory {
 
-    private final AdyenApplePayAuthoriseRequestFactory  adyenApplePayAuthoriseRequestFactory;
+    private final AdyenApplePayAuthoriseRequestFactory adyenApplePayAuthoriseRequestFactory;
 
     @Inject
     public ApplePayAuthoriseRequestFactory(AdyenApplePayAuthoriseRequestFactory adyenApplePayAuthoriseRequestFactory) {

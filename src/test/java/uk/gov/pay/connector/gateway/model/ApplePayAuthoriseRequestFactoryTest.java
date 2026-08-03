@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.model.request.records;
+package uk.gov.pay.connector.gateway.model;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +10,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.adyen.AdyenApplePayAuthoriseRequestFactory;
+import uk.gov.pay.connector.gateway.adyen.utils.AdyenCredentialsHelper;
+import uk.gov.pay.connector.gateway.adyen.utils.AdyenMerchantAccountHelper;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequestFixture;
+import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.util.ChargeFrontendUrlHelper;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
