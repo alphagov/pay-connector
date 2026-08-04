@@ -111,7 +111,7 @@ public class AdyenAccountSetupResourceIT {
         }
 
         @Test
-        void shouldReturnNotFoundResponseWhenCredentialIdExistsButPaymentProviderIsNotAdyen() {
+        void shouldReturnBadRequestResponseWhenCredentialIdExistsButPaymentProviderIsNotAdyen() {
             var worldpayAccount = app.getDatabaseFixtures()
                     .aTestAccount()
                     .withServiceId(serviceId)
@@ -323,7 +323,7 @@ public class AdyenAccountSetupResourceIT {
         }
 
         @Test
-        void shouldReturnNotFoundResponseWhenCredentialIdExistsButPaymentProviderIsNotAdyen() {
+        void shouldReturnBadRequestResponseWhenCredentialIdExistsButPaymentProviderIsNotAdyen() {
             var stripeAccount = app.getDatabaseFixtures()
                     .aTestAccount()
                     .withServiceId(serviceId)
