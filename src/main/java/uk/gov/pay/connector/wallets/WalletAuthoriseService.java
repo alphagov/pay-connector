@@ -5,6 +5,8 @@ import com.google.inject.Inject;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.core.setup.Environment;
 import io.prometheus.client.Counter;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
@@ -20,6 +22,7 @@ import uk.gov.pay.connector.gateway.model.ApplePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WalletAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
@@ -47,7 +50,12 @@ public class WalletAuthoriseService {
     private final PaymentProviders paymentProviders;
     private final WalletPaymentInfoToAuthCardDetailsConverter walletPaymentInfoToAuthCardDetailsConverter;
     private final AuthorisationLogger authorisationLogger;
-    private MetricRegistry metricRegistry;
+    private final MetricRegistry metricRegistry;
+    
+    private record RequestAndResponse(
+            @Nullable WalletAuthoriseRequest request,
+            @NonNull GatewayResponse<BaseAuthoriseResponse> response
+    ) {}
 
     private static final Counter walletPaymentAuthorisationSuccessCounter = Counter.build()
             .name("wallet_payments_authorisation_total")
@@ -75,23 +83,23 @@ public class WalletAuthoriseService {
     public GatewayResponse<BaseAuthoriseResponse> authorise(String chargeId, WalletAuthorisationRequest walletAuthorisationRequest) {
         return authorisationService.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId);
-            GatewayResponse<BaseAuthoriseResponse> operationResponse;
+            RequestAndResponse requestAndResponse = null;
             ChargeStatus chargeStatus = null;
             String requestStatus = "failure";
 
             try {
 
                 LOGGER.info("Authorising charge for {}", walletAuthorisationRequest.getWalletType().toString());
-                operationResponse = switch (walletAuthorisationRequest.getWalletType()) {
+                requestAndResponse = switch (walletAuthorisationRequest.getWalletType()) {
                     case APPLE_PAY -> authoriseApplePay(charge, walletAuthorisationRequest);
                     case GOOGLE_PAY -> authoriseGooglePay(charge, walletAuthorisationRequest);
                 };
 
-                if (operationResponse.getBaseResponse().isPresent()) {
+                if (requestAndResponse.response().getBaseResponse().isPresent()) {
                     requestStatus = "success";
-                    chargeStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
+                    chargeStatus = requestAndResponse.response().getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
                 } else {
-                    operationResponse.throwGatewayError();
+                    requestAndResponse.response().throwGatewayError();
                 }
 
             } catch (GatewayException e) {
@@ -103,16 +111,20 @@ public class WalletAuthoriseService {
                 }
 
                 chargeStatus = AuthorisationService.mapFromGatewayErrorException(e);
-                operationResponse = GatewayResponseBuilder.<BaseAuthoriseResponse>responseBuilder()
-                        .withGatewayError(e.toGatewayError())
-                        .build();
+                requestAndResponse = new RequestAndResponse(
+                        Optional.ofNullable(requestAndResponse).map(RequestAndResponse::request).orElse(null),
+                        GatewayResponseBuilder.<BaseAuthoriseResponse>responseBuilder()
+                                .withGatewayError(e.toGatewayError())
+                                .build());
             }
+            
+            GatewayResponse<BaseAuthoriseResponse> operationResponse = requestAndResponse.response();
 
             Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse, charge.getGatewayTransactionId());
             Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
-            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
-                    operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
+            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity = operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
             CardExpiryDate cardExpiryDate = operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::getCardExpiryDate).orElse(null);
+            AuthCardDetails authCardDetails = walletPaymentInfoToAuthCardDetailsConverter.convert(walletAuthorisationRequest.getPaymentInfo(), cardExpiryDate);
 
             logMetrics(charge, operationResponse, requestStatus, chargeStatus, walletAuthorisationRequest.getWalletType());
 
@@ -123,16 +135,30 @@ public class WalletAuthoriseService {
                     sessionIdentifier.orElse(null),
                     chargeStatus,
                     auth3dsDetailsEntity.orElse(null),
+                    authCardDetails,
                     cardExpiryDate);
             
-            authorisationLogger.logChargeAuthorisation(
-                    LOGGER,
-                    charge,
-                    transactionId.orElse("missing transaction ID"),
-                    operationResponse,
-                    charge.getChargeStatus(),
-                    chargeStatus
-            );
+            if (requestAndResponse.request() == null) {
+                authorisationLogger.logChargeAuthorisation(
+                        LOGGER,
+                        charge,
+                        transactionId.orElse("missing transaction ID"),
+                        operationResponse,
+                        charge.getChargeStatus(),
+                        chargeStatus
+                );
+            } else {
+                authorisationLogger.logChargeAuthorisation(
+                        LOGGER,
+                        requestAndResponse.request(),
+                        authCardDetails,
+                        charge,
+                        transactionId.orElse("missing transaction ID"),
+                        operationResponse,
+                        charge.getChargeStatus(),
+                        chargeStatus
+                );
+            }
 
             return operationResponse;
         });
@@ -178,17 +204,17 @@ public class WalletAuthoriseService {
             ProviderSessionIdentifier sessionIdentifier,
             ChargeStatus status,
             Auth3dsRequiredEntity auth3dsRequiredDetails,
+            AuthCardDetails authCardDetails,
             CardExpiryDate cardExpiryDate) {
         
         LOGGER.info("Processing gateway auth response for {}", walletAuthorisationRequest.getWalletType().toString());
         
-        AuthCardDetails authCardDetailsToBePersisted = walletPaymentInfoToAuthCardDetailsConverter.convert(walletAuthorisationRequest.getPaymentInfo(), cardExpiryDate);
         ChargeEntity updatedCharge = chargeService.updateChargePostWalletAuthorisation(
                 chargeExternalId,
                 status,
                 transactionId,
                 sessionIdentifier,
-                authCardDetailsToBePersisted,
+                authCardDetails,
                 walletAuthorisationRequest.getWalletType(),
                 walletAuthorisationRequest.getPaymentInfo().getEmail(),
                 auth3dsRequiredDetails);
@@ -201,7 +227,7 @@ public class WalletAuthoriseService {
                 status.toString())).inc();
     }
 
-    private GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ChargeEntity chargeEntity, WalletAuthorisationRequest walletAuthorisationRequest)
+    private RequestAndResponse authoriseApplePay(ChargeEntity chargeEntity, WalletAuthorisationRequest walletAuthorisationRequest)
             throws GatewayException {
         var authorisationGatewayRequest = ApplePayAuthorisationGatewayRequest.valueOf
                 (chargeEntity, (ApplePayAuthRequest) walletAuthorisationRequest);
@@ -210,20 +236,24 @@ public class WalletAuthoriseService {
         var applePayAuthoriseRequest = applePayAuthoriseRequestFactory.create(authorisationGatewayRequest).orElse(null);
         PaymentProvider paymentProvider = getPaymentProviderFor(chargeEntity);
         
-        return switch (applePayAuthoriseRequest) {
+        GatewayResponse<BaseAuthoriseResponse> response = switch (applePayAuthoriseRequest) {
             case AdyenApplePayAuthoriseRequest adyenApplePayAuthoriseRequest when paymentProvider instanceof AdyenPaymentProvider ->
                     paymentProvider.authoriseApplePay(
                             adyenApplePayAuthoriseRequest, 
                             authorisationGatewayRequest.getGatewayAccount().getGatewayAccountType());
             case null, default -> getPaymentProviderFor(chargeEntity).authoriseApplePay(authorisationGatewayRequest);
         };
+        
+        return new RequestAndResponse(applePayAuthoriseRequest, response);
     }
 
-    private GatewayResponse<BaseAuthoriseResponse> authoriseGooglePay(ChargeEntity chargeEntity, WalletAuthorisationRequest walletAuthorisationRequest)
+    private RequestAndResponse authoriseGooglePay(ChargeEntity chargeEntity, WalletAuthorisationRequest walletAuthorisationRequest)
             throws GatewayException {
         var authorisationGatewayRequest = GooglePayAuthorisationGatewayRequest.valueOf
                 (chargeEntity, (GooglePayAuthRequest) walletAuthorisationRequest);
-        return getPaymentProviderFor(chargeEntity).authoriseGooglePay(authorisationGatewayRequest);
+        GatewayResponse<BaseAuthoriseResponse> response = getPaymentProviderFor(chargeEntity).authoriseGooglePay(authorisationGatewayRequest);
+
+        return new RequestAndResponse(null, response);
     }
 
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {
