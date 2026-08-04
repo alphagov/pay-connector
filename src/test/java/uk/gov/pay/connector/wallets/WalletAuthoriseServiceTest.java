@@ -36,6 +36,7 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutExc
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.adyen.AdyenPaymentProvider;
+import uk.gov.pay.connector.gateway.adyen.utils.AdyenAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gateway.model.ApplePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
@@ -46,8 +47,8 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.Authori
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
-import uk.gov.pay.connector.gateway.util.WorldpayAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
+import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
@@ -216,7 +217,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
                 authorisationService,
                 mockApplePayAuthoriseRequestFactory,
                 mockWalletPaymentInfoToAuthCardDetailsConverter,
-                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging(), new WorldpayAuthoriseRequestLogGenerator()),
+                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging(), new AdyenAuthoriseRequestLogGenerator(), new WorldpayAuthoriseRequestLogGenerator()),
                 mockEnvironment);
     }
 

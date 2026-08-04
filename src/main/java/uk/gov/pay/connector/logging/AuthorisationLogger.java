@@ -6,15 +6,17 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.gateway.adyen.utils.AdyenAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
-import uk.gov.pay.connector.gateway.model.request.records.CardAuthoriseRequest;
-import uk.gov.pay.connector.gateway.model.request.records.WorldpayCardAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestLog;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
-import uk.gov.pay.connector.gateway.util.WorldpayAuthoriseRequestLogGenerator;
+import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseRequestLogGenerator;
 
 import java.util.Locale;
 import java.util.Optional;
@@ -23,14 +25,17 @@ public class AuthorisationLogger {
 
     private final AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier;
     private final AuthorisationRequestSummaryStructuredLogging authorisationRequestSummaryStructuredLogging;
+    private final AdyenAuthoriseRequestLogGenerator adyenAuthoriseRequestLogGenerator;
     private final WorldpayAuthoriseRequestLogGenerator worldpayAuthoriseRequestLogGenerator;
 
     @Inject
     public AuthorisationLogger(AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier, 
                                AuthorisationRequestSummaryStructuredLogging authorisationRequestSummaryStructuredLogging,
+                               AdyenAuthoriseRequestLogGenerator adyenAuthoriseRequestLogGenerator,
                                WorldpayAuthoriseRequestLogGenerator worldpayAuthoriseRequestLogGenerator) {
         this.authorisationRequestSummaryStringifier = authorisationRequestSummaryStringifier;
         this.authorisationRequestSummaryStructuredLogging = authorisationRequestSummaryStructuredLogging;
+        this.adyenAuthoriseRequestLogGenerator = adyenAuthoriseRequestLogGenerator;
         this.worldpayAuthoriseRequestLogGenerator = worldpayAuthoriseRequestLogGenerator;
     }
 
@@ -55,7 +60,7 @@ public class AuthorisationLogger {
     }
 
     public void logChargeAuthorisation(Logger logger,
-                                       CardAuthoriseRequest authoriseRequest,
+                                       AuthoriseRequest authoriseRequest,
                                        AuthCardDetails authCardDetails,
                                        ChargeEntity charge,
                                        String transactionId,
@@ -63,21 +68,21 @@ public class AuthorisationLogger {
                                        ChargeStatus oldStatus,
                                        ChargeStatus newStatus) {
 
-        switch (authoriseRequest) {
-            case WorldpayCardAuthoriseRequest worldpayAuthoriseRequest -> {
-                AuthorisationRequestLog authoriseRequestLog = worldpayAuthoriseRequestLogGenerator.generate(
-                        worldpayAuthoriseRequest, authCardDetails);
+        AuthorisationRequestLog authoriseRequestLog = switch (authoriseRequest) {
+            case WorldpayAuthoriseRequest worldpayAuthoriseRequest -> 
+                    worldpayAuthoriseRequestLogGenerator.generate(worldpayAuthoriseRequest, authCardDetails);
+            case AdyenAuthoriseRequest applePayAuthoriseRequest -> 
+                    adyenAuthoriseRequestLogGenerator.generate(applePayAuthoriseRequest, authCardDetails);
+        };
 
-                logChargeAuthorisation(logger,
-                        authoriseRequestLog.authorisationRequest(),
-                        authoriseRequestLog.structuredArguments().toArray(new StructuredArgument[0]),
-                        charge,
-                        transactionId,
-                        gatewayResponse,
-                        oldStatus,
-                        newStatus);
-            }
-        }
+        logChargeAuthorisation(logger,
+                authoriseRequestLog.authorisationRequest(),
+                authoriseRequestLog.structuredArguments().toArray(new StructuredArgument[0]),
+                charge,
+                transactionId,
+                gatewayResponse,
+                oldStatus,
+                newStatus);
     }
 
     public void logChargeAuthorisation(Logger logger,

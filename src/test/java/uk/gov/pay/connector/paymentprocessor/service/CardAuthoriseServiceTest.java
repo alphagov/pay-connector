@@ -47,6 +47,7 @@ import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthoris
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.adyen.utils.AdyenAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 import uk.gov.pay.connector.gateway.model.CardAuthoriseRequestFactory;
@@ -62,9 +63,9 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayRespon
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestLog;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
-import uk.gov.pay.connector.gateway.util.WorldpayAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
+import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
@@ -132,7 +133,7 @@ import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR
 import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequestFixture.aWorldpayMotoAuthoriseRequestFixture;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REJECTED;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
-import static uk.gov.pay.connector.gateway.util.WorldpayAuthoriseRequestLogGenerator.GATEWAY_REQUEST_RECORD;
+import static uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseRequestLogGenerator.GATEWAY_REQUEST_RECORD;
 import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity.PaymentInstrumentEntityBuilder.aPaymentInstrumentEntity;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
@@ -207,6 +208,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private WorldpayAuthoriseRequestLogGenerator mockWorldpayAuthoriseRequestLogGenerator;
+    
+    @Mock
+    private AdyenAuthoriseRequestLogGenerator mockAdyenAuthoriseRequestLogGenerator;
 
     @Mock
     private TaskQueueService mockTaskQueueService;
@@ -271,7 +275,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 authorisationService,
                 chargeService,
                 mockCardAuthoriseRequestFactory,
-                new AuthorisationLogger(mockAuthorisationRequestSummaryStringifier, mockAuthorisationRequestSummaryStructuredLogging, mockWorldpayAuthoriseRequestLogGenerator),
+                new AuthorisationLogger(mockAuthorisationRequestSummaryStringifier, mockAuthorisationRequestSummaryStructuredLogging, mockAdyenAuthoriseRequestLogGenerator, mockWorldpayAuthoriseRequestLogGenerator),
                 chargeEligibleForCaptureService,
                 mockPaymentInstrumentEntityToAuthCardDetailsConverter,
                 mockEnvironment);

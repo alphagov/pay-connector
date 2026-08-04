@@ -25,6 +25,7 @@ import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.adyen.utils.AdyenAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -38,12 +39,12 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.templates.WorldpayRequestTemplateBuilder;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
-import uk.gov.pay.connector.gateway.util.WorldpayAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayAuthoriseHandler;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCaptureHandler;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayRefundHandler;
+import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -682,7 +683,7 @@ class WorldpayPaymentProviderTest {
                 new WorldpayRefundHandler(gatewayClient, gatewayUrlMap()),
                 new WorldpayRefundEntityFactory(),
                 new AuthorisationService(mockCardExecutorService, mockEnvironment, mockConnectorConfiguration),
-                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging(), new WorldpayAuthoriseRequestLogGenerator()),
+                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging(), new AdyenAuthoriseRequestLogGenerator(), new WorldpayAuthoriseRequestLogGenerator()),
                 mock(ChargeDao.class),
                 mock(EventService.class),
                 instantSource);

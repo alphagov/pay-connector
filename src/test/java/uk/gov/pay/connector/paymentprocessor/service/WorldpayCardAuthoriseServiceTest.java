@@ -27,6 +27,7 @@ import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.adyen.utils.AdyenAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.CardAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
@@ -35,9 +36,9 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
-import uk.gov.pay.connector.gateway.util.WorldpayAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayAuthorisationRequestSummary;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
+import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
@@ -157,7 +158,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
                 new AuthorisationService(mockExecutorService, environment, mockConfiguration),
                 chargeService,
                 mockCardAuthoriseRequestFactory,
-                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging(), new WorldpayAuthoriseRequestLogGenerator()),
+                new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging(), new AdyenAuthoriseRequestLogGenerator(), new WorldpayAuthoriseRequestLogGenerator()),
                 mockChargeEligibleForCaptureService,
                 mock(PaymentInstrumentEntityToAuthCardDetailsConverter.class),
                 environment);
