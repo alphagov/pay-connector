@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
@@ -123,7 +124,7 @@ public class AdyenAccountSetupResourceIT {
             app.givenSetup()
                     .get(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, credentialExternalId))
                     .then()
-                    .statusCode(SC_NOT_FOUND)
+                    .statusCode(SC_BAD_REQUEST)
                     .body("message", is("Credential is not associated with payment provider Adyen"));
         }
 
@@ -338,7 +339,7 @@ public class AdyenAccountSetupResourceIT {
                             "value", COMPLETED))))
                     .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, credentialExternalId))
                     .then()
-                    .statusCode(SC_NOT_FOUND)
+                    .statusCode(SC_BAD_REQUEST)
                     .body("message", is("Credential is not associated with payment provider Adyen"));
         }
     }
