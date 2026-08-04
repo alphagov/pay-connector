@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.core.setup.Environment;
 import io.github.netmikey.logunit.api.LogCapturer;
 import org.apache.commons.lang3.tuple.Pair;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -69,6 +70,7 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.Instant;
 import java.time.InstantSource;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -77,6 +79,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -312,6 +315,22 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         verify(mockEventService, times(2)).emitAndRecordEvent(eventCaptor.capture());
         assertThat(eventCaptor.getAllValues().getFirst().getResourceExternalId(), is(charge.getExternalId()));
         assertThat(eventCaptor.getAllValues().getFirst().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+        
+        logs.assertContains("Authorisation with Apple Pay");
+        assertThat(logs.getEvents().stream().findFirst().isPresent(), Matchers.is(true));
+        List<String> structuredLogging = logs.getEvents().stream()
+                .filter(loggingEvent -> loggingEvent.getMessage().contains("Authorisation with Apple Pay"))
+                .findFirst().get().getArguments().stream().map(Object::toString).toList();
+
+        assertThat(structuredLogging, hasItems(
+                "payment_external_id="  + charge.getExternalId(),
+                "provider=adyen",
+                "gateway_request_record=true",
+                "billing_address=false",
+                "email_address=false",
+                "wallet=" + WalletType.APPLE_PAY
+        ));
+
 
         verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
