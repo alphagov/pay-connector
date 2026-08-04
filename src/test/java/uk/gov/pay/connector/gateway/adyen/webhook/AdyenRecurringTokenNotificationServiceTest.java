@@ -5,6 +5,8 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,13 +18,16 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.app.adyen.HmacKeys;
 import uk.gov.pay.connector.app.adyen.WebhookHmacKeys;
+import uk.gov.pay.connector.gateway.adyen.response.AdyenTokenNotification;
 import uk.gov.pay.connector.gateway.exception.AdyenNotificationException;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -51,11 +56,14 @@ class AdyenRecurringTokenNotificationServiceTest {
 
     private AdyenRecurringTokenNotificationService adyenRecurringTokenNotificationService;
 
+    private static final JsonObjectMapper jsonObjectMapper = new JsonObjectMapper(new ObjectMapper());
+
     @BeforeEach
     void setUp() {
         adyenRecurringTokenNotificationService = new AdyenRecurringTokenNotificationService(
                 adyenGatewayConfig,
-                mockAdyenNotificationValidator);
+                mockAdyenNotificationValidator,
+                jsonObjectMapper);
         Logger logger = (Logger) LoggerFactory.getLogger(AdyenRecurringTokenNotificationService.class);
         logger.setLevel(Level.INFO);
         logger.addAppender(mockAppender);
@@ -127,6 +135,22 @@ class AdyenRecurringTokenNotificationServiceTest {
         assertThat(loggingEvents.stream()
                         .anyMatch(event -> event.getFormattedMessage().equals("Processed Adyen token notification")),
                 is(true));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenTokenNotificationPayloadIsInvalid() {
+        WebApplicationException exception = assertThrows(
+                WebApplicationException.class,
+                () -> adyenRecurringTokenNotificationService.deserialisePayload("invalidJson", AdyenTokenNotification.class)
+        );
+        
+        verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+        assertThat(loggingEvents.stream()
+                        .anyMatch(event -> event.getFormattedMessage().equals("Error deserialising token notification payload")),
+                is(true));
+        
+        assertThat("Error deserialising token webhook Json", is(exception.getMessage()));
     }
 
     @Test
