@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.Path;
@@ -156,7 +157,7 @@ public class AdyenAccountSetupResource {
                 .orElseThrow(NotFoundException::new);
 
         if (!gatewayAccountCredentialsEntity.getPaymentProvider().equals(ADYEN.getName())) {
-            throw new NotFoundException("Credential is not associated with payment provider Adyen");
+            throw new BadRequestException("Credential is not associated with payment provider Adyen");
         }
 
         return gatewayAccountCredentialsEntity;
