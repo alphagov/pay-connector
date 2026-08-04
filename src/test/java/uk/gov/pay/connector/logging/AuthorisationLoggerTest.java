@@ -16,14 +16,16 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.adyen.utils.AdyenAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.request.records.WorldpayCardAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestLog;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
-import uk.gov.pay.connector.gateway.util.WorldpayAuthoriseRequestLogGenerator;
+import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 
@@ -37,6 +39,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequestFixture.anAdyenApplePayAuthoriseRequestFixture;
 import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequestFixture.aWorldpayMotoAuthoriseRequestFixture;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,6 +61,9 @@ class AuthorisationLoggerTest {
     private WorldpayAuthoriseRequestLogGenerator mockWorldpayAuthoriseRequestLogGenerator;
 
     @Mock
+    private AdyenAuthoriseRequestLogGenerator mockAdyenAuthoriseRequestLogGenerator;
+    
+    @Mock
     private GatewayResponse<?> mockGatewayResponse;
 
     @Mock
@@ -66,6 +72,8 @@ class AuthorisationLoggerTest {
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
+    private final AdyenAuthoriseRequest adyenAuthoriseRequest = anAdyenApplePayAuthoriseRequestFixture().build();
+    
     private final WorldpayCardAuthoriseRequest worldpayAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture().build();
 
     private final GatewayAccountEntity gatewayAccountEntity = GatewayAccountEntityFixture.aGatewayAccountEntity()
@@ -73,12 +81,19 @@ class AuthorisationLoggerTest {
             .withAnalyticsId("AnalyticsId")
             .build();
 
-    private final ChargeEntity chargeEntity = aValidChargeEntity()
+
+    private final ChargeEntity adyenChargeEntity = aValidChargeEntity()
+            .withExternalId("abcdefghijklmnopqrstuvwxyz")
+            .withGatewayAccountEntity(gatewayAccountEntity)
+            .withPaymentProvider(PaymentGatewayName.ADYEN.getName())
+            .build();
+
+    private final ChargeEntity worldpayChargeEntity = aValidChargeEntity()
             .withExternalId("abcdefghijklmnopqrstuvwxyz")
             .withGatewayAccountEntity(gatewayAccountEntity)
             .withPaymentProvider(PaymentGatewayName.WORLDPAY.getName())
             .build();
-
+    
     private Logger logger;
 
     private AuthorisationLogger authorisationLogger;
@@ -90,7 +105,7 @@ class AuthorisationLoggerTest {
         logger.setLevel(INFO);
 
         authorisationLogger = new AuthorisationLogger(mockAuthorisationRequestSummaryStringifier,
-                mockAuthorisationRequestSummaryStructuredLogging, mockWorldpayAuthoriseRequestLogGenerator);
+                mockAuthorisationRequestSummaryStructuredLogging, mockAdyenAuthoriseRequestLogGenerator, mockWorldpayAuthoriseRequestLogGenerator);
     }
 
     @Test
@@ -101,7 +116,7 @@ class AuthorisationLoggerTest {
         given(mockAuthorisationRequestSummaryStructuredLogging.createArgs(mockAuthorisationRequestSummary))
                 .willReturn(null);
 
-        authorisationLogger.logChargeAuthorisation(logger, mockAuthorisationRequestSummary, chargeEntity,
+        authorisationLogger.logChargeAuthorisation(logger, mockAuthorisationRequestSummary, worldpayChargeEntity,
                 "payment-12345", mockGatewayResponse, ChargeStatus.ENTERING_CARD_DETAILS, ChargeStatus.AUTHORISATION_SUCCESS);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
@@ -122,7 +137,7 @@ class AuthorisationLoggerTest {
         given(mockAuthorisationRequestSummaryStructuredLogging.createArgs(mockAuthorisationRequestSummary))
                 .willReturn(new StructuredArgument[]{ kv("some", "fun"), kv("structured", "args") });
 
-        authorisationLogger.logChargeAuthorisation(logger, mockAuthorisationRequestSummary, chargeEntity,
+        authorisationLogger.logChargeAuthorisation(logger, mockAuthorisationRequestSummary, worldpayChargeEntity,
                 "payment-12345", mockGatewayResponse, ChargeStatus.ENTERING_CARD_DETAILS, ChargeStatus.AUTHORISATION_SUCCESS);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
@@ -139,12 +154,34 @@ class AuthorisationLoggerTest {
     }
 
     @Test
+    void logsWithAdyenAuthorisationRequest() {
+        given(mockAdyenAuthoriseRequestLogGenerator.generate(adyenAuthoriseRequest, mockAuthCardDetails))
+                .willReturn(new AuthorisationRequestLog(" with all the fancy details",
+                        List.of(kv("some", "fun"), kv("structured", "args"))));
+
+        authorisationLogger.logChargeAuthorisation(logger, adyenAuthoriseRequest, mockAuthCardDetails, adyenChargeEntity,
+                "payment-12345", mockGatewayResponse, ChargeStatus.ENTERING_CARD_DETAILS, ChargeStatus.AUTHORISATION_SUCCESS);
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+
+        var loggingEvent = loggingEventArgumentCaptor.getAllValues().getFirst();
+
+        assertThat(loggingEvent.getFormattedMessage(), is(
+                "Authorisation with all the fancy details for abcdefghijklmnopqrstuvwxyz " +
+                        "(adyen payment-12345) for AnalyticsId (123) - " +
+                        "mockGatewayResponse .'. ENTERING CARD DETAILS -> AUTHORISATION SUCCESS"));
+
+        assertThat(loggingEvent.getArgumentArray(), hasItemInArray(kv("some", "fun")));
+        assertThat(loggingEvent.getArgumentArray(), hasItemInArray(kv("structured", "args")));
+    }
+
+    @Test
     void logsWithWorldpayAuthorisationRequest() {
         given(mockWorldpayAuthoriseRequestLogGenerator.generate(worldpayAuthoriseRequest, mockAuthCardDetails))
                         .willReturn(new AuthorisationRequestLog(" with all the fancy details",
                                 List.of(kv("some", "fun"), kv("structured", "args"))));
 
-        authorisationLogger.logChargeAuthorisation(logger, worldpayAuthoriseRequest, mockAuthCardDetails, chargeEntity,
+        authorisationLogger.logChargeAuthorisation(logger, worldpayAuthoriseRequest, mockAuthCardDetails, worldpayChargeEntity,
                 "payment-12345", mockGatewayResponse, ChargeStatus.ENTERING_CARD_DETAILS, ChargeStatus.AUTHORISATION_SUCCESS);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
@@ -162,7 +199,7 @@ class AuthorisationLoggerTest {
 
     @Test
     void logsWithNoAuthorisationRequest() {
-        authorisationLogger.logChargeAuthorisation(logger, chargeEntity,
+        authorisationLogger.logChargeAuthorisation(logger, worldpayChargeEntity,
                 "payment-12345", mockGatewayResponse, ChargeStatus.ENTERING_CARD_DETAILS, ChargeStatus.AUTHORISATION_SUCCESS);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());

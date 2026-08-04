@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.util;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequest;
+import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseRequestLogGenerator;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -14,14 +15,14 @@ import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStruc
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.EMAIL;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.IP_ADDRESS;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.MOTO;
-import static uk.gov.pay.connector.gateway.util.WorldpayAuthoriseRequestLogGenerator.GATEWAY_REQUEST_RECORD;
+import static uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseRequestLogGenerator.GATEWAY_REQUEST_RECORD;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
 class WorldpayAuthoriseRequestLogGeneratorTest {
 
     private static final String IP = "203.0.113.1";
 
-    private final WorldpayAuthoriseRequestLogGenerator  generator = new WorldpayAuthoriseRequestLogGenerator();
+    private final WorldpayAuthoriseRequestLogGenerator generator = new WorldpayAuthoriseRequestLogGenerator();
 
     @Test
     public void generatesWorldpayMotoAuthoriseRequestLogWithCorporateCard() {
