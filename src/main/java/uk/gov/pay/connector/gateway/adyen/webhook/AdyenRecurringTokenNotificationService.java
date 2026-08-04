@@ -1,10 +1,13 @@
 package uk.gov.pay.connector.gateway.adyen.webhook;
 
 import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
+import uk.gov.pay.connector.gateway.adyen.response.AdyenTokenNotification;
 import uk.gov.pay.connector.gateway.exception.AdyenNotificationException;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getTokenHmacKey;
@@ -16,11 +19,15 @@ public class AdyenRecurringTokenNotificationService {
     private final AdyenNotificationValidator adyenNotificationValidator;
     private static final String NOTIFICATION_SOURCE = "notification_source";
     private final AdyenGatewayConfig adyenGatewayConfig;
+    private final JsonObjectMapper jsonObjectMapper;
 
     @Inject
-    public AdyenRecurringTokenNotificationService(AdyenGatewayConfig adyenGatewayConfig, AdyenNotificationValidator adyenNotificationValidator) {
+    public AdyenRecurringTokenNotificationService(AdyenGatewayConfig adyenGatewayConfig,
+                                                  AdyenNotificationValidator adyenNotificationValidator,
+                                                  JsonObjectMapper jsonObjectMapper) {
         this.adyenNotificationValidator = adyenNotificationValidator;
         this.adyenGatewayConfig = adyenGatewayConfig;
+        this.jsonObjectMapper = jsonObjectMapper;
     }
 
     public boolean handleNotificationFor(String payload, String hmacSignature, String forwardedIpAddresses) {
@@ -37,8 +44,9 @@ public class AdyenRecurringTokenNotificationService {
                 return false;
             }
 
-            // Todo: need to work out how to set this. Hardcoding for now 
-            boolean live = false;
+            AdyenTokenNotification adyenTokenResponse = deserialisePayload(payload, AdyenTokenNotification.class);
+
+            boolean live = adyenTokenResponse.environment().equalsIgnoreCase("live");
             String hmacKey = getTokenHmacKey(adyenGatewayConfig, live);
             if (!adyenNotificationValidator.isValidHmac(hmacSignature, hmacKey, payload)) {
                 LOGGER.atInfo()
@@ -59,5 +67,16 @@ public class AdyenRecurringTokenNotificationService {
             return false;
         }
     }
-
+    
+    public <T> T deserialisePayload(String payload, Class<T> targetClass) throws AdyenNotificationException {
+        try {
+            return jsonObjectMapper.getObject(payload, targetClass);
+        } catch (Exception e) {
+            LOGGER.info("Error deserialising token notification payload", e);
+            throw new WebApplicationException("Error deserialising token webhook Json", e);
+        }
+    }
 }
+
+
+

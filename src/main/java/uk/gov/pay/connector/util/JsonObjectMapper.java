@@ -21,7 +21,7 @@ public class JsonObjectMapper {
         this.objectMapper = objectMapper;
     }
 
-    public <T> T getObject(String jsonResponse, Class<T> targetType) {
+    public <T> T getObject(String jsonResponse, Class<T> targetType) throws WebApplicationException {
         try {
             return objectMapper.readValue(jsonResponse, targetType);
         } catch (IOException e) {
@@ -32,7 +32,7 @@ public class JsonObjectMapper {
         }
     }
 
-    public String objectToString(Object object) {
+    public String objectToString(Object object) throws WebApplicationException {
         try {
             return objectMapper.writeValueAsString(object);
         } catch (JsonProcessingException e) {
