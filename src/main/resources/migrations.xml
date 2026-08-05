@@ -2149,4 +2149,16 @@
         <addNotNullConstraint tableName="gateway_accounts_adyen_setup" columnName="gateway_account_credential_id"/>
     </changeSet>
 
+    <changeSet id="add charge_external_id column to payment_instruments table" author="">
+        <addColumn tableName="payment_instruments">
+            <column name="charge_external_id" type="varchar(26)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="create index for charge_external_id on payment_instruments" runInTransaction="false" author="">
+        <sql>CREATE INDEX CONCURRENTLY idx_payment_instruments_charge_external_id ON payment_instruments (charge_external_id);</sql>
+    </changeSet>
+
 </databaseChangeLog>
