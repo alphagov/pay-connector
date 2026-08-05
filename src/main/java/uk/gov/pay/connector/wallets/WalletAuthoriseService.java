@@ -169,22 +169,30 @@ public class WalletAuthoriseService {
                             String requestStatus,
                             ChargeStatus chargeStatus,
                             WalletType walletType) {
-        String successOrFailure = (chargeStatus == AUTHORISATION_SUCCESS || chargeStatus == AUTHORISATION_3DS_REQUIRED)
-                ? "success"
-                : "failure";
+
+        String successOrFailureMetricLabel = switch (chargeStatus) {
+            case AUTHORISATION_SUCCESS, AUTHORISATION_3DS_REQUIRED -> "success";
+            default -> "failure";
+        };
+
+        String walletTypeMetricLabel = switch (walletType) {
+            case APPLE_PAY -> "apple-pay";
+            case GOOGLE_PAY -> "google-pay";
+        };
+
         LOGGER.info("{} authorisation - charge status={}, request status={}, charge_external_id={}, payment provider response={}",
-                walletType.toString(), chargeStatus, requestStatus, chargeEntity.getExternalId(), operationResponse.toString());
+                walletType, chargeStatus, requestStatus, chargeEntity.getExternalId(), operationResponse.toString());
         metricRegistry.counter(format("gateway-operations.%s.%s.authorise.%s.result.%s",
                 chargeEntity.getPaymentProvider(),
                 chargeEntity.getGatewayAccount().getType(),
-                walletType.equals(WalletType.GOOGLE_PAY) ? "google-pay" : "apple-pay",
-                successOrFailure)).inc();
+                walletTypeMetricLabel,
+                successOrFailureMetricLabel)).inc();
         walletPaymentAuthorisationSuccessCounter
                 .labels(
                     chargeEntity.getPaymentProvider(),
                     chargeEntity.getGatewayAccount().getType(),
-                    walletType.equals(WalletType.GOOGLE_PAY) ? "google-pay" : "apple-pay",
-                    successOrFailure
+                    walletTypeMetricLabel,
+                    successOrFailureMetricLabel
                 ).inc();
     }
 
