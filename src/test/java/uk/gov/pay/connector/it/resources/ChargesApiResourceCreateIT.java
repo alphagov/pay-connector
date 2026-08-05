@@ -173,8 +173,8 @@ public class ChargesApiResourceCreateIT {
                     .body("links", hasSize(4))
                     .body("links", containsLink("self", "GET", documentLocation))
                     .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
-                    .body("links", containsLink("next_url", "GET", "http://CardFrontend/secure/" + chargeTokenId))
-                    .body("links", containsLink("next_url_post", "POST", "http://CardFrontend/secure",
+                    .body("links", containsLink("next_url", "GET", "https://card.frontend.test/secure/" + chargeTokenId))
+                    .body("links", containsLink("next_url_post", "POST", "https://card.frontend.test/secure",
                             "application/x-www-form-urlencoded", Map.of("chargeTokenId", chargeTokenId)));
 
             Map<String, Object> charge = app.getDatabaseTestHelper().getChargeByExternalId(testChargeId);
@@ -215,8 +215,8 @@ public class ChargesApiResourceCreateIT {
                     .body("links", hasSize(4))
                     .body("links", containsLink("self", "GET", documentLocation))
                     .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
-                    .body("links", containsLink("next_url", "GET", "http://CardFrontend/secure/" + newChargeTokenId))
-                    .body("links", containsLink("next_url_post", "POST", "http://CardFrontend/secure",
+                    .body("links", containsLink("next_url", "GET", "https://card.frontend.test/secure/" + newChargeTokenId))
+                    .body("links", containsLink("next_url_post", "POST", "https://card.frontend.test/secure",
                             "application/x-www-form-urlencoded", Map.of("chargeTokenId", newChargeTokenId)));
 
 
@@ -696,14 +696,14 @@ public class ChargesApiResourceCreateIT {
                     .body("links", hasSize(4))
                     .body("links", containsLink("self", "GET", documentLocation))
                     .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
-                    .body("links", containsLink("next_url", "GET", "http://CardFrontend/secure/" + chargeTokenId))
-                    .body("links", containsLink("next_url_post", "POST", "http://CardFrontend/secure",
+                    .body("links", containsLink("next_url", "GET", "https://card.frontend.test/secure/" + chargeTokenId))
+                    .body("links", containsLink("next_url_post", "POST", "https://card.frontend.test/secure",
                             "application/x-www-form-urlencoded", Map.of("chargeTokenId", chargeTokenId)));
 
             Map<String, Object> charge = app.getDatabaseTestHelper().getChargeByExternalId(testChargeId);
             assertThat(CARD_API.toString(), equalTo(charge.get("source")));
 
-            ValidatableResponse getChargeResponse = app.givenSetup()
+                ValidatableResponse getChargeResponse = app.givenSetup()
                     .get(format("/v1/api/service/%s/account/%s/charges/%s", VALID_SERVICE_ID, GatewayAccountType.TEST, testChargeId))
                     .then()
                     .statusCode(OK.getStatusCode())
@@ -737,8 +737,8 @@ public class ChargesApiResourceCreateIT {
                     .body("links", hasSize(4))
                     .body("links", containsLink("self", "GET", documentLocation))
                     .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
-                    .body("links", containsLink("next_url", "GET", "http://CardFrontend/secure/" + newChargeTokenId))
-                    .body("links", containsLink("next_url_post", "POST", "http://CardFrontend/secure",
+                    .body("links", containsLink("next_url", "GET", "https://card.frontend.test/secure/" + newChargeTokenId))
+                    .body("links", containsLink("next_url_post", "POST", "https://card.frontend.test/secure",
                             "application/x-www-form-urlencoded", Map.of("chargeTokenId", newChargeTokenId)));
 
 
