@@ -48,7 +48,7 @@ class AdyenCardResourceAuthoriseIT {
     final String screenWidth = "1440";
     final String timezoneOffset = "-60";
     final String shopperEmail = "email@fake.test";
-    final String origin = "http://CardFrontend/";
+    final String origin = "https://card.frontend.test";
 
     @BeforeEach
     void setUp() {

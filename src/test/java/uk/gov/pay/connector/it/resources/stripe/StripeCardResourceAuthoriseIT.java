@@ -567,7 +567,7 @@ public class StripeCardResourceAuthoriseIT {
                 .withRequestBody(containing(queryParamWithValue("payment_method", "pm_1FHEP1EZsufgnuO0Y22yNAKu")))
                 .withRequestBody(containing(queryParamWithValue("currency", "GBP")))
                 .withRequestBody(containing(queryParamWithValue("return_url",
-                        format("http://CardFrontend//card_details/%s/3ds_required_in", externalChargeId))))
+                        format("https://card.frontend.test/card_details/%s/3ds_required_in", externalChargeId))))
         );
     }
 

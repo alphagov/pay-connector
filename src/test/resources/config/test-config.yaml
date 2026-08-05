@@ -19,7 +19,7 @@ logging:
         container: "connector"
 
 links:
-  frontendUrl: http://CardFrontend/
+  frontendUrl: https://card.frontend.test
 
 worldpay:
   urls:
