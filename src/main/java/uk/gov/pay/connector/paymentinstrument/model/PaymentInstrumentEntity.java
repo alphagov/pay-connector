@@ -67,16 +67,20 @@ public class PaymentInstrumentEntity {
     @JsonSerialize(using = ToLowerCaseStringSerializer.class)
     private PaymentInstrumentStatus status;
 
+    @Column(name = "charge_external_id")
+    private String chargeExternalId;
+
     @Embedded
     private CardDetailsEntity cardDetails;
 
-    private PaymentInstrumentEntity(Instant createdDate, Map<String, String> recurringAuthToken, Instant startDate, CardDetailsEntity cardDetails, PaymentInstrumentStatus status) {
+    private PaymentInstrumentEntity(Instant createdDate, Map<String, String> recurringAuthToken, Instant startDate, CardDetailsEntity cardDetails, PaymentInstrumentStatus status, String chargeExternalId) {
         this.createdDate = createdDate;
         this.externalId = RandomIdGenerator.newId();
         this.recurringAuthToken = recurringAuthToken;
         this.startDate = startDate;
         this.cardDetails = cardDetails;
         this.status = status;
+        this.chargeExternalId = chargeExternalId;
     }
 
     public Optional<Map<String, String>> getRecurringAuthToken() {
@@ -143,12 +147,17 @@ public class PaymentInstrumentEntity {
         // For JPA
     }
 
+    public String getChargeExternalId() {
+        return chargeExternalId;
+    }
+
     public static class PaymentInstrumentEntityBuilder {
         private CardDetailsEntity cardDetails;
         private Instant createdDate;
         private PaymentInstrumentStatus status;
         private Instant startDate;
         private Map<String, String> recurringAuthToken;
+        private String chargeExternalId;
 
         public static PaymentInstrumentEntity.PaymentInstrumentEntityBuilder aPaymentInstrumentEntity(Instant createdDate) {
             var paymentInstrumentEntityBuilder = new PaymentInstrumentEntityBuilder();
@@ -180,10 +189,15 @@ public class PaymentInstrumentEntity {
             this.recurringAuthToken = recurringAuthToken;
             return this;
         }
+        
+        public PaymentInstrumentEntity.PaymentInstrumentEntityBuilder withExternalChargeId(String chargeExternalId) {
+            this.chargeExternalId = chargeExternalId;
+            return this;
+        }
 
 
         public PaymentInstrumentEntity build() {
-            return new PaymentInstrumentEntity(createdDate, recurringAuthToken, startDate, cardDetails, status);
+            return new PaymentInstrumentEntity(createdDate, recurringAuthToken, startDate, cardDetails, status, chargeExternalId);
         }
     }
 

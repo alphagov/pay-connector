@@ -54,6 +54,7 @@ class PaymentInstrumentServiceTest {
         assertThat(actualPaymentInstrumentEntity.getCardDetails(), is(chargeEntity.getCardDetails()));
         assertThat(actualPaymentInstrumentEntity.getStartDate(), is(NOW));
         assertThat(actualPaymentInstrumentEntity.getStatus(), is(PaymentInstrumentStatus.CREATED));
+        assertThat(actualPaymentInstrumentEntity.getChargeExternalId(), is(chargeEntity.getExternalId()));
         assertThat(actualPaymentInstrumentEntity, is(paymentInstrument));
     }
 }
