@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import jakarta.inject.Inject;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthorisePayload;
 import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseCredentialsHelper;
 import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseDescriptionHelper;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
@@ -18,9 +18,9 @@ public class WorldpayMotoAuthoriseRequestFactory {
         this.credentialsHelper = credentialsHelper;
     }
     
-    public WorldpayMotoAuthoriseRequest create(CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest){
+    public WorldpayMotoAuthorisePayload create(CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest){
         WorldpayMerchantCodeCredentials credentials = credentialsHelper.getOneOffCredentials(cardAuthorisationGatewayRequest);
-        return new WorldpayMotoAuthoriseRequest(
+        return new WorldpayMotoAuthorisePayload(
                 credentials.getUsername(),
                 credentials.getPassword(),
                 credentials.getMerchantCode(),

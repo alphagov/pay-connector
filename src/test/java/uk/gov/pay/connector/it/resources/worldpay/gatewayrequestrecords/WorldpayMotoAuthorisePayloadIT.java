@@ -27,7 +27,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
 
-public class WorldpayMotoAuthoriseRequestIT {
+public class WorldpayMotoAuthorisePayloadIT {
 
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();

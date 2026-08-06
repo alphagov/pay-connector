@@ -33,7 +33,7 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthorisePayload;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.templates.WorldpayRequestTemplateBuilder;
@@ -506,7 +506,7 @@ class WorldpayPaymentProviderTest {
 
         @SuppressWarnings("unchecked")
         Map<String, String> worldpayCredentials = (Map<String, String>) validCredentials.get(ONE_OFF_CUSTOMER_INITIATED);
-        WorldpayMotoAuthoriseRequest worldpayMotoAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture()
+        WorldpayMotoAuthorisePayload worldpayMotoAuthorisePayload = aWorldpayMotoAuthoriseRequestFixture()
                 .withMerchantCode(worldpayCredentials.get(CREDENTIALS_MERCHANT_CODE))
                 .withUsername(worldpayCredentials.get(CREDENTIALS_USERNAME))
                 .withPassword(worldpayCredentials.get(CREDENTIALS_PASSWORD))
@@ -514,7 +514,7 @@ class WorldpayPaymentProviderTest {
                 .withCardNumber(cardNumber)
                 .build();
 
-        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(worldpayMotoAuthoriseRequest, TEST);
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(worldpayMotoAuthorisePayload, TEST);
         assertTrue(response.getBaseResponse().isPresent());
     }
 

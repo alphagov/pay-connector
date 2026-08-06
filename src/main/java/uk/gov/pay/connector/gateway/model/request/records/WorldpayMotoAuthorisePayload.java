@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.model.request.records;
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
-public record WorldpayMotoAuthoriseRequest(
+public record WorldpayMotoAuthorisePayload(
         String username,
         String password,
         String merchantCode,

@@ -31,7 +31,7 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorisePayload;
 import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
@@ -97,8 +97,8 @@ public class AdyenPaymentProvider implements PaymentProvider {
     
     @Override
     public GatewayResponse authoriseApplePay(ApplePayAuthoriseRequest applePayAuthoriseRequest, GatewayAccountType gatewayAccountType) throws GatewayException {
-        if (applePayAuthoriseRequest instanceof AdyenApplePayAuthoriseRequest adyenApplePayAuthoriseRequest) {
-            return adyenAuthoriseHandler.authorise(adyenApplePayAuthoriseRequest, gatewayAccountType);
+        if (applePayAuthoriseRequest instanceof AdyenApplePayAuthorisePayload adyenApplePayAuthorisePayload) {
+            return adyenAuthoriseHandler.authorise(adyenApplePayAuthorisePayload, gatewayAccountType);
         } else {
             throw new IllegalArgumentException("ApplePayAuthoriseRequest is not of type AdyenApplePayAuthoriseRequest");
         }

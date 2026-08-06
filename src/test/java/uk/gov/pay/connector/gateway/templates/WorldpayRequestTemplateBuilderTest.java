@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.templates;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthorisePayload;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -20,7 +20,7 @@ class WorldpayRequestTemplateBuilderTest {
     class MotoAuthorisationRequest {
         @Test
         void shouldGenerateValidAuthoriseOrderRequestForWorldpayMotoAuthorisationRequest() {
-            WorldpayMotoAuthoriseRequest motoOrder = aWorldpayMotoAuthoriseRequestFixture().build();
+            WorldpayMotoAuthorisePayload motoOrder = aWorldpayMotoAuthoriseRequestFixture().build();
 
             assertThat(worldpayRequestTemplateBuilder.buildWith("/worldpay/WorldpayAuthoriseMotoOrderTemplate.ftlx", motoOrder))
                     .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_MOTO_AUTHORISATION_REQUEST))
@@ -32,7 +32,7 @@ class WorldpayRequestTemplateBuilderTest {
     class TemplateBuilderAppliesAutoEscape {
         @Test
         void shouldGenerateValidAuthoriseOrderRequestWithAutoEscape() {
-            WorldpayMotoAuthoriseRequest motoOrder = aWorldpayMotoAuthoriseRequestFixture()
+            WorldpayMotoAuthorisePayload motoOrder = aWorldpayMotoAuthoriseRequestFixture()
                     .withMerchantCode("MERCHANT\"\"CODE")
                     .withCardholderName("Alec & Barley").build();
             String renderedAuthoriseOrder = worldpayRequestTemplateBuilder.buildWith("/worldpay/WorldpayAuthoriseMotoOrderTemplate.ftlx", motoOrder);
@@ -46,7 +46,7 @@ class WorldpayRequestTemplateBuilderTest {
     class InvalidActionsThrowingException {
         @Test
         void shouldThrowRuntimeExceptionWhenTemplateIsNotFound() {
-            WorldpayMotoAuthoriseRequest motoOrder = aWorldpayMotoAuthoriseRequestFixture().build();
+            WorldpayMotoAuthorisePayload motoOrder = aWorldpayMotoAuthoriseRequestFixture().build();
             var thrown = assertThrows(RuntimeException.class, () -> worldpayRequestTemplateBuilder.buildWith("/worldpay/NonExistentOrderTemplate.xml", motoOrder));
             
             assertThat(thrown.getMessage(), is("Could not load template /worldpay/NonExistentOrderTemplate.xml in dir /templates"));
@@ -54,7 +54,7 @@ class WorldpayRequestTemplateBuilderTest {
 
         @Test
         void shouldThrowRuntimeExceptionWhenCannotRenderTemplate() {
-            WorldpayMotoAuthoriseRequest motoOrder = aWorldpayMotoAuthoriseRequestFixture().build();
+            WorldpayMotoAuthorisePayload motoOrder = aWorldpayMotoAuthoriseRequestFixture().build();
 
             var thrown = assertThrows(RuntimeException.class, () -> {
                 worldpayRequestTemplateBuilder.buildWith("/worldpay/WorldpayCancelOrderTemplate.xml", motoOrder);

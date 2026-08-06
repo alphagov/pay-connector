@@ -9,7 +9,7 @@ import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.adyen.request.json.AdyenApplePayPaymentMethod;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
-import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorisePayload;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -30,7 +30,7 @@ class AdyenAuthoriseRequestToGatewayOrderConverterTest {
 
     @Test
     void convertsAdyenApplePayAuthoriseRequest() {
-        var request = new AdyenApplePayAuthoriseRequest(
+        var request = new AdyenApplePayAuthorisePayload(
                 MERCHANT_ACCOUNT,
                 STORE,
                 REFERENCE,
