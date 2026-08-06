@@ -6,7 +6,7 @@ import uk.gov.pay.connector.gateway.adyen.request.json.AdyenApplePayPaymentMetho
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 
 @NullMarked
-public record AdyenApplePayAuthoriseRequest(
+public record AdyenApplePayAuthorisePayload(
         @JsonProperty("merchantAccount")
         String merchantAccount,
         

@@ -21,7 +21,7 @@ import uk.gov.pay.connector.gateway.adyen.AdyenPaymentProvider;
 import uk.gov.pay.connector.gateway.model.ApplePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
-import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorisePayload;
 import uk.gov.pay.connector.gateway.model.request.records.WalletAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -38,8 +38,6 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 import java.util.Optional;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
 public class WalletAuthoriseService {
     
@@ -245,7 +243,7 @@ public class WalletAuthoriseService {
         PaymentProvider paymentProvider = getPaymentProviderFor(chargeEntity);
         
         GatewayResponse<BaseAuthoriseResponse> response = switch (applePayAuthoriseRequest) {
-            case AdyenApplePayAuthoriseRequest adyenApplePayAuthoriseRequest when paymentProvider instanceof AdyenPaymentProvider ->
+            case AdyenApplePayAuthorisePayload adyenApplePayAuthoriseRequest when paymentProvider instanceof AdyenPaymentProvider ->
                     paymentProvider.authoriseApplePay(
                             adyenApplePayAuthoriseRequest, 
                             authorisationGatewayRequest.getGatewayAccount().getGatewayAccountType());

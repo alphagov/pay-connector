@@ -73,8 +73,8 @@ public class WorldpayMotoAuthoriseRequestFixture {
         return this;
     }
 
-    public WorldpayMotoAuthoriseRequest build() {
-        return new WorldpayMotoAuthoriseRequest(
+    public WorldpayMotoAuthorisePayload build() {
+        return new WorldpayMotoAuthorisePayload(
                 username,
                 password,
                 merchantCode,

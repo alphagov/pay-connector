@@ -33,7 +33,7 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.records.CardAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.request.records.WorldpayCardAuthoriseRequest;
-import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthorisePayload;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
@@ -322,7 +322,7 @@ public class CardAuthoriseService {
                                                    CardAuthoriseRequest cardAuthoriseRequest,
                                                    AuthCardDetails authCardDetails) {
         switch (cardAuthoriseRequest) {
-            case WorldpayMotoAuthoriseRequest _ -> {
+            case WorldpayMotoAuthorisePayload _ -> {
                 AUTHORISATION_RESULT_COUNTER.labels(
                         updatedCharge.getPaymentProvider().toLowerCase(),
                         updatedCharge.getGatewayAccount().getType().toLowerCase(),

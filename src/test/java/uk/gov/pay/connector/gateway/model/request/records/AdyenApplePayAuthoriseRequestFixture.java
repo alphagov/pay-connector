@@ -46,7 +46,7 @@ public class AdyenApplePayAuthoriseRequestFixture {
         return this;
     }
     
-    public AdyenApplePayAuthoriseRequest build() {
-        return new AdyenApplePayAuthoriseRequest(merchantAccount, store, reference, amount, paymentMethod, returnUrl);
+    public AdyenApplePayAuthorisePayload build() {
+        return new AdyenApplePayAuthorisePayload(merchantAccount, store, reference, amount, paymentMethod, returnUrl);
     }
 }

@@ -12,7 +12,7 @@ import uk.gov.pay.connector.gateway.adyen.request.json.AdyenApplePayPaymentMetho
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 import uk.gov.pay.connector.gateway.adyen.utils.AdyenCredentialsHelper;
 import uk.gov.pay.connector.gateway.adyen.utils.AdyenMerchantAccountHelper;
-import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorisePayload;
 import uk.gov.pay.connector.gateway.util.ChargeFrontendUrlHelper;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
@@ -25,7 +25,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
-class AdyenApplePayAuthoriseRequestFactoryTest {
+class AdyenApplePayAuthorisePayloadFactoryTest {
     
     @Mock
     private AdyenMerchantAccountHelper mockAdyenMerchantAccountHelper;
@@ -63,7 +63,7 @@ class AdyenApplePayAuthoriseRequestFactoryTest {
         
         var actual = adyenApplePayAuthoriseRequestFactory.create(applePayAuthorisationGatewayRequest);
 
-        var expected = new AdyenApplePayAuthoriseRequest(
+        var expected = new AdyenApplePayAuthorisePayload(
                 merchantAccountId,
                 storeId,
                 externalId, 

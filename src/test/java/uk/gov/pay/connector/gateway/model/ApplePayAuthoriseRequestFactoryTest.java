@@ -13,7 +13,7 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.adyen.AdyenApplePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.utils.AdyenCredentialsHelper;
 import uk.gov.pay.connector.gateway.adyen.utils.AdyenMerchantAccountHelper;
-import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorisePayload;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequestFixture;
 import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.util.ChargeFrontendUrlHelper;
@@ -79,14 +79,14 @@ class ApplePayAuthoriseRequestFactoryTest {
 
         ApplePayAuthorisationGatewayRequest applePayAuthorisationGatewayRequest = ApplePayAuthorisationGatewayRequest.valueOf(chargeEntity, applePayAuthRequest);
         
-        AdyenApplePayAuthoriseRequest adyenApplePayAuthoriseRequest = AdyenApplePayAuthoriseRequestFixture.anAdyenApplePayAuthoriseRequestFixture().build();
+        AdyenApplePayAuthorisePayload adyenApplePayAuthorisePayload = AdyenApplePayAuthoriseRequestFixture.anAdyenApplePayAuthoriseRequestFixture().build();
 
-        given(mockAdyenApplePayAuthoriseRequestFactory.create(applePayAuthorisationGatewayRequest)).willReturn(adyenApplePayAuthoriseRequest);
+        given(mockAdyenApplePayAuthoriseRequestFactory.create(applePayAuthorisationGatewayRequest)).willReturn(adyenApplePayAuthorisePayload);
 
         Optional<? extends ApplePayAuthoriseRequest> applePayAuthoriseRequest = authoriseRequestFactory.create(applePayAuthorisationGatewayRequest);
         
         assertThat(applePayAuthoriseRequest.isPresent(), is(true));
-        assertThat(applePayAuthoriseRequest.get(), is(adyenApplePayAuthoriseRequest));
+        assertThat(applePayAuthoriseRequest.get(), is(adyenApplePayAuthorisePayload));
     }
 
     @ParameterizedTest

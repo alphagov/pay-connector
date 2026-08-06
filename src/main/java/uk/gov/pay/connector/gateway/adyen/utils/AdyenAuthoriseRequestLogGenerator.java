@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.adyen.utils;
 
 import net.logstash.logback.argument.StructuredArgument;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorisePayload;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenAuthoriseRequest;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestLog;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -22,11 +22,11 @@ public class AdyenAuthoriseRequestLogGenerator {
 
     public AuthorisationRequestLog generate(AdyenAuthoriseRequest adyenAuthoriseRequest, AuthCardDetails authCardDetails) {
         return switch (adyenAuthoriseRequest) {
-            case AdyenApplePayAuthoriseRequest adyenApplePayAuthoriseRequest -> generate(adyenApplePayAuthoriseRequest, authCardDetails);
+            case AdyenApplePayAuthorisePayload adyenApplePayAuthorisePayload -> generate(adyenApplePayAuthorisePayload, authCardDetails);
         };
     }
 
-    private AuthorisationRequestLog generate(AdyenApplePayAuthoriseRequest adyenApplePayAuthoriseRequest, AuthCardDetails authCardDetails) {
+    private AuthorisationRequestLog generate(AdyenApplePayAuthorisePayload adyenApplePayAuthorisePayload, AuthCardDetails authCardDetails) {
         List<StructuredArgument> structuredArguments = new ArrayList<>();
         structuredArguments.add(kv(GATEWAY_REQUEST_RECORD, true));
 

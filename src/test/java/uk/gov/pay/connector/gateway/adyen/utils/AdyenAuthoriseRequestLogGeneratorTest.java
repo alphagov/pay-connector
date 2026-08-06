@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gateway.adyen.request.json.AdyenApplePayPaymentMethod;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorisePayload;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestLog;
 import uk.gov.pay.connector.wallets.WalletType;
 
@@ -24,7 +24,7 @@ class AdyenAuthoriseRequestLogGeneratorTest {
 
     @Test
     public void generatesWorldpayMotoAuthoriseRequestLogWithCorporateCard() {
-        AdyenApplePayAuthoriseRequest request = new AdyenApplePayAuthoriseRequest(
+        AdyenApplePayAuthorisePayload request = new AdyenApplePayAuthorisePayload(
                 "merchantAccount",
                 "store",
                 "reference",

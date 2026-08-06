@@ -11,7 +11,7 @@ import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.client.cardid.model.CardInformationFixture;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthorisePayload;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayMotoAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseCredentialsHelper;
 import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseDescriptionHelper;
@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
-class WorldpayMotoAuthoriseRequestFactoryTest {
+class WorldpayMotoAuthorisePayloadFactoryTest {
     private WorldpayMotoAuthoriseRequestFactory worldpayMotoAuthoriseRequestFactory;
     
     @Mock
@@ -68,8 +68,8 @@ class WorldpayMotoAuthoriseRequestFactoryTest {
         given(mockDescriptionHelper.getDescription(cardAuthorisationGatewayRequest)).willReturn(descriptionOrReference);
         given(mockCredentialsHelper.getOneOffCredentials(cardAuthorisationGatewayRequest)).willReturn(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
         
-        WorldpayMotoAuthoriseRequest actual = worldpayMotoAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
-        WorldpayMotoAuthoriseRequest expected = new WorldpayMotoAuthoriseRequest(
+        WorldpayMotoAuthorisePayload actual = worldpayMotoAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
+        WorldpayMotoAuthorisePayload expected = new WorldpayMotoAuthorisePayload(
                 username, 
                 password, 
                 merchantCode, 

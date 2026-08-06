@@ -4,7 +4,7 @@ package uk.gov.pay.connector.gateway.worldpay.utils;
 import net.logstash.logback.argument.StructuredArgument;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
-import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthorisePayload;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestLog;
 
 import java.util.ArrayList;
@@ -25,11 +25,11 @@ public class WorldpayAuthoriseRequestLogGenerator {
 
     public AuthorisationRequestLog generate(WorldpayAuthoriseRequest worldpayAuthoriseRequest, AuthCardDetails authCardDetails) {
         return switch (worldpayAuthoriseRequest) {
-            case WorldpayMotoAuthoriseRequest worldpayMotoAuthoriseRequest -> generate(worldpayMotoAuthoriseRequest, authCardDetails);
+            case WorldpayMotoAuthorisePayload worldpayMotoAuthorisePayload -> generate(worldpayMotoAuthorisePayload, authCardDetails);
         };
     }
 
-    private AuthorisationRequestLog generate(WorldpayMotoAuthoriseRequest worldpayMotoAuthoriseRequest, AuthCardDetails authCardDetails) {
+    private AuthorisationRequestLog generate(WorldpayMotoAuthorisePayload worldpayMotoAuthorisePayload, AuthCardDetails authCardDetails) {
         List<StructuredArgument> structuredArguments = new ArrayList<>();
         structuredArguments.add(kv(GATEWAY_REQUEST_RECORD, true));
 

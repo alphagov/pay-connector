@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.util;
 
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthorisePayload;
 import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseRequestLogGenerator;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -26,7 +26,7 @@ class WorldpayAuthoriseRequestLogGeneratorTest {
 
     @Test
     public void generatesWorldpayMotoAuthoriseRequestLogWithCorporateCard() {
-        WorldpayMotoAuthoriseRequest request = new WorldpayMotoAuthoriseRequest(
+        WorldpayMotoAuthorisePayload request = new WorldpayMotoAuthorisePayload(
                 "username", "password", "merchant code", "order code",
                 "description", "1000", "4242424242424242",
                 "12", "2030", "Cardholder Name", "123");
@@ -50,7 +50,7 @@ class WorldpayAuthoriseRequestLogGeneratorTest {
 
     @Test
     public void generatesWorldpayMotoAuthoriseRequestLogWithoutCorporateCard() {
-        WorldpayMotoAuthoriseRequest request = new WorldpayMotoAuthoriseRequest(
+        WorldpayMotoAuthorisePayload request = new WorldpayMotoAuthorisePayload(
                 "username", "password", "merchant code", "order code",
                 "description", "1000", "4242424242424242",
                 "12", "2030", "Cardholder Name", "123");
@@ -73,7 +73,7 @@ class WorldpayAuthoriseRequestLogGeneratorTest {
 
     @Test
     public void generatesWorldpayMotoAuthoriseRequestLogWithoutIPAddress() {
-        WorldpayMotoAuthoriseRequest request = new WorldpayMotoAuthoriseRequest(
+        WorldpayMotoAuthorisePayload request = new WorldpayMotoAuthorisePayload(
                 "username", "password", "merchant code", "order code",
                 "description", "1000", "4242424242424242",
                 "12", "2030", "Cardholder Name", "123");
