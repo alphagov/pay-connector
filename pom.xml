@@ -335,11 +335,6 @@
             <artifactId>adyen-java-api-library</artifactId>
             <version>43.0.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.14</version>
-        </dependency>
 
         <!-- Test dependencies that are imported from one of the BOMs specified
              in <dependencyManagement> so no explicit versions needed -->
