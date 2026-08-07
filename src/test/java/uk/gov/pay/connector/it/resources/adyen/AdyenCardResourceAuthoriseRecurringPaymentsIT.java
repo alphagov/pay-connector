@@ -48,9 +48,9 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
     private AuthCardDetails authCardDetails;
 
     private static final String REDIRECT_RESULT = "eyJ0cmFuc1N0YXR1cyI6IlkifQ==";
-    
+
     private static final String AUTH_SUCCESS = "AUTHORISATION SUCCESS";
-    
+
     private static final String PSP_REFERENCE_FROM_ADYEN = "993617895215577D";
 
 
@@ -67,7 +67,7 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
 
         verifyResponseForRecurringPayment(chargeId);
 
-        getAndVerifyChargeEntity(chargeId, PSP_REFERENCE_FROM_ADYEN);
+        getAndVerifyChargeEntity(chargeId);
     }
 
     @Test
@@ -79,11 +79,13 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
 
         verifyResponseForRecurringPayment(chargeId);
 
-        Optional<ChargeEntity> charge = getAndVerifyChargeEntity(chargeId, PSP_REFERENCE_FROM_ADYEN);
+        ChargeEntity charge = getAndVerifyChargeEntity(chargeId);
 
         var storedPaymentMethodId = getStoredPaymentMethodId(charge);
+        var paymentInstrumentChargeExternalId = getChargeExternalIdFromPaymentInstrument(charge);
 
         assertThat(storedPaymentMethodId, is(expectedStoredPaymentMethodId));
+        assertThat(paymentInstrumentChargeExternalId, is(charge.getExternalId()));
     }
 
     @Test
@@ -93,12 +95,14 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
 
         verifyResponseForRecurringPayment(chargeId);
 
-        Optional<ChargeEntity> charge = getAndVerifyChargeEntity(chargeId, PSP_REFERENCE_FROM_ADYEN);
+        ChargeEntity charge = getAndVerifyChargeEntity(chargeId);
 
-        var paymentInstrument = charge.get().getPaymentInstrument();
+        var paymentInstrument = charge.getPaymentInstrument();
+        var paymentInstrumentChargeExternalId = getChargeExternalIdFromPaymentInstrument(charge);
 
         assertThat(paymentInstrument.isEmpty(), is(false));
         assertThat(paymentInstrument.get().getRecurringAuthToken().isEmpty(), is(true));
+        assertThat(paymentInstrumentChargeExternalId, is(charge.getExternalId()));
     }
 
     @Test
@@ -110,11 +114,13 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
 
         verifyResponseForRecurringPaymentWith3ds(chargeId, 200, AUTH_SUCCESS);
 
-        Optional<ChargeEntity> charge = getAndVerifyChargeEntity(chargeId, PSP_REFERENCE_FROM_ADYEN);
+        ChargeEntity charge = getAndVerifyChargeEntity(chargeId);
 
         var storedPaymentMethodId = getStoredPaymentMethodId(charge);
+        var paymentInstrumentChargeExternalId = getChargeExternalIdFromPaymentInstrument(charge);
 
         assertThat(storedPaymentMethodId, is(expectedStoredPaymentMethodId));
+        assertThat(paymentInstrumentChargeExternalId, is(charge.getExternalId()));
     }
 
     @Test
@@ -125,12 +131,14 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
 
         verifyResponseForRecurringPaymentWith3ds(chargeId, 200, AUTH_SUCCESS);
 
-        Optional<ChargeEntity> charge = getAndVerifyChargeEntity(chargeId, PSP_REFERENCE_FROM_ADYEN);
+        ChargeEntity charge = getAndVerifyChargeEntity(chargeId);
 
-        var paymentInstrument = charge.get().getPaymentInstrument();
+        var paymentInstrument = charge.getPaymentInstrument();
+        var paymentInstrumentChargeExternalId = getChargeExternalIdFromPaymentInstrument(charge);
 
         assertThat(paymentInstrument.isEmpty(), is(false));
         assertThat(paymentInstrument.get().getRecurringAuthToken().isEmpty(), is(true));
+        assertThat(paymentInstrumentChargeExternalId, is(charge.getExternalId()));
     }
 
     @Test
@@ -165,7 +173,7 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
 
         getAndVerifyChargeEntityForFailedAuthorisation(chargeId, "AUTHORISATION ERROR", null);
     }
-    
+
     private String createChargeWithAgreement(ChargeStatus chargeStatus) {
         app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
 
@@ -209,7 +217,7 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
         if (expectedStatus != null) {
             response.body("status", is(expectedStatus));
         }
-        
+
         app.getAdyenWireMockServer()
                 .verify(postRequestedFor(urlEqualTo("/payments/details"))
                         .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
@@ -237,13 +245,13 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
                         .withRequestBody(matchingJsonPath("$.storePaymentMethod", equalTo("true")))
                         .withRequestBody(matchingJsonPath("$.recurringProcessingModel", equalTo("Subscription"))));
     }
-    
-    private Optional<ChargeEntity> getAndVerifyChargeEntity(String chargeId, String pspReferenceFromAdyen) {
+
+    private ChargeEntity getAndVerifyChargeEntity(String chargeId) {
         Optional<ChargeEntity> charge = chargeDao.findByExternalId(chargeId);
         assertThat(charge.isPresent(), is(true));
         assertThat(charge.get().getStatus(), is(AUTH_SUCCESS));
-        assertThat(charge.get().getGatewayTransactionId(), is(pspReferenceFromAdyen));
-        return charge;
+        assertThat(charge.get().getGatewayTransactionId(), is(PSP_REFERENCE_FROM_ADYEN));
+        return charge.get();
     }
 
     private void getAndVerifyChargeEntityForFailedAuthorisation(String chargeId, String status, @Nullable String pspReferenceFromAdyen) {
@@ -251,13 +259,17 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
         assertThat(charge.isPresent(), is(true));
         assertThat(charge.get().getStatus(), is(status));
         assertThat(charge.get().getPaymentInstrument().isEmpty(), is(true));
-        
+
         if (pspReferenceFromAdyen != null) {
             assertThat(charge.get().getGatewayTransactionId(), is(pspReferenceFromAdyen));
         }
     }
 
-    private static String getStoredPaymentMethodId(Optional<ChargeEntity> charge) {
-        return charge.get().getPaymentInstrument().orElseThrow().getRecurringAuthToken().orElseThrow().get("storedPaymentMethodId");
+    private static String getStoredPaymentMethodId(ChargeEntity charge) {
+        return charge.getPaymentInstrument().orElseThrow().getRecurringAuthToken().orElseThrow().get("storedPaymentMethodId");
+    }
+
+    private static String getChargeExternalIdFromPaymentInstrument(ChargeEntity charge) {
+        return charge.getPaymentInstrument().orElseThrow().getChargeExternalId();
     }
 }
