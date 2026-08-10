@@ -34,6 +34,7 @@ public class RecurringPaymentSetupUtil {
     public static final String JSON_VALID_AGREEMENT_ID_VALUE = "12345678901234567890123456";
     public static final String JSON_AUTH_MODE_AGREEMENT = "agreement";
     public static final String JSON_AGREEMENT_PAYMENT_TYPE = UNSCHEDULED.getName();
+    public static final String CHARGE_ID = String.valueOf(secureRandomLong());
 
     public static String setupChargeWithAgreementAndPaymentInstrument(ITestBaseExtension testBaseExtension, AppWithPostgresAndSqsExtension app, String storedPaymentMethodId) {
         Long paymentInstrumentId = secureRandomLong();
@@ -43,6 +44,7 @@ public class RecurringPaymentSetupUtil {
                 .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE)
                 .withRecurringAuthToken(Map.of(
                         STORED_PAYMENT_METHOD_ID, storedPaymentMethodId))
+                .withChargeExternalId(CHARGE_ID)
                 .build();
         app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
 

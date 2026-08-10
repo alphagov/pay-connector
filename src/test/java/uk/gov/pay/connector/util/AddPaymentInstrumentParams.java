@@ -31,6 +31,7 @@ public class AddPaymentInstrumentParams {
     private final String stateOrProvince;
     private final String postcode;
     private final String countryCode;
+    private final String chargeExternalId;
     
     private Map<String, String> recurringAuthToken;
 
@@ -56,6 +57,10 @@ public class AddPaymentInstrumentParams {
 
     public String getAgreementExternalId() {
         return agreementExternalId;
+    }
+    
+    public String getChargeExternalId() {
+        return chargeExternalId;
     }
 
     public CardType getCardType() {
@@ -117,6 +122,7 @@ public class AddPaymentInstrumentParams {
         startDate = builder.startDate;
         paymentInstrumentStatus = builder.paymentInstrumentStatus;
         agreementExternalId = builder.agreementExternalId;
+        chargeExternalId = builder.chargeExternalId;
         cardType = builder.cardType;
         cardBrand = builder.cardBrand;
         expiryDate = builder.expiryDate;
@@ -152,6 +158,7 @@ public class AddPaymentInstrumentParams {
         private String postcode = "PAY ME";
         private String countryCode = "GB";
         private Map<String, String> recurringAuthToken;
+        private String chargeExternalId;
 
         private AddPaymentInstrumentParamsBuilder() {
         }
@@ -252,6 +259,11 @@ public class AddPaymentInstrumentParams {
         
         public AddPaymentInstrumentParamsBuilder withRecurringAuthToken(Map<String, String> recurringAuthToken) {
             this.recurringAuthToken = recurringAuthToken;
+            return this;
+        }
+
+        public AddPaymentInstrumentParamsBuilder withChargeExternalId(String chargeExternalId) {
+            this.chargeExternalId = chargeExternalId;
             return this;
         }
 

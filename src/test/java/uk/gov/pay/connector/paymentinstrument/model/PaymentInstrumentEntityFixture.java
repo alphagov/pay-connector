@@ -15,6 +15,7 @@ public final class PaymentInstrumentEntityFixture {
     private String externalId = "a-payment-instrument-external-id";
     private PaymentInstrumentStatus paymentInstrumentStatus = PaymentInstrumentStatus.CREATED;
     private CardDetailsEntity cardDetails;
+    private String chargeExternalId;
 
     private PaymentInstrumentEntityFixture() {
     }
@@ -59,6 +60,11 @@ public final class PaymentInstrumentEntityFixture {
         this.cardDetails = cardDetails;
         return this;
     }
+    
+    public PaymentInstrumentEntityFixture withChargeExternalId(String chargeExternalId) {
+        this.chargeExternalId = chargeExternalId;
+        return this;
+    }
 
     public PaymentInstrumentEntity build() {
         PaymentInstrumentEntity paymentInstrumentEntity = new PaymentInstrumentEntity();
@@ -68,6 +74,7 @@ public final class PaymentInstrumentEntityFixture {
         paymentInstrumentEntity.setExternalId(externalId);
         paymentInstrumentEntity.setStatus(paymentInstrumentStatus);
         paymentInstrumentEntity.setCardDetails(cardDetails);
+        paymentInstrumentEntity.setChargeExternalId(chargeExternalId);
         return paymentInstrumentEntity;
     }
 }
