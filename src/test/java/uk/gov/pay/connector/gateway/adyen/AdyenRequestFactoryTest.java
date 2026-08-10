@@ -61,6 +61,8 @@ import static uk.gov.service.payments.commons.model.AgreementPaymentType.UNSCHED
 
 class AdyenRequestFactoryTest {
 
+    private static final String RECURRING_CHARGE_EXTERNAL_ID = "extcharge123";
+    
     final String acceptHeader = "text/html";
     final String userAgent = "Mozilla/5.0";
     final String shopperIp = "127.0.0.1";
@@ -425,6 +427,7 @@ class AdyenRequestFactoryTest {
         var paymentInstrument = aPaymentInstrumentEntity()
                 .withRecurringAuthToken(Map.of(
                         STORED_PAYMENT_METHOD_ID, storedPaymentMethodId))
+                .withChargeExternalId("extcharge123")
                 .build();
 
         var charge = setupChargeEntityForRecurringPayment(agreement, paymentInstrument);
@@ -433,7 +436,7 @@ class AdyenRequestFactoryTest {
 
         var request = adyenRequestFactory.createRecurringPaymentRequest(authoriseRequest);
 
-        assertThat(request.shopperReference(), is(agreementId));
+        assertThat(request.shopperReference(), is(agreementId + "-" + RECURRING_CHARGE_EXTERNAL_ID));
         assertThat(request.storePaymentMethod(), is(nullValue()));
         assertThat(request.recurringProcessingModel(), is("Subscription"));
         assertThat(request.paymentMethod().storedPaymentMethodId(), is(storedPaymentMethodId));
@@ -444,6 +447,9 @@ class AdyenRequestFactoryTest {
     void should_throw_illegalArgumentException_if_shopperReference_is_null_for_recurring_payment() {
         var agreement = anAgreementEntity()
                 .withExternalId(null)
+                .withPaymentInstrument(new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
+                        .withChargeExternalId(null)
+                        .build())
                 .build();
         var storedPaymentMethodId = "42";
         var paymentInstrument = aPaymentInstrumentEntity()
@@ -502,6 +508,7 @@ class AdyenRequestFactoryTest {
                 .build();
 
         return aValidChargeEntity()
+                .withExternalId(RECURRING_CHARGE_EXTERNAL_ID)
                 .withAgreementPaymentType(RECURRING)
                 .withAgreementEntity(agreement)
                 .withPaymentInstrument(paymentInstrument)

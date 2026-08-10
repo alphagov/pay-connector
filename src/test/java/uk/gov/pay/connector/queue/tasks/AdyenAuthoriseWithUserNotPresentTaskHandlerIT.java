@@ -86,9 +86,10 @@ public class AdyenAuthoriseWithUserNotPresentTaskHandlerIT {
         testBaseExtension.assertFrontendChargeStatusIs(chargeId, expectedStatus);
         testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_FAILED_REJECTED.getStatus());
 
-        verifyRequestToAdyenPaymentsEndpoint(chargeId, storedPaymentMethodId);
-
         var charge = getChargeEntity(chargeId);
+
+        assertThat(charge.getPaymentInstrument().isPresent(), is(true));
+        verifyRequestToAdyenPaymentsEndpoint(chargeId, storedPaymentMethodId, charge.getPaymentInstrument().get().getChargeExternalId());
         verifyChargeEntity(charge, storedPaymentMethodId, expectedStatus);
         assertThat(charge.getGatewayRejectionReason(), Matchers.is(expectedReasonCode + " - " + expectedReason));
     }
@@ -108,9 +109,10 @@ public class AdyenAuthoriseWithUserNotPresentTaskHandlerIT {
         testBaseExtension.assertFrontendChargeStatusIs(chargeId, expectedStatus);
         testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_ERROR_GATEWAY.getStatus());
 
-        verifyRequestToAdyenPaymentsEndpoint(chargeId, storedPaymentMethodId);
-
         var charge = getChargeEntity(chargeId);
+
+        assertThat(charge.getPaymentInstrument().isPresent(), is(true));
+        verifyRequestToAdyenPaymentsEndpoint(chargeId, storedPaymentMethodId, charge.getPaymentInstrument().get().getChargeExternalId());
         verifyChargeEntity(charge, storedPaymentMethodId, expectedStatus);
     }
 
@@ -128,18 +130,19 @@ public class AdyenAuthoriseWithUserNotPresentTaskHandlerIT {
         testBaseExtension.assertFrontendChargeStatusIs(chargeId, expectedStatus);
         testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_ERROR_GATEWAY.getStatus());
 
-        verifyRequestToAdyenPaymentsEndpoint(chargeId, storedPaymentMethodId);
-
         var charge = getChargeEntity(chargeId);
+        
+        assertThat(charge.getPaymentInstrument().isPresent(), is(true));
+        verifyRequestToAdyenPaymentsEndpoint(chargeId, storedPaymentMethodId, charge.getPaymentInstrument().get().getChargeExternalId());
         assertThat(charge.getStatus(), is(expectedStatus));
     }
 
-    private void verifyRequestToAdyenPaymentsEndpoint(String chargeId, String storedPaymentMethodId) {
+    private void verifyRequestToAdyenPaymentsEndpoint(String chargeId, String storedPaymentMethodId, String chargeExternalId) {
         app.getAdyenWireMockServer()
                 .verify(postRequestedFor(urlEqualTo("/payments"))
                         .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
                         .withHeader("Idempotency-Key", equalTo("authorise-" + chargeId))
-                        .withRequestBody(matchingJsonPath("$.shopperReference", equalTo(JSON_VALID_AGREEMENT_ID_VALUE)))
+                        .withRequestBody(matchingJsonPath("$.shopperReference", equalTo(JSON_VALID_AGREEMENT_ID_VALUE + "-" + chargeExternalId)))
                         .withRequestBody(matchingJsonPath("$.recurringProcessingModel", equalTo("UnscheduledCardOnFile")))
                         .withRequestBody(matchingJsonPath("$.paymentMethod.storedPaymentMethodId", equalTo(storedPaymentMethodId)))
                         .withRequestBody(matchingJsonPath("$.paymentMethod.type", equalTo("scheme")))

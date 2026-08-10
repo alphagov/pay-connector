@@ -263,6 +263,7 @@ class AdyenAuthoriseHandlerTest {
         var paymentInstrument = aPaymentInstrumentEntity()
                 .withRecurringAuthToken(Map.of(
                         STORED_PAYMENT_METHOD_ID, storedPaymentMethodId))
+                .withChargeExternalId("extcharge123")
                 .build();
 
         var charge = setupChargeEntityForRecurringPayment(agreement, paymentInstrument);
@@ -295,6 +296,7 @@ class AdyenAuthoriseHandlerTest {
         var paymentInstrument = aPaymentInstrumentEntity()
                 .withRecurringAuthToken(Map.of(
                         STORED_PAYMENT_METHOD_ID, storedPaymentMethodId))
+                .withChargeExternalId("extcharge123")
                 .build();
 
         var charge = setupChargeEntityForRecurringPayment(agreement, paymentInstrument);

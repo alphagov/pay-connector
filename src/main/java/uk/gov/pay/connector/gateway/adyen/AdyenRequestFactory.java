@@ -101,7 +101,7 @@ public class AdyenRequestFactory {
         var recurringAuthToken = paymentInstrument.getRecurringAuthToken()
                 .orElseThrow(() -> new IllegalArgumentException("Payment instrument does not have recurring auth token set"));
 
-        String shopperReference = request.getAgreementId();
+        String shopperReference = createShopperReferenceForRecurringPayments(request);
         String storedPaymentMethodId = recurringAuthToken.get(STORED_PAYMENT_METHOD_ID);
 
         if (shopperReference == null || storedPaymentMethodId.isBlank()) {
@@ -127,6 +127,16 @@ public class AdyenRequestFactory {
                 null,
                 fromAgreementPaymentType(request.getAgreementPaymentType())
         );
+    }
+
+    private String createShopperReferenceForRecurringPayments(RecurringPaymentAuthorisationGatewayRequest request) {
+        var chargeExternalId = request.getPaymentInstrument().isPresent()
+                ? request.getPaymentInstrument().get().getChargeExternalId()
+                : request.getGovUkPayPaymentId();
+        if (chargeExternalId == null || request.getAgreementId() == null) {
+            return null;
+        }
+        return String.format("%s-%s", request.getAgreementId(), chargeExternalId);
     }
 
     private static String getShopperInteraction(CardAuthorisationGatewayRequest request) {
