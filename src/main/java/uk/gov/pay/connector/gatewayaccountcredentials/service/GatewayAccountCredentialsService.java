@@ -33,11 +33,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.Comparator.comparing;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -103,6 +103,10 @@ public class GatewayAccountCredentialsService {
         boolean isFirstCredentials = !gatewayAccountCredentialsDao.hasActiveCredentials(gatewayAccountEntity.getId());
         boolean credentialsPrePopulated = !credentials.isEmpty();
         var gatewayAccountType = GatewayAccountType.fromString(gatewayAccountEntity.getType());
+        
+        if (paymentGatewayName == ADYEN && gatewayAccountType == TEST && !credentialsPrePopulated) {
+            throw new BadRequestException("Switching credential cannot be created for an Adyen test account.");
+        }
 
         if (paymentGatewayName == SANDBOX ||
                 (paymentGatewayName == STRIPE && gatewayAccountType == TEST)) {

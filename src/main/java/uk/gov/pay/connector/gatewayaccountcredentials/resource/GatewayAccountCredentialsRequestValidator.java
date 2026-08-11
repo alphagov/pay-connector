@@ -18,7 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.lang.String.format;
-import static java.util.stream.Collectors.toUnmodifiableList;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest.PAYMENT_PROVIDER_FIELD_NAME;
@@ -49,7 +49,7 @@ public class GatewayAccountCredentialsRequestValidator {
 
         var paymentGatewayName = PaymentGatewayName.valueFrom(gatewayAccountCredentialsRequest.paymentProvider());
 
-        if (!(paymentGatewayName == WORLDPAY || paymentGatewayName == STRIPE)) {
+        if (!List.of(ADYEN, WORLDPAY, STRIPE).contains(paymentGatewayName)) {
             throw new ValidationException(List.of("Operation not supported for payment provider '"
                     + paymentGatewayName.getName() + "'"));
         }
@@ -113,25 +113,23 @@ public class GatewayAccountCredentialsRequestValidator {
         return getRequiredCredentialsFields(paymentProvider, path)
                 .stream()
                 .filter(requiredField -> !credentials.containsKey(requiredField))
-                .collect(toUnmodifiableList());
+                .toList();
     }
 
     private List<String> getRequiredCredentialsFields(PaymentGatewayName paymentProvider, String path) {
-        switch (paymentProvider) {
-            case WORLDPAY:
+        return switch (paymentProvider) {
+            case WORLDPAY -> {
                 if (FIELD_CREDENTIALS.equals(path)) {
                     throw new UnsupportedOperationException(format("Path [%s] is not supported for updating Worldpay credentials", path));
                 }
-                return WORLDPAY_CREDENTIALS_KEYS;
-            case STRIPE:
-                return STRIPE_CREDENTIALS_KEYS;
-            case EPDQ:
-                return EPDQ_CREDENTIALS_KEYS;
-            case SMARTPAY:
-            case SANDBOX:
-            default:
-                throw new UnsupportedOperationException("Cannot perform operation for payment provider [ " + paymentProvider.getName() + ']');
-        }
+                yield WORLDPAY_CREDENTIALS_KEYS;
+            }
+            case STRIPE -> STRIPE_CREDENTIALS_KEYS;
+            case EPDQ -> EPDQ_CREDENTIALS_KEYS;
+            case ADYEN -> List.of();
+            default ->
+                    throw new UnsupportedOperationException("Cannot perform operation for payment provider [ " + paymentProvider.getName() + ']');
+        };
     }
 
     private void validateReplaceStateOperation(JsonPatchRequest request) {
