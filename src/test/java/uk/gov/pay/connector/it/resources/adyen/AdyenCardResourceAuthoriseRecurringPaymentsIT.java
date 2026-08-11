@@ -241,7 +241,7 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
                 .verify(postRequestedFor(urlEqualTo("/payments"))
                         .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
                         .withHeader("Idempotency-Key", equalTo("authorise-" + chargeId))
-                        .withRequestBody(matchingJsonPath("$.shopperReference", equalTo(externalAgreementId)))
+                        .withRequestBody(matchingJsonPath("$.shopperReference", equalTo(externalAgreementId + "-" + chargeId)))
                         .withRequestBody(matchingJsonPath("$.storePaymentMethod", equalTo("true")))
                         .withRequestBody(matchingJsonPath("$.recurringProcessingModel", equalTo("Subscription"))));
     }

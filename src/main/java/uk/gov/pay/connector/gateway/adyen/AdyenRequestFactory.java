@@ -32,6 +32,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 public class AdyenRequestFactory {
 
     public static final String STORED_PAYMENT_METHOD_ID = "storedPaymentMethodId";
@@ -67,9 +69,10 @@ public class AdyenRequestFactory {
         Boolean storePaymentMethod = null;
         String recurringProcessingModel = null;
         if (request.isSavePaymentInstrumentToAgreement()) {
-            shopperReference = request.getAgreement()
+           var agreementExternalId = request.getAgreement()
                     .orElseThrow(() -> new IllegalArgumentException("Expected charge with savePaymentInstrumentToAgreement to have an agreement"))
                     .getExternalId();
+            shopperReference = createShopperReferenceForRecurringPayments(agreementExternalId, request.getGovUkPayPaymentId());
             storePaymentMethod = true;
             recurringProcessingModel = fromAgreementPaymentType(request.getAgreementPaymentType());
         }
@@ -101,11 +104,11 @@ public class AdyenRequestFactory {
         var recurringAuthToken = paymentInstrument.getRecurringAuthToken()
                 .orElseThrow(() -> new IllegalArgumentException("Payment instrument does not have recurring auth token set"));
 
-        String shopperReference = createShopperReferenceForRecurringPayments(request);
+        String shopperReference = createShopperReferenceForRecurringPayments(request.getAgreementId(), paymentInstrument.getChargeExternalId());
         String storedPaymentMethodId = recurringAuthToken.get(STORED_PAYMENT_METHOD_ID);
 
-        if (shopperReference == null || storedPaymentMethodId.isBlank()) {
-            throw new IllegalArgumentException("Adyen recurring auth token is missing shopperReference or storedPaymentMethodId");
+        if (isBlank(storedPaymentMethodId)) {
+            throw new IllegalArgumentException("Adyen recurring auth token is missing storedPaymentMethodId");
         }
 
         return new AuthoriseRequestPayload(
@@ -129,14 +132,11 @@ public class AdyenRequestFactory {
         );
     }
 
-    private String createShopperReferenceForRecurringPayments(RecurringPaymentAuthorisationGatewayRequest request) {
-        var chargeExternalId = request.getPaymentInstrument().isPresent()
-                ? request.getPaymentInstrument().get().getChargeExternalId()
-                : request.getGovUkPayPaymentId();
-        if (chargeExternalId == null || request.getAgreementId() == null) {
-            return null;
+    private String createShopperReferenceForRecurringPayments(String agreementId, String chargeExternalId) {
+        if (agreementId == null || chargeExternalId == null || isBlank(agreementId) || isBlank(chargeExternalId)) {
+            throw new IllegalArgumentException("shopperReference could not be derived as charge external ID or agreement external ID are missing");
         }
-        return String.format("%s-%s", request.getAgreementId(), chargeExternalId);
+        return String.format("%s-%s", agreementId, chargeExternalId);
     }
 
     private static String getShopperInteraction(CardAuthorisationGatewayRequest request) {
