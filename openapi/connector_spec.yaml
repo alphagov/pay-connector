@@ -3795,6 +3795,22 @@ components:
           example: "fr;q=0.9, fr-CH;q=1.0, en;q=0.8, de;q=0.7, *;q=0.5"
         address:
           $ref: "#/components/schemas/Address"
+        browserAcceptHeader:
+          type: string
+        browserColorDepth:
+          type: string
+        browserJavaScriptEnabled:
+          type: boolean
+        browserLanguage:
+          type: string
+        browserScreenHeight:
+          type: string
+        browserScreenWidth:
+          type: string
+        browserTZ:
+          type: string
+        browserUserAgent:
+          type: string
         card_brand:
           type: string
           example: visa
@@ -5614,6 +5630,22 @@ components:
         brand:
           type: string
           example: visa
+        browser_accept_header:
+          type: string
+        browser_color_depth:
+          type: string
+        browser_java_script_enabled:
+          type: boolean
+        browser_language:
+          type: string
+        browser_screen_height:
+          type: string
+        browser_screen_width:
+          type: string
+        browser_tz:
+          type: string
+        browser_user_agent:
+          type: string
         card_type:
           type: string
           enum:

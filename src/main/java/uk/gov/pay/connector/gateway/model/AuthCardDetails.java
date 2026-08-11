@@ -18,7 +18,7 @@ import java.util.Optional;
 import static uk.gov.pay.connector.gateway.model.PayersCardType.CREDIT_OR_DEBIT;
 
 @ValidAuthCardDetails
-public class AuthCardDetails {
+public class AuthCardDetails implements BrowserDataFor3ds {
 
     @Schema(example = "4242424242424242", description = "Card number. See https://docs.payments.service.gov.uk/testing_govuk_pay/#mock-card-numbers-and-email-addresses for test card numbers")
     private String cardNo;
@@ -276,5 +276,37 @@ public class AuthCardDetails {
     @Override
     public int hashCode() {
         return Objects.hash(cardNo, cardHolder, cvc, endDate, address, cardBrand, userAgentHeader, acceptHeader, payersCardType, payersCardPrepaidStatus, corporateCard, worldpay3dsFlexDdcResult, ipAddress, jsScreenColorDepth, jsNavigatorLanguage, jsScreenHeight, jsScreenWidth, jsTimezoneOffsetMins, acceptLanguageHeader);
+    }
+
+    public Optional<String> getBrowserAcceptHeader() {
+        return Optional.ofNullable(acceptHeader);
+    }
+
+    public Optional<String> getBrowserColorDepth() {
+        return Optional.ofNullable(jsScreenColorDepth);
+    }
+
+    public Optional<Boolean> getBrowserJavaScriptEnabled() {
+        return Optional.ofNullable(jsEnabled);
+    }
+
+    public Optional<String> getBrowserLanguage() {
+        return Optional.ofNullable(jsNavigatorLanguage);
+    }
+
+    public Optional<String> getBrowserScreenHeight() {
+        return Optional.ofNullable(jsScreenHeight);
+    }
+
+    public Optional<String> getBrowserScreenWidth() {
+        return Optional.ofNullable(jsScreenWidth);
+    }
+
+    public Optional<String> getBrowserTZ() {
+        return Optional.ofNullable(jsTimezoneOffsetMins);
+    }
+
+    public Optional<String> getBrowserUserAgent() {
+        return Optional.ofNullable(userAgentHeader);
     }
 }

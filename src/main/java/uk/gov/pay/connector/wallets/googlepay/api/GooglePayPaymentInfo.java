@@ -2,28 +2,26 @@ package uk.gov.pay.connector.wallets.googlepay.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import uk.gov.pay.connector.gateway.model.BrowserDataFor3ds;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.util.Optional;
 
-public class GooglePayPaymentInfo extends WalletPaymentInfo {
+public class GooglePayPaymentInfo extends WalletPaymentInfo implements BrowserDataFor3ds {
     
     @Schema(example = "text/html;q=1.0, */*;q=0.9")
-    private String acceptHeader;
+    private final String acceptHeader;
     
     @Schema(example = "Mozilla/5.0")
-    private String userAgentHeader;
+    private final String userAgentHeader;
     
     @Schema(example = "203.0.113.1")
-    private String ipAddress;
+    private final String ipAddress;
     
     @Schema(example = "1f1154b7-620d-4654-801b-893b5bb22db1", description = "SessionId returned by Worldpay/CardinalCommerce as part of device data collection. Applicable for Google Pay payments only")
     @JsonProperty("worldpay_3ds_flex_ddc_result")
     private String worldpay3dsFlexDdcResult;
-
-    public GooglePayPaymentInfo() {
-    }
     
     public GooglePayPaymentInfo(String lastDigitsCardNumber,
                                 String brand,

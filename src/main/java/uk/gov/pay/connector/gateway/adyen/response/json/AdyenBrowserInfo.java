@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.adyen.response.json;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record BrowserInfo(
+public record AdyenBrowserInfo(
         @JsonProperty("acceptHeader") String acceptHeader,
         @JsonProperty("colorDepth") Integer colorDepth,
         @JsonProperty("javaEnabled") Boolean javaEnabled,

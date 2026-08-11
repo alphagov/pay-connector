@@ -10,7 +10,7 @@ import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 import uk.gov.pay.connector.gateway.adyen.request.json.AuthoriseRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
 import uk.gov.pay.connector.gateway.adyen.request.json.PaymentMethod;
-import uk.gov.pay.connector.gateway.adyen.response.json.BrowserInfo;
+import uk.gov.pay.connector.gateway.adyen.response.json.AdyenBrowserInfo;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import java.util.HashMap;
@@ -82,7 +82,7 @@ class AuthoriseRequestPayloadToGatewayOrderConverterTest {
                 "scheme",
                 null);
 
-        var browserInfo = new BrowserInfo("text/html",
+        var browserInfo = new AdyenBrowserInfo("text/html",
                 24,
                 false,
                 false,
