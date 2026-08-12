@@ -4725,7 +4725,7 @@ components:
             stripe_account_id: accnt_id
         payment_provider:
           type: string
-          description: "Payment provider. Accepted values - stripe, worldpay"
+          description: "Payment provider. Accepted values - stripe, worldpay, adyen"
           example: stripe
     GatewayAccountCredentialsWithInternalId:
       type: object
