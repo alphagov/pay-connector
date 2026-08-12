@@ -1,7 +1,9 @@
 package uk.gov.pay.connector.gateway.adyen.response.json;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jspecify.annotations.NullMarked;
 
+@NullMarked
 public record AdyenBrowserInfo(
         @JsonProperty("acceptHeader") String acceptHeader,
         @JsonProperty("colorDepth") Integer colorDepth,

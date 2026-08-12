@@ -1,13 +1,12 @@
 package uk.gov.pay.connector.gateway.adyen;
 
-import org.jspecify.annotations.NullMarked;
 import uk.gov.pay.connector.gateway.adyen.response.json.AdyenBrowserInfo;
 import uk.gov.pay.connector.gateway.model.BrowserDataFor3ds;
 
 import java.util.Locale;
 import java.util.Optional;
 
-@NullMarked
+
 public class AdyenBrowserInfoFactory {
 
     public AdyenBrowserInfo create(BrowserDataFor3ds browserDataFor3ds) {
