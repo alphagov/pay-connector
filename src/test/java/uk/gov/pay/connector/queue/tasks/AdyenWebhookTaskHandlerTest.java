@@ -93,7 +93,7 @@ class AdyenWebhookTaskHandlerTest {
 
     @Test
     void shouldProcessSuccessfulCaptureNotificationForConnectorCharge() {
-        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
+        when(mockAdyenNotificationService.deserialisePaymentPayloadToNotificationRequest(payload))
                 .thenReturn(mockNotificationRequest);
         when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
                 .thenReturn(List.of(mockNotificationItem));
@@ -102,7 +102,7 @@ class AdyenWebhookTaskHandlerTest {
         when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(),
                 gatewayTransactionId)).thenReturn(Optional.of(mockCharge));
 
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
+        adyenWebhookTaskHandler.processAdyenPaymentsWebhookNotification(payload);
 
         verify(mockChargeService).findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(),
                 gatewayTransactionId);
@@ -111,7 +111,7 @@ class AdyenWebhookTaskHandlerTest {
 
     @Test
     void shouldLogWarningWhenChargeDoesNotExistInConnectorOrLedger() {
-        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
+        when(mockAdyenNotificationService.deserialisePaymentPayloadToNotificationRequest(payload))
                 .thenReturn(mockNotificationRequest);
         when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
                 .thenReturn(List.of(mockNotificationItem));
@@ -120,7 +120,7 @@ class AdyenWebhookTaskHandlerTest {
         when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(),
                 gatewayTransactionId)).thenReturn(Optional.empty());
 
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
+        adyenWebhookTaskHandler.processAdyenPaymentsWebhookNotification(payload);
 
         verify(mockAdyenCaptureNotificationHandler, never()).process(any(), any());
         verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
@@ -133,7 +133,7 @@ class AdyenWebhookTaskHandlerTest {
 
     @Test
     void shouldNotProcessRefundNotificationWhenChargeNotFound() {
-        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
+        when(mockAdyenNotificationService.deserialisePaymentPayloadToNotificationRequest(payload))
                 .thenReturn(mockNotificationRequest);
         when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
                 .thenReturn(List.of(mockNotificationItem));
@@ -142,14 +142,14 @@ class AdyenWebhookTaskHandlerTest {
         when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(), gatewayTransactionId))
                 .thenReturn(Optional.empty());
 
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
+        adyenWebhookTaskHandler.processAdyenPaymentsWebhookNotification(payload);
 
         verify(mockAdyenRefundNotificationHandler, never()).process(any(), any());
     }
 
     @Test
     void shouldProcessRefundNotificationForConnectorCharge() {
-        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
+        when(mockAdyenNotificationService.deserialisePaymentPayloadToNotificationRequest(payload))
                 .thenReturn(mockNotificationRequest);
         when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
                 .thenReturn(List.of(mockNotificationItem));
@@ -158,14 +158,14 @@ class AdyenWebhookTaskHandlerTest {
         when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(), gatewayTransactionId))
                 .thenReturn(Optional.of(mockCharge));
 
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
+        adyenWebhookTaskHandler.processAdyenPaymentsWebhookNotification(payload);
 
         verify(mockAdyenRefundNotificationHandler).process(mockNotificationItem, mockCharge);
     }
 
     @Test
     void shouldProcessCancellationNotificationForConnectorCharge() {
-        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
+        when(mockAdyenNotificationService.deserialisePaymentPayloadToNotificationRequest(payload))
                 .thenReturn(mockNotificationRequest);
         when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
                 .thenReturn(List.of(mockNotificationItem));
@@ -174,7 +174,7 @@ class AdyenWebhookTaskHandlerTest {
         when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(), gatewayTransactionId))
                 .thenReturn(Optional.of(mockCharge));
 
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
+        adyenWebhookTaskHandler.processAdyenPaymentsWebhookNotification(payload);
 
         verify(mockAdyenCancellationNotificationHandler).process(mockNotificationItem, mockCharge);
         verify(mockAdyenRefundNotificationHandler, never()).process(any(), any());
@@ -183,7 +183,7 @@ class AdyenWebhookTaskHandlerTest {
 
     @Test
     void shouldIgnoreUnsupportedNotificationItem() {
-        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
+        when(mockAdyenNotificationService.deserialisePaymentPayloadToNotificationRequest(payload))
                 .thenReturn(mockNotificationRequest);
         when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
                 .thenReturn(List.of(mockNotificationItem));
@@ -192,7 +192,7 @@ class AdyenWebhookTaskHandlerTest {
         when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(), gatewayTransactionId))
                 .thenReturn(Optional.of(mockCharge));
 
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
+        adyenWebhookTaskHandler.processAdyenPaymentsWebhookNotification(payload);
 
         verify(mockAdyenRefundNotificationHandler, never()).process(any(), any());
         verify(mockAdyenCancellationNotificationHandler, never()).process(any(), any());
@@ -207,14 +207,14 @@ class AdyenWebhookTaskHandlerTest {
         var notification = NotificationRequest.fromJson(load(ADYEN_REFUND_SUCCESS_NOTIFICATION));
         var charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().build());
 
-        given(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(any()))
+        given(mockAdyenNotificationService.deserialisePaymentPayloadToNotificationRequest(any()))
                 .willReturn(notification);
         given(mockAdyenNotificationService.extractNotificationItems(notification))
                 .willReturn(notification.getNotificationItems());
         given(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any()))
                 .willReturn(Optional.of(charge));
 
-        adyenWebhookTaskHandler.processAdyenWebhookNotification("refund-successful-notification");
+        adyenWebhookTaskHandler.processAdyenPaymentsWebhookNotification("refund-successful-notification");
 
         then(mockAdyenRefundNotificationHandler)
                 .should()
@@ -226,14 +226,14 @@ class AdyenWebhookTaskHandlerTest {
         var notification = NotificationRequest.fromJson(load(ADYEN_REFUND_FAILURE_NOTIFICATION));
         var charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().build());
 
-        given(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(any()))
+        given(mockAdyenNotificationService.deserialisePaymentPayloadToNotificationRequest(any()))
                 .willReturn(notification);
         given(mockAdyenNotificationService.extractNotificationItems(notification))
                 .willReturn(notification.getNotificationItems());
         given(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any()))
                 .willReturn(Optional.of(charge));
 
-        adyenWebhookTaskHandler.processAdyenWebhookNotification("refund-failed-notification");
+        adyenWebhookTaskHandler.processAdyenPaymentsWebhookNotification("refund-failed-notification");
 
         then(mockAdyenRefundNotificationHandler)
                 .should()

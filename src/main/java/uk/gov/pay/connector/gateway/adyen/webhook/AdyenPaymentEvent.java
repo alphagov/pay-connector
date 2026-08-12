@@ -8,7 +8,23 @@ public enum AdyenPaymentEvent {
     EXPIRE,
     REFUND,
     REFUND_FAILED,
-    REFUNDED_REVERSED;
+    REFUNDED_REVERSED,
+    RECURRING_TOKEN_CREATED("recurring.token.created"),
+    RECURRING_TOKEN_DISABLED("recurring.token.disabled");
+
+    private final String name;
+
+    AdyenPaymentEvent(String name) {
+        this.name = name;
+    }
+
+    AdyenPaymentEvent() {
+        this.name = name();
+    }
+
+    public String getName() {
+        return name;
+    }
 
     public static boolean contains(String eventName) {
         for (AdyenPaymentEvent e : AdyenPaymentEvent.values()) {

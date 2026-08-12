@@ -43,7 +43,7 @@ class AdyenWebhookTaskHandlerForPaymentWebhooksIT {
     void should_update_charge_in_different_capture_state_to_CAPTURED_for_successful_capture_notification(ChargeStatus currentStatus) {
         var testCharge = createTestChargeWithStatus(currentStatus);
 
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(load(ADYEN_CAPTURE_SUCCESS_NOTIFICATION));
+        adyenWebhookTaskHandler.processAdyenPaymentsWebhookNotification(load(ADYEN_CAPTURE_SUCCESS_NOTIFICATION));
 
         var chargeFromDatabase = app.getDatabaseTestHelper()
                 .getChargeByExternalId(testCharge.getExternalChargeId());
@@ -55,7 +55,7 @@ class AdyenWebhookTaskHandlerForPaymentWebhooksIT {
     void should_update_charge_in_valid_cancelled_state_for_successful_capture_notification(ChargeStatus currentStatus, String expectedStatus) {
         var testCharge = createTestChargeWithStatus(currentStatus);
 
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(load(ADYEN_CANCELLATION_SUCCESS_NOTIFICATION));
+        adyenWebhookTaskHandler.processAdyenPaymentsWebhookNotification(load(ADYEN_CANCELLATION_SUCCESS_NOTIFICATION));
 
         var chargeFromDatabase = app.getDatabaseTestHelper()
                 .getChargeByExternalId(testCharge.getExternalChargeId());
@@ -67,7 +67,7 @@ class AdyenWebhookTaskHandlerForPaymentWebhooksIT {
     void should_update_charge_in_valid_cancelled_state_for_failed_capture_notification(ChargeStatus currentStatus, String expectedStatus) {
         var testCharge = createTestChargeWithStatus(currentStatus);
 
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(load(ADYEN_CANCELLATION_FAILED_NOTIFICATION));
+        adyenWebhookTaskHandler.processAdyenPaymentsWebhookNotification(load(ADYEN_CANCELLATION_FAILED_NOTIFICATION));
 
         var chargeFromDatabase = app.getDatabaseTestHelper()
                 .getChargeByExternalId(testCharge.getExternalChargeId());
@@ -81,7 +81,7 @@ class AdyenWebhookTaskHandlerForPaymentWebhooksIT {
                 .replace("{{pspReference}}", testRefund.getGatewayTransactionId())
                 .replace("{{merchantReference}}", testRefund.getExternalRefundId());
 
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
+        adyenWebhookTaskHandler.processAdyenPaymentsWebhookNotification(payload);
 
         assertRefundStatus(testRefund.getId(), REFUNDED.getValue());
     }
@@ -91,7 +91,7 @@ class AdyenWebhookTaskHandlerForPaymentWebhooksIT {
         var testRefund = createRefundInSubmittedState();
         var payload = load(ADYEN_REFUND_FAILURE_NOTIFICATION).replace("{{pspReference}}", testRefund.getGatewayTransactionId()).replace("{{merchantReference}}", testRefund.getExternalRefundId());
 
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
+        adyenWebhookTaskHandler.processAdyenPaymentsWebhookNotification(payload);
 
         assertRefundStatus(testRefund.getId(), REFUND_ERROR.getValue());
     }
@@ -110,7 +110,7 @@ class AdyenWebhookTaskHandlerForPaymentWebhooksIT {
                 .replace("{{pspReference}}", testRefund.getGatewayTransactionId())
                 .replace("{{merchantReference}}", testRefund.getExternalRefundId());
 
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
+        adyenWebhookTaskHandler.processAdyenPaymentsWebhookNotification(payload);
 
         assertRefundStatus(testRefund.getId(), REFUNDED.getValue());
     }

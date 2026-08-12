@@ -18,7 +18,7 @@ import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 public class AdyenNotificationValidator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdyenNotificationValidator.class);
-    private static final String NOTIFICATION_SOURCE = "notification_source";
+    static final String NOTIFICATION_SOURCE = "notification_source";
 
     private final IpDomainMatcher ipDomainMatcher;
     private final String notificationDomain;

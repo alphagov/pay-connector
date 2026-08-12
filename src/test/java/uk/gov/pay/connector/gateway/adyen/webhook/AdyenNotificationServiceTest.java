@@ -9,6 +9,7 @@ import com.adyen.model.notification.NotificationRequest;
 import com.adyen.model.notification.NotificationRequestItem;
 import com.adyen.notification.WebhookHandler;
 import com.adyen.util.HMACValidator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ import uk.gov.pay.connector.app.adyen.WebhookHmacKeys;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.queue.tasks.TaskType;
 import uk.gov.pay.connector.queue.tasks.model.Task;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.io.IOException;
@@ -69,11 +71,13 @@ class AdyenNotificationServiceTest {
     @Mock
     private AdyenNotificationValidator mockAdyenNotificationValidator;
 
+    private static final JsonObjectMapper jsonObjectMapper = new JsonObjectMapper(new ObjectMapper());
+
     @BeforeEach
     void setUp() {
         adyenNotificationService = new AdyenNotificationService(mockAdyenGatewayConfig,
                 mockTaskQueueService,
-                mockAdyenNotificationValidator);
+                mockAdyenNotificationValidator, jsonObjectMapper);
         Logger root = (Logger) LoggerFactory.getLogger(AdyenNotificationService.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
@@ -87,11 +91,11 @@ class AdyenNotificationServiceTest {
 
         String payload = getNotificationWithValidHmacSignature("AUTHORISATION");
 
-        boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8");
+        boolean result = adyenNotificationService.handleNotificationFor(payload, null,"5.6.7.8");
 
         assertTrue(result);
     }
-    
+
     @Test
     void shouldRejectNotificationWhenHmacSignatureIsInvalid() {
         when(mockAdyenNotificationValidator.isValidIpAddress("5.6.7.8")).thenReturn(true);
@@ -100,16 +104,29 @@ class AdyenNotificationServiceTest {
 
         String payload = getNotificationWithValidHmacSignature("AUTHORISATION");
 
-        boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8");
+        boolean result = adyenNotificationService.handleNotificationFor(payload, null,"5.6.7.8");
 
         assertFalse(result);
+    }
+
+    @Test
+    void shouldDecideWhichValidatorMethodToUse() {
+        when(mockAdyenNotificationValidator.isValidIpAddress("5.6.7.8")).thenReturn(true);
+        when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys());
+        when(mockAdyenNotificationValidator.isValidHmac(any(), any())).thenReturn(true);
+
+        String payload = getNotificationWithValidHmacSignature("AUTHORISATION");
+
+        boolean result = adyenNotificationService.handleNotificationFor(payload, null,"5.6.7.8");
+
+        assertTrue(result);
     }
 
     @Test
     void shouldRejectNotificationWhenForwardedIpDoesNotMatchConfiguredDomain() {
         when(mockAdyenNotificationValidator.isValidIpAddress("8.8.8.8")).thenReturn(false);
 
-        boolean result = adyenNotificationService.handleNotificationFor("{\"notificationItems\":[]}", "8.8.8.8");
+        boolean result = adyenNotificationService.handleNotificationFor("{\"notificationItems\":[]}", null,"8.8.8.8");
 
         assertFalse(result);
     }
@@ -119,7 +136,7 @@ class AdyenNotificationServiceTest {
         String payload = TestTemplateResourceLoader.load(ADYEN_NOTIFICATION)
                 .replace("{{HMAC_SIGNATURE}}", "WrongSignature");
 
-        boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8");
+        boolean result = adyenNotificationService.handleNotificationFor(payload, null,"5.6.7.8");
 
         assertFalse(result);
         verify(mockTaskQueueService, never()).add(any(Task.class));
@@ -129,7 +146,7 @@ class AdyenNotificationServiceTest {
     void shouldThrowWebApplicationExceptionWhenPayloadIsInvalidJson() {
         when(mockAdyenNotificationValidator.isValidIpAddress("5.6.7.8")).thenReturn(true);
         assertThrows(WebApplicationException.class,
-                () -> adyenNotificationService.handleNotificationFor("not-json", "5.6.7.8"));
+                () -> adyenNotificationService.handleNotificationFor("not-json", null,"5.6.7.8"));
 
         verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
@@ -148,7 +165,7 @@ class AdyenNotificationServiceTest {
                     "live": false
                 }
                 """;
-        boolean result = adyenNotificationService.handleNotificationFor(validJsonButMissingExpectedFields,
+        boolean result = adyenNotificationService.handleNotificationFor(validJsonButMissingExpectedFields,null,
                 "5.6.7.8");
 
         assertFalse(result);
@@ -173,7 +190,7 @@ class AdyenNotificationServiceTest {
                     ]
                 }
                 """;
-        boolean result = adyenNotificationService.handleNotificationFor(validJsonButMissingExpectedFields,
+        boolean result = adyenNotificationService.handleNotificationFor(validJsonButMissingExpectedFields,null,
                 "5.6.7.8");
 
         assertFalse(result);
@@ -197,7 +214,7 @@ class AdyenNotificationServiceTest {
 
         String payload = getNotificationWithValidHmacSignature(eventCode.toString());
 
-        boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8");
+        boolean result = adyenNotificationService.handleNotificationFor(payload, null,"5.6.7.8");
 
         assertTrue(result);
 
@@ -218,7 +235,7 @@ class AdyenNotificationServiceTest {
         when(mockAdyenNotificationValidator.isValidHmac(any(), any())).thenReturn(true);
         String payload = getNotificationWithValidHmacSignature(eventCode);
 
-        boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8");
+        boolean result = adyenNotificationService.handleNotificationFor(payload, null,"5.6.7.8");
 
         assertTrue(result);
 
@@ -226,7 +243,7 @@ class AdyenNotificationServiceTest {
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(loggingEvents.getFirst()
-                .getFormattedMessage(), is("Ignored Adyen notification"));
+                .getFormattedMessage(), is("Ignoring unsupported Adyen notification"));
         assertThat(loggingEvents.get(1).getFormattedMessage(), is("Processed Adyen notification"));
     }
 
@@ -242,7 +259,7 @@ class AdyenNotificationServiceTest {
         doThrow(new RuntimeException("SQS unavailable")).when(mockTaskQueueService).add(any(Task.class));
 
         WebApplicationException exception = assertThrows(WebApplicationException.class, () ->
-                adyenNotificationService.handleNotificationFor(payload, "5.6.7.8"));
+                adyenNotificationService.handleNotificationFor(payload, null, "5.6.7.8"));
 
         verify(mockTaskQueueService).add(any(Task.class));
         assertThat(exception.getResponse().getStatus(), is(500));

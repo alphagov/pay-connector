@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.gateway.adyen.response.AdyenTokenNotification;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 
 import java.util.List;
@@ -41,9 +42,9 @@ public class AdyenWebhookTaskHandler {
     }
 
     @Transactional
-    public void processAdyenWebhookNotification(String payload) {
+    public void processAdyenPaymentsWebhookNotification(String payload) {
         NotificationRequest notificationRequest =
-                adyenNotificationService.deserialisePayloadToNotificationRequest(payload);
+                adyenNotificationService.deserialisePaymentPayloadToNotificationRequest(payload);
 
         List<NotificationRequestItem> items = adyenNotificationService.extractNotificationItems(notificationRequest);
 
@@ -52,17 +53,29 @@ public class AdyenWebhookTaskHandler {
         }
     }
 
+    @Transactional
+    public void processAdyenTokenWebhookNotification(String payload) {
+        AdyenTokenNotification notificationRequest =
+                adyenNotificationService.deserialiseTokenPayloadToNotificationRequest(payload);
+            processNotificationItemForCharge(notificationRequest);
+    }
+
+    private void processNotificationItemForCharge(AdyenTokenNotification item) {
+        String eventCode = item.type();
+        String gatewayTransactionId = item.data().storedPaymentMethodId();
+
+        chargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(), gatewayTransactionId)
+                .ifPresentOrElse(charge -> System.out.println("TODO: handled by a future handler which i think Raf is doing"),
+                        () -> logChargeNotFoundWarning(eventCode, gatewayTransactionId));
+    }
+
     private void processNotificationItemForCharge(NotificationRequestItem item) {
         String eventCode = item.getEventCode();
         String gatewayTransactionId = item.getOriginalReference();
 
         chargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(), gatewayTransactionId)
                 .ifPresentOrElse(charge -> processNotificationItem(item, charge),
-                        () -> LOGGER.atWarn()
-                                .setMessage("Charge not found in Connector or Ledger for Adyen {} webhook")
-                                .addArgument(eventCode.toLowerCase())
-                                .addKeyValue(GATEWAY_TRANSACTION_ID, gatewayTransactionId)
-                                .log());
+                        () -> logChargeNotFoundWarning(eventCode, gatewayTransactionId));
     }
 
     private void processNotificationItem(NotificationRequestItem item, Charge foundCharge) {
@@ -76,5 +89,13 @@ public class AdyenWebhookTaskHandler {
                     .addKeyValue(GATEWAY_TRANSACTION_ID, item.getOriginalReference())
                     .log();
         }
+    }
+    
+    private void logChargeNotFoundWarning(String eventCode, String gatewayTransactionId) {
+    LOGGER.atWarn()
+            .setMessage("Charge not found in Connector or Ledger for Adyen {} webhook")
+                                .addArgument(eventCode.toLowerCase())
+            .addKeyValue(GATEWAY_TRANSACTION_ID, gatewayTransactionId)
+                                .log();
     }
 }

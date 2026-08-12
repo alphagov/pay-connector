@@ -72,7 +72,7 @@ class AdyenCancellationNotificationHandlerTest {
             "false,SYSTEM CANCEL SUBMITTED,SYSTEM CANCEL ERROR",
     })
     void shouldProcessCancelNotificationForConnectorCharge(Boolean success, String currentStatus, String expectedStatus) {
-        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
+        when(mockAdyenNotificationService.deserialisePaymentPayloadToNotificationRequest(payload))
                 .thenReturn(mockNotificationRequest);
         when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
                 .thenReturn(List.of(mockNotificationItem));
@@ -84,7 +84,7 @@ class AdyenCancellationNotificationHandlerTest {
         when(mockCharge.isHistoric()).thenReturn(false);
 
         NotificationRequest notificationRequest =
-                mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload);
+                mockAdyenNotificationService.deserialisePaymentPayloadToNotificationRequest(payload);
 
         NotificationRequestItem item = mockAdyenNotificationService.extractNotificationItems(notificationRequest).getFirst();
 
@@ -100,7 +100,7 @@ class AdyenCancellationNotificationHandlerTest {
             "true,CAPTURE QUEUED"
     })
     void shouldIgnoreCancelNotificationAndLogWarningWhenInUnexpectedState(Boolean success, String currentStatus) {
-        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
+        when(mockAdyenNotificationService.deserialisePaymentPayloadToNotificationRequest(payload))
                 .thenReturn(mockNotificationRequest);
         when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
                 .thenReturn(List.of(mockNotificationItem));
@@ -111,7 +111,7 @@ class AdyenCancellationNotificationHandlerTest {
         when(mockCharge.getExternalId()).thenReturn("someId");
 
         NotificationRequest notificationRequest =
-                mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload);
+                mockAdyenNotificationService.deserialisePaymentPayloadToNotificationRequest(payload);
         NotificationRequestItem item = mockAdyenNotificationService.extractNotificationItems(notificationRequest).getFirst();
 
         adyenCancellationNotificationHandler.process(item, mockCharge);

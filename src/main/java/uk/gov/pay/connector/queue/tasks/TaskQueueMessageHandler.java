@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
-import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsTaskHandler;
@@ -15,6 +14,7 @@ import uk.gov.pay.connector.queue.tasks.handlers.QueryAndUpdatePaymentInSubmitte
 import uk.gov.pay.connector.queue.tasks.handlers.RetryPaymentOrRefundEmailTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.ServiceArchivedTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.model.DeleteStoredPaymentDetailsTaskData;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.queue.tasks.model.RetryPaymentOrRefundEmailTaskData;
@@ -99,7 +99,11 @@ public class TaskQueueMessageHandler {
                         break; 
                     case HANDLE_ADYEN_PAYMENTS_WEBHOOK_NOTIFICATION:
                         LOGGER.info("Processing [{}] task.", taskType.getName());
-                        adyenWebhookTaskHandler.processAdyenWebhookNotification(taskMessage.getTask().getData());
+                        adyenWebhookTaskHandler.processAdyenPaymentsWebhookNotification(taskMessage.getTask().getData());
+                        break;
+                    case HANDLE_ADYEN_TOKEN_WEBHOOK_NOTIFICATION: // Raf is adding
+                        LOGGER.info("Processing [{}] task.", taskType.getName());
+                        adyenWebhookTaskHandler.processAdyenTokenWebhookNotification(taskMessage.getTask().getData());
                         break;
                     case AUTHORISE_WITH_USER_NOT_PRESENT:
                         var taskData = objectMapper.readValue(taskMessage.getTask().getData(), PaymentTaskData.class);
