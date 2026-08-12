@@ -57,7 +57,7 @@ import static uk.gov.service.payments.commons.model.AgreementPaymentType.UNSCHED
 class AdyenRequestFactoryTest {
 
     private static final String RECURRING_CHARGE_EXTERNAL_ID = "extcharge123";
-    
+
     final String acceptHeader = "text/html";
     final String userAgent = "Mozilla/5.0";
     final String shopperIp = "127.0.0.1";
@@ -211,7 +211,7 @@ class AdyenRequestFactoryTest {
 
         var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
 
-        assertThat(request.shopperReference(), is(agreementId));
+        assertThat(request.shopperReference(), is(agreementId + "-" + authoriseRequest.getGovUkPayPaymentId()));
         assertThat(request.storePaymentMethod(), is(true));
         assertThat(request.recurringProcessingModel(), is("Subscription"));
     }
@@ -405,7 +405,7 @@ class AdyenRequestFactoryTest {
     }
 
     @Test
-    void should_throw_illegalArgumentException_if_shopperReference_is_null_for_recurring_payment() {
+    void should_throw_illegalArgumentException_if_shopperReference_is_incomplete_for_recurring_payment() {
         var agreement = anAgreementEntity()
                 .withExternalId(null)
                 .withPaymentInstrument(new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
@@ -424,7 +424,7 @@ class AdyenRequestFactoryTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> adyenRequestFactory.createRecurringPaymentRequest(authoriseRequest));
 
-        assertThat(exception.getMessage(), is("Adyen recurring auth token is missing shopperReference or storedPaymentMethodId"));
+        assertThat(exception.getMessage(), is("shopperReference could not be derived as charge external ID or agreement external ID are missing"));
     }
 
     @Test
@@ -436,6 +436,7 @@ class AdyenRequestFactoryTest {
         var paymentInstrument = aPaymentInstrumentEntity()
                 .withRecurringAuthToken(Map.of(
                         STORED_PAYMENT_METHOD_ID, " "))
+                .withChargeExternalId("charge-external-id123")
                 .build();
         var charge = setupChargeEntityForRecurringPayment(agreement, paymentInstrument);
 
@@ -444,7 +445,7 @@ class AdyenRequestFactoryTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> adyenRequestFactory.createRecurringPaymentRequest(authoriseRequest));
 
-        assertThat(exception.getMessage(), is("Adyen recurring auth token is missing shopperReference or storedPaymentMethodId"));
+        assertThat(exception.getMessage(), is("Adyen recurring auth token is missing storedPaymentMethodId"));
     }
 
     private static CancelGatewayRequest makeCancelGatewayRequestWithExternalChargeId(String externalChargeId) {
