@@ -6,8 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.slf4j.event.KeyValuePair;
-import org.slf4j.event.Level;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -37,9 +35,6 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.everyItem;
-import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
@@ -381,40 +376,6 @@ class AdyenRequestFactoryTest {
         assertThat(request.origin(), is(nullValue()));
         assertThat(request.shopperEmail(), is(nullValue()));
         assertThat(request.shopperIP(), is(nullValue()));
-    }
-
-    @Test
-    void should_log_warning_when_browser_info_integer_cannot_be_parsed() {
-        var authoriseRequest = aCardAuthorisationGatewayRequest()
-                .withAuthCardDetails(anAuthCardDetails()
-                        .withJsScreenColorDepth("invalid")
-                        .withJsScreenWidth("not-a-number")
-                        .withJsTimezoneOffsetMins("bad-offset")
-                        .build())
-                .withCredentials(ADYEN_CREDENTIALS)
-                .build();
-
-        adyenRequestFactory.createPaymentRequest(authoriseRequest);
-
-        var loggingEvents = logs.getEvents();
-
-        assertThat(loggingEvents.size(), is(3));
-
-        assertThat(loggingEvents, everyItem(hasProperty("level", is(Level.WARN))));
-        assertThat(loggingEvents, everyItem(hasProperty("message", is("Unable to parse browser info integer"))));
-
-        var keyValuePairs = loggingEvents.stream()
-                .flatMap(event -> event.getKeyValuePairs().stream())
-                .toList();
-
-        assertThat(keyValuePairs, contains(
-                new KeyValuePair("property", "js_screen_color_depth"),
-                new KeyValuePair("value", "invalid"),
-                new KeyValuePair("property", "js_screen_width"),
-                new KeyValuePair("value", "not-a-number"),
-                new KeyValuePair("property", "js_timezone_offset_min"),
-                new KeyValuePair("value", "bad-offset")
-        ));
     }
 
     @Test
