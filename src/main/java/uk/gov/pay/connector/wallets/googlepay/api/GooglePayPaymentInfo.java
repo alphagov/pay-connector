@@ -22,6 +22,9 @@ public class GooglePayPaymentInfo extends WalletPaymentInfo implements BrowserDa
     @Schema(example = "1f1154b7-620d-4654-801b-893b5bb22db1", description = "SessionId returned by Worldpay/CardinalCommerce as part of device data collection. Applicable for Google Pay payments only")
     @JsonProperty("worldpay_3ds_flex_ddc_result")
     private String worldpay3dsFlexDdcResult;
+
+    public GooglePayPaymentInfo() {
+    }
     
     public GooglePayPaymentInfo(String lastDigitsCardNumber,
                                 String brand,
