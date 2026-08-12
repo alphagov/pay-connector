@@ -8,7 +8,7 @@ import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record GatewayAccountCredentialsRequest (
-        @Schema(example = "stripe", description = "Payment provider. Accepted values - stripe, worldpay")
+        @Schema(example = "stripe", description = "Payment provider. Accepted values - stripe, worldpay, adyen")
         @JsonProperty(PAYMENT_PROVIDER_FIELD_NAME)
         String paymentProvider,
         

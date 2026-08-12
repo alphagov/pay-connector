@@ -22,15 +22,19 @@ import java.util.Map;
 
 import static jakarta.ws.rs.core.Response.Status.OK;
 import static java.lang.String.format;
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
+import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -88,6 +92,40 @@ public class GatewayAccountCredentialsResourceIT {
                         .post("/v1/api/accounts/10000/credentials")
                         .then()
                         .statusCode(400);
+            }
+
+            @Test
+            void validRequest_shouldCreateAdyenSwitchingCredentials_andReturn200() {
+                var liveAccount = addGatewayAccountAndCredential("stripe", ACTIVE, LIVE, 
+                        Map.of("stripe_account_id", "some-account-id"));
+                var liveAccountId = liveAccount.getAccountId();
+
+                credentialsId = liveAccount.getCredentials().getFirst().getId();
+
+                app.givenSetup()
+                        .body(toJson(Map.of("payment_provider", "adyen", "credentials", emptyMap())))
+                        .post("/v1/api/accounts/" + liveAccountId + "/credentials")
+                        .then()
+                        .statusCode(OK.getStatusCode());
+                
+                app.givenSetup()
+                        .get("/v1/api/accounts/" + liveAccountId)
+                        .then()
+                        .statusCode(OK.getStatusCode())
+                        .body("gateway_account_credentials.size()", is(2))
+                        .body("gateway_account_credentials[1].payment_provider", is("adyen"))
+                        .body("gateway_account_credentials[1].state", is(CREATED.toString()))
+                        .body("gateway_account_credentials[1].external_id", is(notNullValue(String.class)));
+            }
+
+            @Test
+            void invalidRequest_shouldNotCreateAdyenSwitchingCredentials_andReturn409() {
+                app.givenSetup()
+                        .body(toJson(Map.of("payment_provider", "adyen", "credentials", emptyMap())))
+                        .post("/v1/api/accounts/" + accountId + "/credentials")
+                        .then()
+                        .statusCode(SC_CONFLICT)
+                        .body("message", is(List.of("Cannot create empty Adyen credentials on a test account.")));
             }
         }
 
@@ -290,6 +328,55 @@ public class GatewayAccountCredentialsResourceIT {
                         .body("gateway_account_credentials[1].payment_provider", is("stripe"))
                         .body("gateway_account_credentials[1].credentials.stripe_account_id", is("some-account-id"))
                         .body("gateway_account_credentials[1].external_id", is(notNullValue(String.class)));
+            }
+
+            @Test
+            void validRequest_shouldCreateAdyenSwitchingCredentials_andReturn200() {
+                String gatewayAccountId = app.givenSetup()
+                        .body(toJson(Map.of(
+                                "payment_provider", "stripe",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
+                                "type", "live"
+                        )))
+                        .post("/v1/api/accounts")
+                        .then().extract().path("gateway_account_id");
+
+                app.givenSetup()
+                        .body(toJson(Map.of("payment_provider", "adyen", "credentials", emptyMap())))
+                        .post(format("/v1/api/service/%s/account/%s/credentials", VALID_SERVICE_ID, LIVE))
+                        .then()
+                        .statusCode(OK.getStatusCode())
+                        .body(not(hasKey("gateway_account_credential_id")));
+
+                app.givenSetup()
+                        .get("/v1/api/accounts/" + gatewayAccountId)
+                        .then()
+                        .statusCode(OK.getStatusCode())
+                        .body("gateway_account_credentials.size()", is(2))
+                        .body("gateway_account_credentials[1].payment_provider", is("adyen"))
+                        .body("gateway_account_credentials[1].state", is(CREATED.toString()))
+                        .body("gateway_account_credentials[1].external_id", is(notNullValue(String.class)));
+            }
+
+            @Test
+            void invalidRequest_shouldNotCreateAdyenSwitchingCredentials_andReturn409() {
+                app.givenSetup()
+                        .body(toJson(Map.of(
+                                "payment_provider", "stripe",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
+                                "type", "test"
+                        )))
+                        .post("/v1/api/accounts")
+                        .then().extract().path("gateway_account_id");
+
+                app.givenSetup()
+                        .body(toJson(Map.of("payment_provider", "adyen", "credentials", emptyMap())))
+                        .post(format("/v1/api/service/%s/account/%s/credentials", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(SC_CONFLICT)
+                        .body("message", is(List.of("Cannot create empty Adyen credentials on a test account.")));
             }
 
             @Test

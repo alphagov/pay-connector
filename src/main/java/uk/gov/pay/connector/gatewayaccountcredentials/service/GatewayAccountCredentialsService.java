@@ -8,7 +8,9 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.WebApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.exception.ConflictWebApplicationException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
@@ -33,11 +35,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.Comparator.comparing;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -103,6 +105,10 @@ public class GatewayAccountCredentialsService {
         boolean isFirstCredentials = !gatewayAccountCredentialsDao.hasActiveCredentials(gatewayAccountEntity.getId());
         boolean credentialsPrePopulated = !credentials.isEmpty();
         var gatewayAccountType = GatewayAccountType.fromString(gatewayAccountEntity.getType());
+        
+        if (paymentGatewayName == ADYEN && gatewayAccountType == TEST && credentials.isEmpty()) {
+            throw new ConflictWebApplicationException("Cannot create empty Adyen credentials on a test account.");
+        }
 
         if (paymentGatewayName == SANDBOX ||
                 (paymentGatewayName == STRIPE && gatewayAccountType == TEST)) {

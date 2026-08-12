@@ -323,12 +323,12 @@ public class GatewayAccountResourceCreateIT {
         }
 
         @Test
-        void should_create_Adyen_gateway_account_without_credentials() {
+        void should_create_live_Adyen_gateway_account_without_credentials() {
             // language=JSON
             var requestBodyWithoutCredentials = """
                     {
                       "payment_provider": "adyen",
-                      "type": "test",
+                      "type": "live",
                       "service_name": "new service",
                       "service_id": "service-external-id"
                     }""";
@@ -340,7 +340,7 @@ public class GatewayAccountResourceCreateIT {
                     .statusCode(201)
                     .body("gateway_account_id", not(emptyString()))
                     .body("external_id", not(emptyString()))
-                    .body("type", is("test"))
+                    .body("type", is("live"))
                     .body("service_name", is("new service"))
                     .body("description", nullValue())
                     .body("analytics_id", nullValue())
