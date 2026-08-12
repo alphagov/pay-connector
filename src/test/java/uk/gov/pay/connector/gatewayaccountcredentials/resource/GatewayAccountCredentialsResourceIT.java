@@ -24,7 +24,7 @@ import static jakarta.ws.rs.core.Response.Status.OK;
 import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -119,13 +119,13 @@ public class GatewayAccountCredentialsResourceIT {
             }
 
             @Test
-            void invalidRequest_shouldNotCreateAdyenSwitchingCredentials_andReturn400() {
+            void invalidRequest_shouldNotCreateAdyenSwitchingCredentials_andReturn409() {
                 app.givenSetup()
                         .body(toJson(Map.of("payment_provider", "adyen", "credentials", emptyMap())))
                         .post("/v1/api/accounts/" + accountId + "/credentials")
                         .then()
-                        .statusCode(SC_BAD_REQUEST)
-                        .body("message", is("Switching credential cannot be created for an Adyen test account."));
+                        .statusCode(SC_CONFLICT)
+                        .body("message", is(List.of("Cannot create empty Adyen credentials on a test account.")));
             }
         }
 
@@ -360,7 +360,7 @@ public class GatewayAccountCredentialsResourceIT {
             }
 
             @Test
-            void invalidRequest_shouldNotCreateAdyenSwitchingCredentials_andReturn400() {
+            void invalidRequest_shouldNotCreateAdyenSwitchingCredentials_andReturn409() {
                 app.givenSetup()
                         .body(toJson(Map.of(
                                 "payment_provider", "stripe",
@@ -375,8 +375,8 @@ public class GatewayAccountCredentialsResourceIT {
                         .body(toJson(Map.of("payment_provider", "adyen", "credentials", emptyMap())))
                         .post(format("/v1/api/service/%s/account/%s/credentials", VALID_SERVICE_ID, TEST))
                         .then()
-                        .statusCode(SC_BAD_REQUEST)
-                        .body("message", is("Switching credential cannot be created for an Adyen test account."));
+                        .statusCode(SC_CONFLICT)
+                        .body("message", is(List.of("Cannot create empty Adyen credentials on a test account.")));
             }
 
             @Test

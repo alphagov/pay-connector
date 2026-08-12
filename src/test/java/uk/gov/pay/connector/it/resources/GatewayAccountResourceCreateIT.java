@@ -323,7 +323,7 @@ public class GatewayAccountResourceCreateIT {
         }
 
         @Test
-        void should_create_Adyen_gateway_account_without_credentials() {
+        void should_create_live_Adyen_gateway_account_without_credentials() {
             // language=JSON
             var requestBodyWithoutCredentials = """
                     {

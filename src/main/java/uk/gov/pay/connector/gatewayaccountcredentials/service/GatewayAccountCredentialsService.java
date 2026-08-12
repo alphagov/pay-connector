@@ -8,7 +8,9 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.WebApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.exception.ConflictWebApplicationException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
@@ -104,8 +106,8 @@ public class GatewayAccountCredentialsService {
         boolean credentialsPrePopulated = !credentials.isEmpty();
         var gatewayAccountType = GatewayAccountType.fromString(gatewayAccountEntity.getType());
         
-        if (paymentGatewayName == ADYEN && gatewayAccountType == TEST && !credentialsPrePopulated) {
-            throw new BadRequestException("Switching credential cannot be created for an Adyen test account.");
+        if (paymentGatewayName == ADYEN && gatewayAccountType == TEST && credentials.isEmpty()) {
+            throw new ConflictWebApplicationException("Cannot create empty Adyen credentials on a test account.");
         }
 
         if (paymentGatewayName == SANDBOX ||
