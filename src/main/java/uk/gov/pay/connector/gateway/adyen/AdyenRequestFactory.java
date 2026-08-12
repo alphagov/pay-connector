@@ -13,7 +13,7 @@ import uk.gov.pay.connector.gateway.adyen.request.json.CancelRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.CaptureRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.PaymentMethod;
 import uk.gov.pay.connector.gateway.adyen.request.json.RefundRequestPayload;
-import uk.gov.pay.connector.gateway.adyen.response.json.BrowserInfo;
+import uk.gov.pay.connector.gateway.adyen.response.json.AdyenBrowserInfo;
 import uk.gov.pay.connector.gateway.adyen.utils.AdyenCredentialsHelper;
 import uk.gov.pay.connector.gateway.adyen.utils.AdyenMerchantAccountHelper;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -30,7 +30,6 @@ import uk.gov.service.payments.commons.model.AgreementPaymentType;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public class AdyenRequestFactory {
 
@@ -40,6 +39,7 @@ public class AdyenRequestFactory {
     private final AdyenMerchantAccountHelper adyenMerchantAccountHelper;
     private final AdyenCredentialsHelper adyenCredentialsHelper;
     private final ChargeFrontendUrlHelper chargeFrontendUrlHelper;
+    private final AdyenBrowserInfoFactory adyenBrowserInfoFactory;
     private final Logger LOGGER = LoggerFactory.getLogger(AdyenRequestFactory.class);
 
     public AdyenRequestFactory(ConnectorConfiguration configuration) {
@@ -47,6 +47,7 @@ public class AdyenRequestFactory {
         this.adyenMerchantAccountHelper = new AdyenMerchantAccountHelper(configuration);
         this.adyenCredentialsHelper = new AdyenCredentialsHelper();
         this.chargeFrontendUrlHelper = new ChargeFrontendUrlHelper(configuration);
+        this.adyenBrowserInfoFactory = new AdyenBrowserInfoFactory();
     }
 
     public AuthoriseRequestPayload createPaymentRequest(CardAuthorisationGatewayRequest request) {
@@ -101,7 +102,7 @@ public class AdyenRequestFactory {
         var recurringAuthToken = paymentInstrument.getRecurringAuthToken()
                 .orElseThrow(() -> new IllegalArgumentException("Payment instrument does not have recurring auth token set"));
 
-        String shopperReference = request.getAgreementId();
+        String shopperReference = createShopperReferenceForRecurringPayments(request);
         String storedPaymentMethodId = recurringAuthToken.get(STORED_PAYMENT_METHOD_ID);
 
         if (shopperReference == null || storedPaymentMethodId.isBlank()) {
@@ -127,6 +128,16 @@ public class AdyenRequestFactory {
                 null,
                 fromAgreementPaymentType(request.getAgreementPaymentType())
         );
+    }
+
+    private String createShopperReferenceForRecurringPayments(RecurringPaymentAuthorisationGatewayRequest request) {
+        var chargeExternalId = request.getPaymentInstrument().isPresent()
+                ? request.getPaymentInstrument().get().getChargeExternalId()
+                : request.getGovUkPayPaymentId();
+        if (chargeExternalId == null || request.getAgreementId() == null) {
+            return null;
+        }
+        return String.format("%s-%s", request.getAgreementId(), chargeExternalId);
     }
 
     private static String getShopperInteraction(CardAuthorisationGatewayRequest request) {
@@ -176,31 +187,8 @@ public class AdyenRequestFactory {
                 stateOrProvince);
     }
 
-    private BrowserInfo mapToBrowserInfo(AuthCardDetails authCardDetails) {
-        return new BrowserInfo(
-                authCardDetails.getAcceptHeader(),
-                authCardDetails.getJsScreenColorDepth().flatMap(value -> parseInteger("js_screen_color_depth", value)).orElse(null), false,
-                authCardDetails.getJsEnabled(),
-                authCardDetails.getJsNavigatorLanguage().orElse(null),
-                authCardDetails.getJsScreenHeight().flatMap(value -> parseInteger("js_screen_height", value)).orElse(null),
-                authCardDetails.getJsScreenWidth().flatMap(value -> parseInteger("js_screen_width", value)).orElse(null),
-                authCardDetails.getJsTimezoneOffsetMins().flatMap(value -> parseInteger("js_timezone_offset_min", value)).orElse(null),
-                authCardDetails.getUserAgentHeader()
-        );
-    }
-
-    private Optional<Integer> parseInteger(String property, String value) {
-        try {
-            return Optional.of(Integer.valueOf(value));
-        } catch (NumberFormatException e) {
-            LOGGER.atWarn()
-                    .setMessage("Unable to parse browser info integer")
-                    .addKeyValue("property", property)
-                    .addKeyValue("value", value)
-                    .setCause(e)
-                    .log();
-            return Optional.empty();
-        }
+    private AdyenBrowserInfo mapToBrowserInfo(AuthCardDetails authCardDetails) {
+        return adyenBrowserInfoFactory.create(authCardDetails);
     }
 
     String fromAgreementPaymentType(AgreementPaymentType agreementPaymentType) {

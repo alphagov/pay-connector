@@ -10,6 +10,8 @@ import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -20,6 +22,9 @@ import uk.gov.pay.connector.app.adyen.HmacKeys;
 import uk.gov.pay.connector.app.adyen.WebhookHmacKeys;
 import uk.gov.pay.connector.gateway.adyen.response.AdyenTokenNotification;
 import uk.gov.pay.connector.gateway.exception.AdyenNotificationException;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
+import uk.gov.pay.connector.queue.tasks.TaskType;
+import uk.gov.pay.connector.queue.tasks.model.Task;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -32,7 +37,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -57,13 +64,17 @@ class AdyenRecurringTokenNotificationServiceTest {
     private AdyenRecurringTokenNotificationService adyenRecurringTokenNotificationService;
 
     private static final JsonObjectMapper jsonObjectMapper = new JsonObjectMapper(new ObjectMapper());
+    
+    @Mock
+    private TaskQueueService mockTaskQueueService;
 
     @BeforeEach
     void setUp() {
         adyenRecurringTokenNotificationService = new AdyenRecurringTokenNotificationService(
                 adyenGatewayConfig,
                 mockAdyenNotificationValidator,
-                jsonObjectMapper);
+                jsonObjectMapper,
+                mockTaskQueueService);
         Logger logger = (Logger) LoggerFactory.getLogger(AdyenRecurringTokenNotificationService.class);
         logger.setLevel(Level.INFO);
         logger.addAppender(mockAppender);
@@ -172,6 +183,7 @@ class AdyenRecurringTokenNotificationServiceTest {
         assertThat(loggingEvents.stream()
                         .anyMatch(event -> event.getFormattedMessage().equals("Hmac signature is invalid, rejecting Adyen token notification")),
                 is(true));
+        verifyNoInteractions(mockTaskQueueService);
     }
 
     @Test
@@ -192,5 +204,148 @@ class AdyenRecurringTokenNotificationServiceTest {
         assertThat(loggingEvents.stream()
                         .anyMatch(event -> event.getFormattedMessage().equals("Failed to validate Adyen token notification payload")),
                 is(true));
+    }
+
+    @Test
+    void shouldIgnoreUnsupportedTokenNotification() {
+        var primaryTestKey = "primaryTest";
+
+        String payload = TestTemplateResourceLoader
+                .load(
+                        TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION).replace(
+                        "\"type\": \"recurring.token.created\"",
+                        "\"type\": \"recurring.token.updated\""
+                );
+
+        var tokenKeys =
+                new HmacKeys.WebhookHmacKeyPair(new WebhookHmacKeys(primaryTestKey, "secondaryTest"),
+                        new WebhookHmacKeys("primaryLive", "secondaryLive"));
+
+        when(mockAdyenNotificationValidator.isValidIpAddress(FORWARDED_IP)).thenReturn(true);
+
+        when(adyenGatewayConfig.getHmacKeys()).thenReturn(new HmacKeys(null, tokenKeys));
+
+        when(mockAdyenNotificationValidator.isValidHmac( HMAC_SIGNATURE, primaryTestKey, payload)).thenReturn(true);
+
+        boolean result = 
+                adyenRecurringTokenNotificationService.handleNotificationFor(payload, HMAC_SIGNATURE, FORWARDED_IP);
+
+        assertTrue(result);
+
+        verifyNoInteractions(mockTaskQueueService);
+
+        verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
+
+        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+
+        assertThat(loggingEvents.stream().anyMatch(event -> event.getFormattedMessage().equals(
+                                                "Ignoring unsupported Adyen token notification")), is(true)
+        );
+    }
+
+    @Test
+    void shouldThrowWebApplicationExceptionWhenAddingTokenNotificationToTaskQueueFails() {
+        var primaryTestKey = "primaryTest";
+
+        String payload = TestTemplateResourceLoader.load(
+                TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION
+        );
+
+        var tokenKeys = new HmacKeys.WebhookHmacKeyPair(
+                new WebhookHmacKeys(primaryTestKey, "secondaryTest"),
+                new WebhookHmacKeys("primaryLive", "secondaryLive")
+        );
+
+        when(mockAdyenNotificationValidator.isValidIpAddress(FORWARDED_IP))
+                .thenReturn(true);
+
+        when(adyenGatewayConfig.getHmacKeys())
+                .thenReturn(new HmacKeys(null, tokenKeys));
+
+        when(mockAdyenNotificationValidator.isValidHmac(HMAC_SIGNATURE, primaryTestKey, payload)).thenReturn(true);
+
+        doThrow(new RuntimeException("SQS unavailable")).when(mockTaskQueueService).add(any(Task.class));
+
+        assertThrows(WebApplicationException.class, () -> adyenRecurringTokenNotificationService.handleNotificationFor(
+                        payload, HMAC_SIGNATURE, FORWARDED_IP));
+        verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
+
+        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+
+        assertThat(loggingEvents.stream().anyMatch(event -> event.getFormattedMessage().equals(
+                                                "Error sending Adyen token webhook notification to task SQS queue")),
+                is(true)
+        );
+    }
+    
+    @Test
+    void shouldThrowWebApplicationExceptionWhenTokenNotificationCannotBeDeserialised() {
+        String payload = "invalidJson";
+
+        when(mockAdyenNotificationValidator.isValidIpAddress(FORWARDED_IP)).thenReturn(true);
+
+        WebApplicationException exception = assertThrows(WebApplicationException.class, 
+                () -> adyenRecurringTokenNotificationService.handleNotificationFor(payload, HMAC_SIGNATURE, FORWARDED_IP));
+
+        assertThat(exception.getMessage(), is("Error deserialising token webhook Json"));
+
+        verifyNoInteractions(mockTaskQueueService);
+        verify(mockAppender, atLeastOnce())
+                .doAppend(loggingEventArgumentCaptor.capture());
+
+        List<LoggingEvent> loggingEvents =
+                loggingEventArgumentCaptor.getAllValues();
+
+        assertThat(loggingEvents.stream().anyMatch(event -> event.getFormattedMessage().equals(
+                "Error deserialising token notification payload")), is(true));
+    }
+    
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "recurring.token.created",
+            "recurring.token.disabled"
+    })
+    void shouldAddSupportedTokenNotificationToTaskQueue(String eventType) {
+        var primaryTestKey = "primaryTest";
+
+        String payload = TestTemplateResourceLoader.load(
+                TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION
+        ).replace(
+                "\"type\": \"recurring.token.created\"",
+                "\"type\": \"" + eventType + "\""
+        );
+
+        var tokenKeys = new HmacKeys.WebhookHmacKeyPair(
+                new WebhookHmacKeys(primaryTestKey, "secondaryTest"),
+                new WebhookHmacKeys("primaryLive", "secondaryLive")
+        );
+
+        when(mockAdyenNotificationValidator.isValidIpAddress(FORWARDED_IP))
+                .thenReturn(true);
+
+        when(adyenGatewayConfig.getHmacKeys())
+                .thenReturn(new HmacKeys(null, tokenKeys));
+
+        when(mockAdyenNotificationValidator.isValidHmac(
+                HMAC_SIGNATURE,
+                primaryTestKey,
+                payload
+        )).thenReturn(true);
+
+        boolean result =
+                adyenRecurringTokenNotificationService.handleNotificationFor(
+                        payload,
+                        HMAC_SIGNATURE,
+                        FORWARDED_IP
+                );
+
+        assertTrue(result);
+
+        verify(mockTaskQueueService).add(
+                new Task(
+                        payload,
+                        TaskType.HANDLE_ADYEN_TOKEN_WEBHOOK_NOTIFICATION
+                )
+        );
     }
 }

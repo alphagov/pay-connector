@@ -14,7 +14,7 @@
         <jjwt.version>0.13.0</jjwt.version>
         <pact.version>4.7.3</pact.version>
         <eclipselink.version>4.0.9</eclipselink.version>
-        <swagger-version>2.2.52</swagger-version>
+        <swagger-version>2.2.53</swagger-version>
         <prometheus.version>0.16.0</prometheus.version>
 
         <PACT_BROKER_URL/>
@@ -97,6 +97,16 @@
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-db</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-graphite</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.rabbitmq</groupId>
+                    <artifactId>amqp-client</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.inject</groupId>
@@ -334,11 +344,6 @@
             <groupId>com.adyen</groupId>
             <artifactId>adyen-java-api-library</artifactId>
             <version>43.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.14</version>
         </dependency>
 
         <!-- Test dependencies that are imported from one of the BOMs specified

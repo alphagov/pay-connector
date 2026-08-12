@@ -2,12 +2,13 @@ package uk.gov.pay.connector.wallets.googlepay.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import uk.gov.pay.connector.gateway.model.BrowserDataFor3ds;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.util.Optional;
 
-public class GooglePayPaymentInfo extends WalletPaymentInfo {
+public class GooglePayPaymentInfo extends WalletPaymentInfo implements BrowserDataFor3ds {
     
     @Schema(example = "text/html;q=1.0, */*;q=0.9")
     private String acceptHeader;
@@ -23,6 +24,7 @@ public class GooglePayPaymentInfo extends WalletPaymentInfo {
     private String worldpay3dsFlexDdcResult;
 
     public GooglePayPaymentInfo() {
+        // Needed for Jackson
     }
     
     public GooglePayPaymentInfo(String lastDigitsCardNumber,

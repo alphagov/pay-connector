@@ -39,6 +39,7 @@ public class PaymentInstrumentService {
                 .withCardDetails(charge.getCardDetails())
                 .withStatus(PaymentInstrumentStatus.CREATED) 
                 .withStartDate(now)
+                .withChargeExternalId(charge.getExternalId())
                 .build();
         paymentInstrumentDao.persist(paymentInstrument);
         ledgerService.postEvent(PaymentInstrumentCreated.from(paymentInstrument, charge.getGatewayAccount()));

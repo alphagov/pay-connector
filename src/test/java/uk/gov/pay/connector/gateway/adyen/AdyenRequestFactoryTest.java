@@ -6,8 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.slf4j.event.KeyValuePair;
-import org.slf4j.event.Level;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -37,9 +35,6 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.everyItem;
-import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
@@ -61,6 +56,8 @@ import static uk.gov.service.payments.commons.model.AgreementPaymentType.UNSCHED
 
 class AdyenRequestFactoryTest {
 
+    private static final String RECURRING_CHARGE_EXTERNAL_ID = "extcharge123";
+    
     final String acceptHeader = "text/html";
     final String userAgent = "Mozilla/5.0";
     final String shopperIp = "127.0.0.1";
@@ -382,40 +379,6 @@ class AdyenRequestFactoryTest {
     }
 
     @Test
-    void should_log_warning_when_browser_info_integer_cannot_be_parsed() {
-        var authoriseRequest = aCardAuthorisationGatewayRequest()
-                .withAuthCardDetails(anAuthCardDetails()
-                        .withJsScreenColorDepth("invalid")
-                        .withJsScreenWidth("not-a-number")
-                        .withJsTimezoneOffsetMins("bad-offset")
-                        .build())
-                .withCredentials(ADYEN_CREDENTIALS)
-                .build();
-
-        adyenRequestFactory.createPaymentRequest(authoriseRequest);
-
-        var loggingEvents = logs.getEvents();
-
-        assertThat(loggingEvents.size(), is(3));
-
-        assertThat(loggingEvents, everyItem(hasProperty("level", is(Level.WARN))));
-        assertThat(loggingEvents, everyItem(hasProperty("message", is("Unable to parse browser info integer"))));
-
-        var keyValuePairs = loggingEvents.stream()
-                .flatMap(event -> event.getKeyValuePairs().stream())
-                .toList();
-
-        assertThat(keyValuePairs, contains(
-                new KeyValuePair("property", "js_screen_color_depth"),
-                new KeyValuePair("value", "invalid"),
-                new KeyValuePair("property", "js_screen_width"),
-                new KeyValuePair("value", "not-a-number"),
-                new KeyValuePair("property", "js_timezone_offset_min"),
-                new KeyValuePair("value", "bad-offset")
-        ));
-    }
-
-    @Test
     void should_create_recurring_PaymentRequest_for_recurring_payment() {
         var agreementId = "some-agreement-id";
         var agreement = anAgreementEntity()
@@ -425,6 +388,7 @@ class AdyenRequestFactoryTest {
         var paymentInstrument = aPaymentInstrumentEntity()
                 .withRecurringAuthToken(Map.of(
                         STORED_PAYMENT_METHOD_ID, storedPaymentMethodId))
+                .withChargeExternalId("extcharge123")
                 .build();
 
         var charge = setupChargeEntityForRecurringPayment(agreement, paymentInstrument);
@@ -433,7 +397,7 @@ class AdyenRequestFactoryTest {
 
         var request = adyenRequestFactory.createRecurringPaymentRequest(authoriseRequest);
 
-        assertThat(request.shopperReference(), is(agreementId));
+        assertThat(request.shopperReference(), is(agreementId + "-" + RECURRING_CHARGE_EXTERNAL_ID));
         assertThat(request.storePaymentMethod(), is(nullValue()));
         assertThat(request.recurringProcessingModel(), is("Subscription"));
         assertThat(request.paymentMethod().storedPaymentMethodId(), is(storedPaymentMethodId));
@@ -444,6 +408,9 @@ class AdyenRequestFactoryTest {
     void should_throw_illegalArgumentException_if_shopperReference_is_null_for_recurring_payment() {
         var agreement = anAgreementEntity()
                 .withExternalId(null)
+                .withPaymentInstrument(new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
+                        .withChargeExternalId(null)
+                        .build())
                 .build();
         var storedPaymentMethodId = "42";
         var paymentInstrument = aPaymentInstrumentEntity()
@@ -502,6 +469,7 @@ class AdyenRequestFactoryTest {
                 .build();
 
         return aValidChargeEntity()
+                .withExternalId(RECURRING_CHARGE_EXTERNAL_ID)
                 .withAgreementPaymentType(RECURRING)
                 .withAgreementEntity(agreement)
                 .withPaymentInstrument(paymentInstrument)

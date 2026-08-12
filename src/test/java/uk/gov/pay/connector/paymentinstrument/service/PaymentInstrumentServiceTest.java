@@ -27,7 +27,7 @@ class PaymentInstrumentServiceTest {
     @Mock
     private PaymentInstrumentDao mockPaymentInstrumentDao;        
 
-    private ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+    private final ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
 
     private static final Instant NOW = Instant.parse("2022-03-31T15:15:00Z");  
 
@@ -54,6 +54,7 @@ class PaymentInstrumentServiceTest {
         assertThat(actualPaymentInstrumentEntity.getCardDetails(), is(chargeEntity.getCardDetails()));
         assertThat(actualPaymentInstrumentEntity.getStartDate(), is(NOW));
         assertThat(actualPaymentInstrumentEntity.getStatus(), is(PaymentInstrumentStatus.CREATED));
+        assertThat(actualPaymentInstrumentEntity.getChargeExternalId(), is(chargeEntity.getExternalId()));
         assertThat(actualPaymentInstrumentEntity, is(paymentInstrument));
     }
 }
