@@ -24,6 +24,7 @@ public class GooglePayPaymentInfo extends WalletPaymentInfo implements BrowserDa
     private String worldpay3dsFlexDdcResult;
 
     public GooglePayPaymentInfo() {
+        // Needed for Jackson
     }
     
     public GooglePayPaymentInfo(String lastDigitsCardNumber,
