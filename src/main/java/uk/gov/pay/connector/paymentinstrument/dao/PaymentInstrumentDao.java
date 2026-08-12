@@ -29,6 +29,20 @@ public class PaymentInstrumentDao extends JpaDao<PaymentInstrumentEntity> {
                 .setParameter("externalId", externalId)
                 .getResultList().stream().findFirst();
     }
+
+    public Optional<PaymentInstrumentEntity> findByChargeExternalId(String chargeExternalId) {
+
+        String query = "SELECT p FROM PaymentInstrumentEntity p " +
+                "WHERE p.chargeExternalId = :chargeExternalId";
+
+        var pi = entityManager.get()
+                .createQuery(query, PaymentInstrumentEntity.class)
+                .setParameter("chargeExternalId", chargeExternalId)
+                .getResultList();
+        
+        return pi.stream().findFirst();
+    }
+
     
     public List<PaymentInstrumentEntity> findPaymentInstrumentsByAgreementAndStatus(String agreementExternalId, PaymentInstrumentStatus status) {
         String query = "SELECT p from PaymentInstrumentEntity p " +
