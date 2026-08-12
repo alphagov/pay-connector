@@ -79,8 +79,7 @@ public class AdyenRecurringTokenNotificationService {
 
                 return true;
             }
-            taskQueueService.add(new Task(payload, TaskType.HANDLE_ADYEN_TOKEN_WEBHOOK_NOTIFICATION));
-            
+            addNotificationToTaskQueue(payload);
             LOGGER.atInfo()
                     .setMessage("Processed Adyen token notification")
                     .addKeyValue(PROVIDER, ADYEN.getName())
@@ -103,6 +102,18 @@ public class AdyenRecurringTokenNotificationService {
     }
     private boolean isSupportedEventType(String eventType) {
         return SUPPORTED_EVENT_TYPES.contains(eventType);
+    }
+    
+    private void addNotificationToTaskQueue(String payload) {
+        try {
+            taskQueueService.add(
+                    new Task(payload, TaskType.HANDLE_ADYEN_TOKEN_WEBHOOK_NOTIFICATION)
+            );
+        } catch (Exception e) {
+            LOGGER.error("Error sending Adyen token webhook notification to task SQS queue", e);
+            
+            throw new WebApplicationException("Error sending message to task SQS queue", e);
+        }
     }
 }
 

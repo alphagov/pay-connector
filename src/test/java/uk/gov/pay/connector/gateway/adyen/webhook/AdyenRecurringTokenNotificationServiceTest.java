@@ -37,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -241,6 +242,64 @@ class AdyenRecurringTokenNotificationServiceTest {
                                                 "Ignoring unsupported Adyen token notification")), is(true)
         );
     }
+
+    @Test
+    void shouldThrowWebApplicationExceptionWhenAddingTokenNotificationToTaskQueueFails() {
+        var primaryTestKey = "primaryTest";
+
+        String payload = TestTemplateResourceLoader.load(
+                TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION
+        );
+
+        var tokenKeys = new HmacKeys.WebhookHmacKeyPair(
+                new WebhookHmacKeys(primaryTestKey, "secondaryTest"),
+                new WebhookHmacKeys("primaryLive", "secondaryLive")
+        );
+
+        when(mockAdyenNotificationValidator.isValidIpAddress(FORWARDED_IP))
+                .thenReturn(true);
+
+        when(adyenGatewayConfig.getHmacKeys())
+                .thenReturn(new HmacKeys(null, tokenKeys));
+
+        when(mockAdyenNotificationValidator.isValidHmac(HMAC_SIGNATURE, primaryTestKey, payload)).thenReturn(true);
+
+        doThrow(new RuntimeException("SQS unavailable")).when(mockTaskQueueService).add(any(Task.class));
+
+        assertThrows(WebApplicationException.class, () -> adyenRecurringTokenNotificationService.handleNotificationFor(
+                        payload, HMAC_SIGNATURE, FORWARDED_IP));
+        verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
+
+        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+
+        assertThat(loggingEvents.stream().anyMatch(event -> event.getFormattedMessage().equals(
+                                                "Error sending Adyen token webhook notification to task SQS queue")),
+                is(true)
+        );
+    }
+    
+    @Test
+    void shouldThrowWebApplicationExceptionWhenTokenNotificationCannotBeDeserialised() {
+        String payload = "invalidJson";
+
+        when(mockAdyenNotificationValidator.isValidIpAddress(FORWARDED_IP)).thenReturn(true);
+
+        WebApplicationException exception = assertThrows(WebApplicationException.class, 
+                () -> adyenRecurringTokenNotificationService.handleNotificationFor(payload, HMAC_SIGNATURE, FORWARDED_IP));
+
+        assertThat(exception.getMessage(), is("Error deserialising token webhook Json"));
+
+        verifyNoInteractions(mockTaskQueueService);
+        verify(mockAppender, atLeastOnce())
+                .doAppend(loggingEventArgumentCaptor.capture());
+
+        List<LoggingEvent> loggingEvents =
+                loggingEventArgumentCaptor.getAllValues();
+
+        assertThat(loggingEvents.stream().anyMatch(event -> event.getFormattedMessage().equals(
+                "Error deserialising token notification payload")), is(true));
+    }
+    
     @ParameterizedTest
     @ValueSource(strings = {
             "recurring.token.created",
