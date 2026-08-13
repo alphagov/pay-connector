@@ -1315,6 +1315,7 @@ public class DatabaseFixtures {
         String externalId = "externalIDabc";
 
         String agreementExternalId;
+        String chargeExternalId;
 
         PaymentInstrumentStatus status = PaymentInstrumentStatus.CREATED;
 
@@ -1329,6 +1330,11 @@ public class DatabaseFixtures {
 
         public TestPaymentInstrument withExternalId(String externalId) {
             this.externalId = externalId;
+            return this;
+        }
+
+        public TestPaymentInstrument withChargeExternalId(String chargeExternalId) {
+            this.chargeExternalId = chargeExternalId;
             return this;
         }
 
@@ -1350,6 +1356,7 @@ public class DatabaseFixtures {
                     .withStartDate(startDate)
                     .withPaymentInstrumentStatus(status)
                     .withAgreementExternalId(agreementExternalId)
+                    .withChargeExternalId(chargeExternalId)
                     .build());
             return this;
         }

@@ -24,6 +24,7 @@ public class PaymentInstrumentDaoIT {
     private PaymentInstrumentDao paymentInstrumentDao;
 
     private static final String PAYMENT_INSTRUMENT_EXTERNAL_ID_ONE = "12345678901234567890123456";
+    private static final String PAYMENT_INSTRUMENT_CHARGE_EXTERNAL_ID = "987654321987654321987654";
 
     @BeforeEach
     void setUp() {
@@ -42,6 +43,14 @@ public class PaymentInstrumentDaoIT {
     void findByExternalId_shouldNotFindAPaymentInstrumentEntity() {
         Optional<PaymentInstrumentEntity> paymentInstrument = paymentInstrumentDao.findByExternalId(PAYMENT_INSTRUMENT_EXTERNAL_ID_ONE);
         assertThat(paymentInstrument.isPresent(), is(false));
+    }
+
+    @Test
+    void findByChargeExternalId_shouldFindAPaymentInstrumentEntity() {
+        insertTestPaymentInstrumentWithChargeExternalId(PAYMENT_INSTRUMENT_CHARGE_EXTERNAL_ID);
+        Optional<PaymentInstrumentEntity> paymentInstrument = paymentInstrumentDao.findByChargeExternalId(PAYMENT_INSTRUMENT_CHARGE_EXTERNAL_ID);
+        assertThat(paymentInstrument.isPresent(), is(true));
+        assertThat(paymentInstrument.get().getChargeExternalId(), is(PAYMENT_INSTRUMENT_CHARGE_EXTERNAL_ID));
     }
 
     @Test
@@ -73,6 +82,14 @@ public class PaymentInstrumentDaoIT {
                 .aTestPaymentInstrument()
                 .withPaymentInstrumentId(secureRandomLong())
                 .withExternalId(paymentInstrumentExternalId)
+                .insert();
+    }
+
+    private void insertTestPaymentInstrumentWithChargeExternalId( String chargeExternalId) {
+        app.getDatabaseFixtures()
+                .aTestPaymentInstrument()
+                .withPaymentInstrumentId(secureRandomLong())
+                .withChargeExternalId(chargeExternalId)
                 .insert();
     }
 
