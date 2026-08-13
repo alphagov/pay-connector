@@ -7,6 +7,8 @@ import java.security.SecureRandom;
 import java.util.Locale;
 import java.util.UUID;
 
+import static java.util.Arrays.stream;
+
 public class RandomIdGenerator {
 
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -22,10 +24,13 @@ public class RandomIdGenerator {
      *
      * @return a random number in base32 (in string format)
      */
+
+    public static int ID_LENGTH = 26;
+
     public static String newId() {
         String id = new BigInteger(130, RANDOM).toString(32);
 
-        return StringUtils.leftPad(id, 26, '0');
+        return StringUtils.leftPad(id, ID_LENGTH, '0');
     }
 
     public static String randomUuid() {
@@ -36,19 +41,24 @@ public class RandomIdGenerator {
         return UUID.nameUUIDFromBytes(externalEntityId.getBytes()).toString()
                 .replace("-", "")
                 .toLowerCase(Locale.ENGLISH)
-                .substring(0, 26);
+                .substring(0, ID_LENGTH);
     }
 
-    public  String random13ByteHexGenerator() {
+    // This method can accept single/multiple parameters or a String array of Ids
+    public static Boolean isValidIdLength(String... ids) {
+        return ids.length > 0 && stream(ids).allMatch(id -> id.length() == ID_LENGTH);
+    }
+
+    public String random13ByteHexGenerator() {
         byte[] bytes = new byte[13];
         RANDOM.nextBytes(bytes);
-        StringBuilder sb = new StringBuilder(26);
+        StringBuilder sb = new StringBuilder(ID_LENGTH);
         for (byte b : bytes) {
             sb.append(String.format("%02x", b));
         }
         return sb.toString();
     }
-    
+
     public static long randomLong() {
         return RANDOM.nextLong();
     }

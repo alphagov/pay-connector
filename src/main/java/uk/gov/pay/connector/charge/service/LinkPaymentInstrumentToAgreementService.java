@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.function.Predicate.not;
-import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.service.payments.logging.LoggingKeys.AGREEMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_INSTRUMENT_EXTERNAL_ID;
 
@@ -45,25 +44,32 @@ public class LinkPaymentInstrumentToAgreementService {
 
     @Transactional
     public void linkPaymentInstrumentFromChargeToAgreement(ChargeEntity chargeEntity) {
-        chargeEntity.getPaymentInstrument().ifPresentOrElse(paymentInstrumentEntity -> {
-            chargeEntity.getAgreement().ifPresentOrElse(agreementEntity -> {
-                paymentInstrumentEntity.getRecurringAuthToken().filter(not(Map::isEmpty)).ifPresentOrElse(_ -> {
-                    cancelActivePaymentInstruments(agreementEntity);
-                    agreementEntity.setPaymentInstrument(paymentInstrumentEntity);
-                    paymentInstrumentEntity.setAgreementExternalId(agreementEntity.getExternalId());
-                    paymentInstrumentEntity.setStatus(PaymentInstrumentStatus.ACTIVE);
-                    ledgerService.postEvent(List.of(
-                            AgreementSetUp.from(agreementEntity, instantSource.instant()),
-                            PaymentInstrumentConfirmed.from(agreementEntity, instantSource.instant())
-                    ));
-                    LOGGER.info("Agreement successfully set up with payment instrument",
-                            kv(AGREEMENT_EXTERNAL_ID, agreementEntity.getExternalId()),
-                            kv(PAYMENT_INSTRUMENT_EXTERNAL_ID, paymentInstrumentEntity.getExternalId()));
-                }, () -> LOGGER.info("Payment instrument doesn't have a token associated. Not linked the payment instrument to the agreement",
-                        kv(AGREEMENT_EXTERNAL_ID, agreementEntity.getExternalId()),
-                        kv(PAYMENT_INSTRUMENT_EXTERNAL_ID, paymentInstrumentEntity.getExternalId())));
-            }, () -> LOGGER.error("Expected charge {} to have an agreement but it does not have one", chargeEntity.getExternalId()));
-        }, () -> LOGGER.error("Expected charge {} to have a payment instrument but it does not have one", chargeEntity.getExternalId()));
+        chargeEntity.getPaymentInstrument().ifPresentOrElse(paymentInstrumentEntity ->
+                chargeEntity.getAgreement().ifPresentOrElse(agreementEntity ->
+                        paymentInstrumentEntity.getRecurringAuthToken().filter(not(Map::isEmpty)).ifPresentOrElse(_ ->
+                                linkPaymentInstrumentToAgreement(agreementEntity, paymentInstrumentEntity), () -> LOGGER.atInfo()
+                                .setMessage("Payment instrument doesn't have a token associated. Not linked the payment instrument to the agreement")
+                                .addKeyValue(PAYMENT_INSTRUMENT_EXTERNAL_ID, paymentInstrumentEntity.getExternalId())
+                                .addKeyValue(AGREEMENT_EXTERNAL_ID, agreementEntity.getExternalId())
+                                .log()
+                        ), () -> LOGGER.error("Expected charge {} to have an agreement but it does not have one", chargeEntity.getExternalId())), () -> LOGGER.error("Expected charge {} to have a payment instrument but it does not have one", chargeEntity.getExternalId()));
+    }
+
+    @Transactional
+    public void linkPaymentInstrumentToAgreement(AgreementEntity agreementEntity, PaymentInstrumentEntity paymentInstrumentEntity) {
+        cancelActivePaymentInstruments(agreementEntity);
+        agreementEntity.setPaymentInstrument(paymentInstrumentEntity);
+        paymentInstrumentEntity.setAgreementExternalId(agreementEntity.getExternalId());
+        paymentInstrumentEntity.setStatus(PaymentInstrumentStatus.ACTIVE);
+        ledgerService.postEvent(List.of(
+                AgreementSetUp.from(agreementEntity, instantSource.instant()),
+                PaymentInstrumentConfirmed.from(agreementEntity, instantSource.instant())
+        ));
+        LOGGER.atInfo()
+                .setMessage("Agreement successfully set up with payment instrument")
+                .addKeyValue(AGREEMENT_EXTERNAL_ID, agreementEntity.getExternalId())
+                .addKeyValue(PAYMENT_INSTRUMENT_EXTERNAL_ID, paymentInstrumentEntity.getExternalId())
+                .log();
     }
 
     private void cancelActivePaymentInstruments(AgreementEntity agreement) {
