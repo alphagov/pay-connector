@@ -309,4 +309,9 @@ public class AuthCardDetails implements BrowserDataFor3ds {
     public Optional<String> getBrowserUserAgent() {
         return Optional.ofNullable(userAgentHeader);
     }
+
+    public Optional<String> getBrowserIpAddress() {
+        return Optional.ofNullable(ipAddress);
+    }
+
 }

@@ -3799,6 +3799,8 @@ components:
           type: string
         browserColorDepth:
           type: string
+        browserIpAddress:
+          type: string
         browserJavaScriptEnabled:
           type: boolean
         browserLanguage:
@@ -5634,6 +5636,8 @@ components:
           type: string
         browser_color_depth:
           type: string
+        browser_ip_address:
+          type: string
         browser_java_script_enabled:
           type: boolean
         browser_language:
@@ -5664,6 +5668,24 @@ components:
         ip_address:
           type: string
           example: 203.0.113.1
+        js_enabled:
+          type: boolean
+          example: true
+        js_navigator_language:
+          type: string
+          example: en-GB
+        js_screen_color_depth:
+          type: string
+          example: "32"
+        js_screen_height:
+          type: string
+          example: "982"
+        js_screen_width:
+          type: string
+          example: "1512"
+        js_timezone_offset_mins:
+          type: string
+          example: "-60"
         last_digits_card_number:
           type: string
           description: last digits card number
