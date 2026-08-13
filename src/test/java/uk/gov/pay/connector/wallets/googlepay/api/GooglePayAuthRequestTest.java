@@ -22,9 +22,12 @@ class GooglePayAuthRequestTest {
         assertThat(actual.getPaymentInfo().getLastDigitsCardNumber(), is(paymentInfo.get("last_digits_card_number").asText()));
         assertThat(actual.getPaymentInfo().getBrand(), is(paymentInfo.get("brand").asText()));
         assertThat(actual.getPaymentInfo().getEmail(), is(paymentInfo.get("email").asText()));
-        assertThat(actual.getPaymentInfo().getAcceptHeader(), is(paymentInfo.get("accept_header").asText()));
-        assertThat(actual.getPaymentInfo().getUserAgentHeader(), is(paymentInfo.get("user_agent_header").asText()));
-        assertThat(actual.getPaymentInfo().getIpAddress(), is(paymentInfo.get("ip_address").asText()));
+        assertThat(actual.getPaymentInfo().getBrowserAcceptHeader().isPresent(), is(true));
+        assertThat(actual.getPaymentInfo().getBrowserAcceptHeader().get(), is(paymentInfo.get("accept_header").asText()));
+        assertThat(actual.getPaymentInfo().getBrowserUserAgent().isPresent(), is(true));
+        assertThat(actual.getPaymentInfo().getBrowserUserAgent().get(), is(paymentInfo.get("user_agent_header").asText()));
+        assertThat(actual.getPaymentInfo().getBrowserIpAddress().isPresent(), is(true));
+        assertThat(actual.getPaymentInfo().getBrowserIpAddress().get(), is(paymentInfo.get("ip_address").asText()));
 
         JsonNode encryptedPaymentData = expected.get("encrypted_payment_data");
         assertThat(actual.getEncryptedPaymentData().isPresent(), is(true));
