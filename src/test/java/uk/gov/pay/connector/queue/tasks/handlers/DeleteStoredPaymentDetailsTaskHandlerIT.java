@@ -23,6 +23,7 @@ class DeleteStoredPaymentDetailsTaskHandlerIT {
     private static final String AGREEMENT_EXTERNAL_ID = "agreement-external-id-123";
     private static final String PAYMENT_INSTRUMENT_EXTERNAL_ID = "payment-instrument-ext-id-123";
     private static final String STORED_PAYMENT_METHOD_ID = "stored-payment-method-id-123";
+    private static final String CHARGE_EXTERNAL_ID = "charged-external-id-123";
 
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
@@ -40,7 +41,7 @@ class DeleteStoredPaymentDetailsTaskHandlerIT {
 
         app.getAdyenWireMockServer().stubFor(delete(urlPathEqualTo("/storedPaymentMethods/" + STORED_PAYMENT_METHOD_ID))
                 .withQueryParam("merchantAccount", equalTo("adyen-test-merchant-account-id"))
-                .withQueryParam("shopperReference", equalTo(AGREEMENT_EXTERNAL_ID))
+                .withQueryParam("shopperReference", equalTo(AGREEMENT_EXTERNAL_ID+"-"+CHARGE_EXTERNAL_ID))
                 .willReturn(aResponse().withStatus(204)));
 
         deleteStoredPaymentDetailsTaskHandler.process(AGREEMENT_EXTERNAL_ID, PAYMENT_INSTRUMENT_EXTERNAL_ID);
@@ -48,7 +49,7 @@ class DeleteStoredPaymentDetailsTaskHandlerIT {
         app.getAdyenWireMockServer().verify(deleteRequestedFor(urlPathEqualTo("/storedPaymentMethods/" + STORED_PAYMENT_METHOD_ID))
                 .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
                 .withQueryParam("merchantAccount", equalTo("adyen-test-merchant-account-id"))
-                .withQueryParam("shopperReference", equalTo(AGREEMENT_EXTERNAL_ID)));
+                .withQueryParam("shopperReference", equalTo(AGREEMENT_EXTERNAL_ID+"-"+CHARGE_EXTERNAL_ID)));
     }
 
     @Test
@@ -57,7 +58,7 @@ class DeleteStoredPaymentDetailsTaskHandlerIT {
 
         app.getAdyenWireMockServer().stubFor(delete(urlPathEqualTo("/storedPaymentMethods/" + STORED_PAYMENT_METHOD_ID))
                 .withQueryParam("merchantAccount", equalTo("adyen-test-merchant-account-id"))
-                .withQueryParam("shopperReference", equalTo(AGREEMENT_EXTERNAL_ID))
+                .withQueryParam("shopperReference", equalTo(AGREEMENT_EXTERNAL_ID+"-"+CHARGE_EXTERNAL_ID))
                 .willReturn(aResponse().withStatus(500).withBody("{\"error\":\"gateway error\"}")));
 
         assertThrows(GatewayException.GatewayErrorException.class,
@@ -83,6 +84,7 @@ class DeleteStoredPaymentDetailsTaskHandlerIT {
                 .withPaymentInstrumentId(424242L)
                 .withExternalPaymentInstrumentId(PAYMENT_INSTRUMENT_EXTERNAL_ID)
                 .withAgreementExternalId(AGREEMENT_EXTERNAL_ID)
+                        .withChargeExternalId(CHARGE_EXTERNAL_ID)
                 .withRecurringAuthToken(Map.of("storedPaymentMethodId", STORED_PAYMENT_METHOD_ID))
                 .build());
     }

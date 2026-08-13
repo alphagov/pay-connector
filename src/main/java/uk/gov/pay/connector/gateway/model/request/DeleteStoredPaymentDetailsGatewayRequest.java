@@ -8,17 +8,20 @@ import java.util.Map;
 
 public class DeleteStoredPaymentDetailsGatewayRequest {
     private String agreementExternalId;
+    private String chargeExternalId;
     private Map<String, String> recurringAuthToken;
     private String gatewayAccountType;
     private boolean live;
     private GatewayCredentials gatewayCredentials;
 
     private DeleteStoredPaymentDetailsGatewayRequest(String agreementExternalId,
+                                                     String chargeExternalId,
                                                      Map<String, String> recurringAuthToken,
                                                      String gatewayAccountType,
                                                      boolean live,
                                                      GatewayCredentials gatewayCredentials) {
         this.agreementExternalId = agreementExternalId;
+        this.chargeExternalId = chargeExternalId;
         this.recurringAuthToken = recurringAuthToken;
         this.gatewayAccountType = gatewayAccountType;
         this.live = live;
@@ -30,6 +33,7 @@ public class DeleteStoredPaymentDetailsGatewayRequest {
                 .orElseThrow(() -> new IllegalArgumentException("Expected payment instrument to have recurring auth token set"));
         return new DeleteStoredPaymentDetailsGatewayRequest(
                 agreement.getExternalId(),
+                paymentInstrument.getChargeExternalId(),
                 recurringAuthToken,
                 agreement.getGatewayAccount().getType(),
                 agreement.isLive(),
@@ -55,5 +59,9 @@ public class DeleteStoredPaymentDetailsGatewayRequest {
 
     public GatewayCredentials getGatewayCredentials() {
         return gatewayCredentials;
+    }
+
+    public String getChargeExternalId() {
+        return chargeExternalId;
     }
 }
