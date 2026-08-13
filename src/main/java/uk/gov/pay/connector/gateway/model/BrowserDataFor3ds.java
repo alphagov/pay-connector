@@ -35,4 +35,8 @@ public interface BrowserDataFor3ds {
     default Optional<String> getBrowserUserAgent() {
         return Optional.empty();
     }
+
+    default Optional<String> getBrowserIpAddress() {
+        return Optional.empty();
+    }
 }
