@@ -40,7 +40,7 @@ public class AdyenDeleteStoredPaymentHandler {
                 getApiKeyHeader(adyenGatewayConfig, request.isLive()),
                 Map.of(
                         "merchantAccount", adyenMerchantAccountHelper.getMerchantAccount(request.isLive()),
-                        "shopperReference", request.getAgreementExternalId()
+                        "shopperReference", String.format("%s-%s",request.getAgreementExternalId(), request.getChargeExternalId())
                 ),
                 request.getGatewayAccountType());
 

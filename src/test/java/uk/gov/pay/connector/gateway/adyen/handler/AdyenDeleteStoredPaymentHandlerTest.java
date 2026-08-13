@@ -73,7 +73,7 @@ class AdyenDeleteStoredPaymentHandlerTest {
         assertThat(gatewayRequest.getUrl().toString(), is("https://example.com/test/version/storedPaymentMethods/storedPaymentMethodId-123"));
         assertThat(gatewayRequest.getHeaders(), hasEntry("X-API-Key", "test-api-key"));
         assertThat(gatewayRequest.getQueryParams(), hasEntry("merchantAccount", "merchant-account-test"));
-        assertThat(gatewayRequest.getQueryParams(), hasEntry("shopperReference", "agreement-external-id-123"));
+        assertThat(gatewayRequest.getQueryParams(), hasEntry("shopperReference", "agreement-external-id-123-charge-external-id-123"));
     }
 
     @Test
@@ -88,6 +88,7 @@ class AdyenDeleteStoredPaymentHandlerTest {
     private DeleteStoredPaymentDetailsGatewayRequest createDeleteStoredPaymentDetailsGatewayRequest() {
         PaymentInstrumentEntity paymentInstrumentEntity = aPaymentInstrumentEntity()
                 .withExternalId("payment-instrument-ext-id-123")
+                .withChargeExternalId("charge-external-id-123")
                 .withRecurringAuthToken(Map.of("storedPaymentMethodId", "storedPaymentMethodId-123"))
                 .build();
 
