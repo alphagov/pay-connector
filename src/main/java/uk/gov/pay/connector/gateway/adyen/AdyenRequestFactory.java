@@ -36,7 +36,8 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 public class AdyenRequestFactory {
 
     public static final String STORED_PAYMENT_METHOD_ID = "storedPaymentMethodId";
-    
+    public static final String SHOPPER_REFERENCE_DELIMITER = "-";
+
     private final ConnectorConfiguration configuration;
     private final AdyenMerchantAccountHelper adyenMerchantAccountHelper;
     private final AdyenCredentialsHelper adyenCredentialsHelper;
@@ -137,7 +138,7 @@ public class AdyenRequestFactory {
         if (agreementId == null || chargeExternalId == null || isBlank(agreementId) || isBlank(chargeExternalId)) {
             throw new IllegalArgumentException("shopperReference could not be derived as charge external ID or agreement external ID are missing");
         }
-        return String.format("%s-%s", agreementId, chargeExternalId);
+        return agreementId + SHOPPER_REFERENCE_DELIMITER + chargeExternalId;
     }
 
     private static String getShopperInteraction(CardAuthorisationGatewayRequest request) {
