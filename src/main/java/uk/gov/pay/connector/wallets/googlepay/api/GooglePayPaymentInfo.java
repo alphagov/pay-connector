@@ -11,12 +11,15 @@ import java.util.Optional;
 public class GooglePayPaymentInfo extends WalletPaymentInfo implements BrowserDataFor3ds {
     
     @Schema(example = "text/html;q=1.0, */*;q=0.9")
+    @JsonProperty("accept_header")
     private String acceptHeader;
     
     @Schema(example = "Mozilla/5.0")
+    @JsonProperty("user_agent_header")
     private String userAgentHeader;
     
     @Schema(example = "203.0.113.1")
+    @JsonProperty("ip_address")
     private String ipAddress;
     
     @Schema(example = "true")
@@ -67,16 +70,19 @@ public class GooglePayPaymentInfo extends WalletPaymentInfo implements BrowserDa
         this.worldpay3dsFlexDdcResult = worldpay3dsFlexDdcResult;
     }
 
-    public String getAcceptHeader() {
-        return acceptHeader;
+    @Override
+    public Optional<String> getBrowserAcceptHeader() {
+        return Optional.ofNullable(acceptHeader);
     }
 
-    public String getUserAgentHeader() {
-        return userAgentHeader;
+    @Override
+    public Optional<String> getBrowserUserAgent() {
+        return Optional.ofNullable(userAgentHeader);
     }
 
-    public String getIpAddress() {
-        return ipAddress;
+    @Override
+    public Optional<String> getBrowserIpAddress() {
+        return Optional.ofNullable(ipAddress);
     }
 
     @Override
@@ -109,22 +115,6 @@ public class GooglePayPaymentInfo extends WalletPaymentInfo implements BrowserDa
         return Optional.ofNullable(jsTimezoneOffsetMins);
     }
 
-    @Override
-    public Optional<String> getBrowserAcceptHeader() {
-        return Optional.ofNullable(acceptHeader);
-    }
-
-    @Override
-    public Optional<String> getBrowserUserAgent() {
-        return Optional.ofNullable(userAgentHeader);
-    }
-
-    @Override
-    public Optional<String> getBrowserIpAddress() {
-        return Optional.ofNullable(ipAddress);
-    }
-
-
     public Optional<String> getWorldpay3dsFlexDdcResult() {
         return Optional.ofNullable(worldpay3dsFlexDdcResult);
     }
@@ -138,6 +128,12 @@ public class GooglePayPaymentInfo extends WalletPaymentInfo implements BrowserDa
                 ", acceptHeader=" + acceptHeader +
                 ", userAgentHeader=" + userAgentHeader +
                 ", ipAddress=" + Optional.ofNullable(ipAddress).map(x -> "ipAddress is present").orElse("ipAddress is not present") +
+                ". jsEnabled=" + jsEnabled +
+                ", jsNavigatorLanguage='" + jsNavigatorLanguage + '\'' +
+                ", jsScreenColorDepth='" + jsScreenColorDepth + '\'' +
+                ", jsScreenHeight='" + jsScreenHeight + '\'' +
+                ", jsScreenWidth='" + jsScreenWidth + '\'' +
+                ", jsTimezoneOffsetMins='" + jsTimezoneOffsetMins + '\'' +
                 ", worldpay3dsFlexDdcResult=" + getWorldpay3dsFlexDdcResult().map(x -> "present").orElse("not present") +
                 '}';
     }
