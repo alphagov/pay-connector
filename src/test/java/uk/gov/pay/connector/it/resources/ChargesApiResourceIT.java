@@ -102,7 +102,7 @@ public class ChargesApiResourceIT {
                 .then()
                 .statusCode(204);
 
-        Thread.sleep(1000);
+        Thread.sleep(2000);
 
         // Trigger the capture process programmatically which normally would be invoked by the scheduler.
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
