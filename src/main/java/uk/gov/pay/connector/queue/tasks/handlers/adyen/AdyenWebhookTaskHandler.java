@@ -26,20 +26,27 @@ public class AdyenWebhookTaskHandler {
     private final AdyenNotificationService adyenNotificationService;
     private final AdyenCancellationNotificationHandler adyenCancellationNotificationHandler;
     private final AdyenRefundNotificationHandler adyenRefundNotificationHandler;
+    private final AdyenTokenWebhookNotificationHandler adyenTokenWebhookNotificationHandler;
 
     @Inject
     public AdyenWebhookTaskHandler(ChargeService chargeService,
                                    AdyenNotificationService adyenNotificationService,
                                    AdyenCancellationNotificationHandler adyenCancellationNotificationHandler,
-                                   AdyenRefundNotificationHandler adyenRefundNotificationHandler, 
-                                   AdyenCaptureNotificationHandler adyenCaptureNotificationHandler) {
+                                   AdyenRefundNotificationHandler adyenRefundNotificationHandler,
+                                   AdyenCaptureNotificationHandler adyenCaptureNotificationHandler,
+                                   AdyenTokenWebhookNotificationHandler adyenTokenWebhookNotificationHandler) {
         this.chargeService = chargeService;
         this.adyenNotificationService = adyenNotificationService;
         this.adyenCancellationNotificationHandler = adyenCancellationNotificationHandler;
         this.adyenRefundNotificationHandler = adyenRefundNotificationHandler;
         this.adyenCaptureNotificationHandler = adyenCaptureNotificationHandler;
+        this.adyenTokenWebhookNotificationHandler = adyenTokenWebhookNotificationHandler;
     }
 
+    public void processAdyenTokenWebhookNotification(String payload) {
+        adyenTokenWebhookNotificationHandler.process(payload);
+    }
+    
     @Transactional
     public void processAdyenWebhookNotification(String payload) {
         NotificationRequest notificationRequest =

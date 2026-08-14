@@ -12,7 +12,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
-import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsTaskHandler;
@@ -20,6 +19,7 @@ import uk.gov.pay.connector.queue.tasks.handlers.QueryAndUpdatePaymentInSubmitte
 import uk.gov.pay.connector.queue.tasks.handlers.RetryPaymentOrRefundEmailTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.ServiceArchivedTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.queue.tasks.model.RetryPaymentOrRefundEmailTaskData;
 import uk.gov.pay.connector.queue.tasks.model.ServiceArchivedTaskData;
@@ -189,6 +189,15 @@ class TaskQueueMessageHandlerTest {
         PaymentTaskData taskData = paymentTaskDataArgumentCaptor.getValue();
         assertThat(taskData.getPaymentExternalId(), is("payment-ext-id"));
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
+    }
+
+    @Test
+    void shouldProcessAdyenTokenWebhookNotificationTask() throws QueueException {
+        TaskMessage taskMessage = setupQueueMessage("{}", TaskType.HANDLE_ADYEN_TOKEN_WEBHOOK_NOTIFICATION);
+        taskQueueMessageHandler.processMessages();
+        verify(mockAdyenWebhookTaskHandler).processAdyenTokenWebhookNotification("{}");
+        verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
+        logs.assertContains("Processing [handle_adyen_token_webhook_notification] task.");
     }
 
     private TaskMessage setupQueueMessage(String data, TaskType taskType) throws QueueException {
