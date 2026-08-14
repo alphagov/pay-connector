@@ -10,6 +10,7 @@ import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGate
 
 import java.util.Map;
 
+import static uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory.SHOPPER_REFERENCE_DELIMITER;
 import static uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory.STORED_PAYMENT_METHOD_ID;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getApiKeyHeader;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getDeleteStoredPaymentMethodUrl;
@@ -40,7 +41,7 @@ public class AdyenDeleteStoredPaymentHandler {
                 getApiKeyHeader(adyenGatewayConfig, request.isLive()),
                 Map.of(
                         "merchantAccount", adyenMerchantAccountHelper.getMerchantAccount(request.isLive()),
-                        "shopperReference", String.format("%s-%s",request.getAgreementExternalId(), request.getChargeExternalId())
+                        "shopperReference", request.getAgreementExternalId() + SHOPPER_REFERENCE_DELIMITER + request.getChargeExternalId()
                 ),
                 request.getGatewayAccountType());
 
