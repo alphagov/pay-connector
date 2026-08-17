@@ -23,6 +23,7 @@ import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenCancellationNotificationHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenCaptureNotificationHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenRefundNotificationHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenTokenWebhookNotificationHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookTaskHandler;
 
 import java.io.IOException;
@@ -60,6 +61,9 @@ class AdyenWebhookTaskHandlerTest {
 
     @Mock
     private AdyenNotificationService mockAdyenNotificationService;
+
+    @Mock
+    private AdyenTokenWebhookNotificationHandler mockAdyenTokenWebhookNotificationHandler;
 
     @Mock
     private Charge mockCharge;
@@ -238,5 +242,12 @@ class AdyenWebhookTaskHandlerTest {
         then(mockAdyenRefundNotificationHandler)
                 .should()
                 .process(any(), org.mockito.ArgumentMatchers.eq(charge));
+    }
+
+    @Test
+    void shouldDelegateTokenWebhookTaskToTokenHandler() {
+        adyenWebhookTaskHandler.processAdyenTokenWebhookNotification(payload);
+
+        verify(mockAdyenTokenWebhookNotificationHandler).process(payload);
     }
 }
