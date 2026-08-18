@@ -2,6 +2,7 @@ package uk.gov.pay.connector.wallets;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
+import uk.gov.pay.connector.gateway.adyen.response.AdyenAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
@@ -19,10 +21,10 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthRequestBuilder;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.AdyenGooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.Map;
 
@@ -48,6 +50,9 @@ public class WalletServiceTest {
 
     @Mock
     private WorldpayOrderStatusResponse worldpayResponse;
+    
+    @Mock
+    private AdyenAuthoriseResponse adyenAuthoriseResponse;
 
     private WalletService walletService;
 
@@ -136,6 +141,63 @@ public class WalletServiceTest {
     void shouldReturn402_ifGatewayErrorsForGooglePay() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
         GooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+        GatewayError gatewayError = mock(GatewayError.class);
+        GatewayResponse gatewayResponse = responseBuilder()
+                .withGatewayError(gatewayError)
+                .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
+                .build();
+        when(gatewayError.getErrorType()).thenReturn(GATEWAY_ERROR);
+        when(gatewayError.getMessage()).thenReturn("oops");
+        when(mockWalletAuthoriseService.authorise(externalChargeId, googlePayAuthRequest)).thenReturn(gatewayResponse);
+
+        Response authorisationResponse = walletService.authorise(externalChargeId, googlePayAuthRequest);
+
+        verify(mockWalletAuthoriseService).authorise(externalChargeId, googlePayAuthRequest);
+        assertThat(authorisationResponse.getStatus(), is(402));
+        ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
+        assertThat(response.messages(), contains("oops"));
+    }
+
+    @Test
+    void shouldAuthoriseAValidChargeForAdyenGooglePay() throws JsonProcessingException {
+        String externalChargeId = "external-charge-id";
+        AdyenGooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load("googlepay/example-adyen-auth-request.json"), AdyenGooglePayAuthRequest.class);
+        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
+                .withResponse(adyenAuthoriseResponse)
+                .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
+                .build();
+        when(adyenAuthoriseResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED);
+        when(mockWalletAuthoriseService.authorise(externalChargeId, googlePayAuthRequest)).thenReturn(gatewayResponse);
+
+        Response authorisationResponse = walletService.authorise(externalChargeId, googlePayAuthRequest);
+
+        verify(mockWalletAuthoriseService).authorise(externalChargeId, googlePayAuthRequest);
+        assertThat(authorisationResponse.getStatus(), is(200));
+        assertThat(authorisationResponse.getEntity(), is(Map.of("status", "AUTHORISATION SUCCESS")));
+    }
+
+    @Test
+    void shouldReturnAuthorise3dsRequiredForAValid3dsChargeForAdyenGooglePay() throws JsonProcessingException {
+        String externalChargeId = "external-charge-id";
+        AdyenGooglePayAuthRequest googlePayAuth3dsRequest = objectMapper.readValue(load("googlepay/example-3ds-adyen-auth-request.json"), AdyenGooglePayAuthRequest.class);
+        GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
+                .withResponse(adyenAuthoriseResponse)
+                .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
+                .build();
+        when(adyenAuthoriseResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS);
+        when(mockWalletAuthoriseService.authorise(externalChargeId, googlePayAuth3dsRequest)).thenReturn(gatewayResponse);
+
+        Response authorisationResponse = walletService.authorise(externalChargeId, googlePayAuth3dsRequest);
+
+        verify(mockWalletAuthoriseService).authorise(externalChargeId, googlePayAuth3dsRequest);
+        assertThat(authorisationResponse.getStatus(), is(200));
+        assertThat(authorisationResponse.getEntity(), is(Map.of("status", "AUTHORISATION 3DS REQUIRED")));
+    }
+
+    @Test
+    void shouldReturn402_ifGatewayErrorsForAdyenGooglePay() throws JsonProcessingException {
+        String externalChargeId = "external-charge-id";
+        AdyenGooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load("googlepay/example-adyen-auth-request.json"), AdyenGooglePayAuthRequest.class);
         GatewayError gatewayError = mock(GatewayError.class);
         GatewayResponse gatewayResponse = responseBuilder()
                 .withGatewayError(gatewayError)

@@ -6,6 +6,17 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.inject.Inject;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -34,19 +45,9 @@ import uk.gov.pay.connector.util.MDCUtils;
 import uk.gov.pay.connector.util.ResponseUtil;
 import uk.gov.pay.connector.wallets.WalletService;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.AdyenGooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 
-import jakarta.inject.Inject;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
 import java.util.Map;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -136,6 +137,32 @@ public class CardResource {
                                              @NotNull @Valid GooglePayAuthRequest googlePayAuthRequest) {
         logger.info("Received wallet payment info \n{} \nfor charge with id {}", googlePayAuthRequest.getPaymentInfo().toString(), chargeId);
         return walletService.authorise(chargeId, googlePayAuthRequest);
+    }
+
+    @POST
+    @Path("/v1/frontend/charges/{chargeId}/wallets/google/adyen")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Authorise Adyen Google Pay payment",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "202", description = "Accepted - payment has been submitted for authorisation and awaiting response from payment service provider"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - invalid payload or the payment has been declined",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "402", description = "Gateway error",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid payload or missing mandatory attributes",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error"),
+            }
+    )
+    public Response authoriseChargeAdyenGooglePay(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
+                                             @PathParam("chargeId") String chargeId,
+                                             @NotNull @Valid AdyenGooglePayAuthRequest adyenGooglePayAuthRequest) {
+        logger.info("Received wallet payment info \n{} \nfor charge with id {}", adyenGooglePayAuthRequest.getPaymentInfo().toString(), chargeId);
+        return walletService.authorise(chargeId, adyenGooglePayAuthRequest);
     }
 
     @POST
