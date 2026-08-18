@@ -16,7 +16,10 @@ import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
+import uk.gov.pay.connector.util.AddChargeParams;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
@@ -67,6 +70,10 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.Auth3dsRequiredEntityFixture.anAuth3dsRequiredEntity;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus.CANCELLED;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus.INACTIVE;
+import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
+import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.EXTERNAL;
@@ -103,7 +110,7 @@ public class ChargeDaoIT {
                 .build();
         gatewayAccountCredentialsEntity.setId(defaultTestAccount.getCredentials().getFirst().getId());
     }
-    
+
 
     @Test
     void chargeEvents_shouldRecordTransactionIdWithEachStatusChange() {
@@ -1166,6 +1173,129 @@ public class ChargeDaoIT {
 
         assertThat(optionalCharge.isPresent(), is(true));
         assertThat(optionalCharge.get().getAgreementPaymentType(), is(nullValue()));
+    }
+
+    @Nested
+    class TestFindLatestChargeForAgreementId {
+        long firstPaymentInstrumentId;
+        long secondPaymentInstrumentId;
+        long latestPaymentInstrumentId;
+
+        String agreementExternalId;
+        String firstChargeExternalId;
+        String secondChargeExternalId;
+        String latestChargeExternalId;
+
+        @BeforeEach
+        void setUp() {
+            agreementExternalId = randomAlphanumeric(26);
+
+            firstPaymentInstrumentId = secureRandomLong();
+            secondPaymentInstrumentId = secureRandomLong();
+            latestPaymentInstrumentId = secureRandomLong();
+
+            firstChargeExternalId = randomAlphanumeric(26);
+            secondChargeExternalId = randomAlphanumeric(26);
+            latestChargeExternalId = randomAlphanumeric(26);
+        }
+
+        @Test
+        void shouldFindLatestChargeForAgreementWhenMultipleChargesExistsAndPaymentInstrumentsAreInCreatedOrActiveState() {
+            insertAgreement(agreementExternalId);
+
+            insertPaymentInstrument(firstPaymentInstrumentId, agreementExternalId, firstChargeExternalId, Instant.now(),
+                    PaymentInstrumentStatus.CREATED);
+            insertPaymentInstrument(secondPaymentInstrumentId, agreementExternalId, secondChargeExternalId,
+                    now().plusMinutes(10).toInstant(), PaymentInstrumentStatus.ACTIVE);
+            insertPaymentInstrument(latestPaymentInstrumentId, agreementExternalId, latestChargeExternalId,
+                    now().plusMinutes(100).toInstant(), PaymentInstrumentStatus.CREATED);
+
+            insertChargeForAgreement(firstChargeExternalId, agreementExternalId, firstPaymentInstrumentId);
+            insertChargeForAgreement(secondChargeExternalId, agreementExternalId, secondPaymentInstrumentId);
+            insertChargeForAgreement(latestChargeExternalId, agreementExternalId, latestPaymentInstrumentId);
+
+            Optional<ChargeEntity> optionalChargeEntity = chargeDao.findLatestChargeForAgreementId(agreementExternalId);
+
+            assertThat(optionalChargeEntity.isPresent(), is(true));
+
+            ChargeEntity latestChargeEntity = optionalChargeEntity.get();
+            assertThat(latestChargeEntity.getExternalId(), is(latestChargeExternalId));
+            assertThat(latestChargeEntity.getPaymentInstrument().isPresent(), is(true));
+
+            PaymentInstrumentEntity paymentInstrumentEntity = latestChargeEntity.getPaymentInstrument().get();
+            assertThat(paymentInstrumentEntity.getChargeExternalId(), is(latestChargeExternalId));
+            assertThat(paymentInstrumentEntity.getStatus(), is(PaymentInstrumentStatus.CREATED));
+        }
+
+        @Test
+        void shouldNotReturnAChargeForAgreementIfNoneExistsForAgreementExternalId() {
+            insertAgreement(agreementExternalId);
+            insertPaymentInstrument(latestPaymentInstrumentId, agreementExternalId, latestChargeExternalId,
+                    now().plusMinutes(100).toInstant(), PaymentInstrumentStatus.CREATED);
+            insertChargeForAgreement(latestChargeExternalId, agreementExternalId, latestPaymentInstrumentId);
+
+            Optional<ChargeEntity> latestChargeForAgreementId = chargeDao.findLatestChargeForAgreementId("non-existent-external-id");
+
+            assertThat(latestChargeForAgreementId.isPresent(), is(false));
+        }
+
+        @Test
+        void shouldNotReturnAChargeIfNoPaymentInstrumentsExistsInCreatedOrActiveState() {
+            insertAgreement(agreementExternalId);
+            insertPaymentInstrument(firstPaymentInstrumentId, agreementExternalId, firstChargeExternalId,
+                    Instant.now(), INACTIVE);
+            insertPaymentInstrument(secondPaymentInstrumentId, agreementExternalId, secondChargeExternalId,
+                    Instant.now(), CANCELLED);
+
+            insertChargeForAgreement(firstChargeExternalId, agreementExternalId, firstPaymentInstrumentId);
+            insertChargeForAgreement(secondChargeExternalId, agreementExternalId, secondPaymentInstrumentId);
+
+            Optional<ChargeEntity> latestChargeForAgreementId = chargeDao.findLatestChargeForAgreementId(agreementExternalId);
+            assertThat(latestChargeForAgreementId.isPresent(), is(false));
+        }
+
+        @Test
+        void shouldNotReturnAChargeWhenChargesExistsAreForSubsequentRecurringPaymentWhichWontHavePaymentInstrumentId() {
+            insertAgreement(agreementExternalId);
+            insertChargeForAgreement(firstChargeExternalId, agreementExternalId, null);
+            insertChargeForAgreement(secondChargeExternalId, agreementExternalId, null);
+
+            Optional<ChargeEntity> latestChargeForAgreementId = chargeDao.findLatestChargeForAgreementId(agreementExternalId);
+            assertThat(latestChargeForAgreementId.isPresent(), is(false));
+        }
+
+        private void insertAgreement(String agreementExternalId) {
+            app.getDatabaseTestHelper().addAgreement(
+                    anAddAgreementParams()
+                            .withExternalAgreementId(agreementExternalId)
+                            .withGatewayAccountId(String.valueOf(defaultTestAccount.getAccountId()))
+                            .build()
+            );
+        }
+
+        private static void insertPaymentInstrument(long paymentInstrumentId, String agreementExternalId,
+                                                    String chargeExternalId, Instant createdDate, PaymentInstrumentStatus status) {
+            app.getDatabaseTestHelper().addPaymentInstrument(
+                    anAddPaymentInstrumentParams()
+                            .withPaymentInstrumentId(paymentInstrumentId)
+                            .withCreatedDate(createdDate)
+                            .withAgreementExternalId(agreementExternalId)
+                            .withChargeExternalId(chargeExternalId)
+                            .withPaymentInstrumentStatus(status)
+                            .build());
+        }
+
+        private void insertChargeForAgreement(String chargeExternalId2, String agreementExternalId, Long paymentInstrumentIdLatest) {
+            app.getDatabaseTestHelper().addCharge(
+                    AddChargeParams.AddChargeParamsBuilder
+                            .anAddChargeParams()
+                            .withExternalChargeId(chargeExternalId2)
+                            .withGatewayAccountId(String.valueOf(defaultTestAccount.getAccountId()))
+                            .withAgreementExternalId(agreementExternalId)
+                            .withPaymentInstrumentId(paymentInstrumentIdLatest)
+                            .build()
+            );
+        }
     }
 
     private void insertTestAccount() {

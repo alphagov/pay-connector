@@ -2,6 +2,13 @@ package uk.gov.pay.connector.charge.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
@@ -10,13 +17,6 @@ import uk.gov.pay.connector.events.model.ResourceType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.Query;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
@@ -32,6 +32,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_QUEUED;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus.ACTIVE;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus.CREATED;
 
 @Transactional
 public class ChargeDao extends JpaDao<ChargeEntity> {
@@ -357,5 +359,22 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setParameter("authorisationModes", authorisationModes)
                 .setMaxResults(limit)
                 .getResultList();
+    }
+
+    public Optional<ChargeEntity> findLatestChargeForAgreementId(String agreementExternalId) {
+        return entityManager.get()
+                .createQuery("""
+                        SELECT c FROM ChargeEntity c
+                        WHERE c.agreementEntity.externalId = :agreementExternalId
+                          AND c.paymentInstrument IS NOT NULL
+                         AND c.paymentInstrument.status IN :statuses
+                        ORDER BY c.paymentInstrument.createdDate DESC
+                        """, ChargeEntity.class)
+                .setParameter("agreementExternalId", agreementExternalId)
+                .setParameter("statuses", List.of(ACTIVE, CREATED))
+                .setMaxResults(1)
+                .getResultList()
+                .stream()
+                .findFirst();
     }
 }
