@@ -8,7 +8,7 @@ import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
 import uk.gov.pay.connector.wallets.WalletType;
 
 public record AdyenGooglePayAuthRequest(
-        @Schema(hidden = true)
+        @Schema(name = "payment_info", implementation = GooglePayPaymentInfo.class)
         @NotNull
         @Valid
         @JsonProperty("payment_info")
@@ -25,6 +25,7 @@ public record AdyenGooglePayAuthRequest(
         return paymentInfo;
     }
 
+    @Schema(hidden = true)
     @Override
     public WalletType getWalletType() {
         return WalletType.GOOGLE_PAY;
