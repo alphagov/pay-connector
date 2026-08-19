@@ -3690,14 +3690,12 @@ components:
     AdyenGooglePayAuthRequest:
       type: object
       properties:
+        payment_info:
+          $ref: "#/components/schemas/payment_info"
         token:
           type: string
-        walletType:
-          type: string
-          enum:
-          - APPLE_PAY
-          - GOOGLE_PAY
       required:
+      - payment_info
       - token
     AdyenSetupPatchRequest:
       type: object
@@ -6297,3 +6295,78 @@ components:
       required:
       - password
       - username
+    payment_info:
+      type: object
+      properties:
+        accept_header:
+          type: string
+          example: "text/html;q=1.0, */*;q=0.9"
+        brand:
+          type: string
+          example: visa
+        browser_accept_header:
+          type: string
+        browser_color_depth:
+          type: string
+        browser_ip_address:
+          type: string
+        browser_java_script_enabled:
+          type: boolean
+        browser_language:
+          type: string
+        browser_screen_height:
+          type: string
+        browser_screen_width:
+          type: string
+        browser_tz:
+          type: string
+        browser_user_agent:
+          type: string
+        card_type:
+          type: string
+          enum:
+          - DEBIT
+          - CREDIT
+          - CREDIT_OR_DEBIT
+          example: DEBIT
+        cardholder_name:
+          type: string
+          example: Joe B
+          maxLength: 255
+        email:
+          type: string
+          example: mr@payment.test
+          maxLength: 254
+        ip_address:
+          type: string
+          example: 203.0.113.1
+        js_enabled:
+          type: boolean
+          example: true
+        js_navigator_language:
+          type: string
+          example: en-GB
+        js_screen_color_depth:
+          type: string
+          example: "32"
+        js_screen_height:
+          type: string
+          example: "982"
+        js_screen_width:
+          type: string
+          example: "1512"
+        js_timezone_offset_mins:
+          type: string
+          example: "-60"
+        last_digits_card_number:
+          type: string
+          description: last digits card number
+          example: "4242"
+        user_agent_header:
+          type: string
+          example: Mozilla/5.0
+        worldpay_3ds_flex_ddc_result:
+          type: string
+          description: SessionId returned by Worldpay/CardinalCommerce as part of
+            device data collection. Applicable for Google Pay payments only
+          example: 1f1154b7-620d-4654-801b-893b5bb22db1
