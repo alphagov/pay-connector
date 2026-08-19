@@ -75,11 +75,14 @@ public class LinkPaymentInstrumentToAgreementService {
     private void cancelActivePaymentInstruments(AgreementEntity agreement) {
         List<PaymentInstrumentEntity> paymentInstruments = paymentInstrumentDao.findPaymentInstrumentsByAgreementAndStatus(
                 agreement.getExternalId(), PaymentInstrumentStatus.ACTIVE);
-        paymentInstruments.forEach(paymentInstrument -> {
-            paymentInstrument.setStatus(PaymentInstrumentStatus.CANCELLED);
-            taskQueueService.addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
-        });
+        paymentInstruments.forEach(paymentInstrument -> 
+                cancelPaymentInstrument(agreement, paymentInstrument));
+    }
 
+    @Transactional
+    public void cancelPaymentInstrument(AgreementEntity agreement, PaymentInstrumentEntity paymentInstrument) {
+        paymentInstrument.setStatus(PaymentInstrumentStatus.CANCELLED);
+        taskQueueService.addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
     }
 
 }
