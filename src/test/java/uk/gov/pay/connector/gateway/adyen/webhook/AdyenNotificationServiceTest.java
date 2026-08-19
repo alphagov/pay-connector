@@ -9,7 +9,9 @@ import com.adyen.model.notification.NotificationRequest;
 import com.adyen.model.notification.NotificationRequestItem;
 import com.adyen.notification.WebhookHandler;
 import com.adyen.util.HMACValidator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.WebApplicationException;
+import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +31,7 @@ import uk.gov.pay.connector.app.adyen.WebhookHmacKeys;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.queue.tasks.TaskType;
 import uk.gov.pay.connector.queue.tasks.model.Task;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.io.IOException;
@@ -46,6 +49,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_NOTIFICATION;
 
@@ -69,11 +73,16 @@ class AdyenNotificationServiceTest {
     @Mock
     private AdyenNotificationValidator mockAdyenNotificationValidator;
 
+    private final JsonObjectMapper jsonObjectMapper = new JsonObjectMapper(new ObjectMapper());
+    private static final String FORWARDED_IP = "5.6.7.8";
+    private static final String HMAC_SIGNATURE = "sha256=test-signature";
+    
     @BeforeEach
     void setUp() {
         adyenNotificationService = new AdyenNotificationService(mockAdyenGatewayConfig,
                 mockTaskQueueService,
-                mockAdyenNotificationValidator);
+                mockAdyenNotificationValidator,
+                jsonObjectMapper);
         Logger root = (Logger) LoggerFactory.getLogger(AdyenNotificationService.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
@@ -160,7 +169,7 @@ class AdyenNotificationServiceTest {
                 .getFormattedMessage(), is("Adyen notification request is empty or missing items"));
         assertThat(loggingEvents
                 .get(1)
-                .getFormattedMessage(), is("Failed to validate Adyen notification payload"));
+                .getFormattedMessage(), is("Failed to validate Adyen payment notification payload"));
     }
 
     @Test
@@ -184,8 +193,86 @@ class AdyenNotificationServiceTest {
                 .getFormattedMessage(), is("Adyen notification request is empty or missing items"));
         assertThat(loggingEvents
                 .get(1)
-                .getFormattedMessage(), is("Failed to validate Adyen notification payload"));
+                .getFormattedMessage(), is("Failed to validate Adyen payment notification payload"));
     }
+
+    @Test
+    void shouldRejectTokenNotificationWhenHmacSignatureIsNull() {
+        String payload = TestTemplateResourceLoader.load(TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION);
+        when(mockAdyenNotificationValidator.isValidIpAddress(FORWARDED_IP)).thenReturn(true);
+
+        boolean result = adyenNotificationService.handleNotificationFor(payload, null, FORWARDED_IP);
+
+        assertFalse(result);
+        verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+        assertThat(loggingEvents
+                .stream()
+                .anyMatch(event -> event
+                        .getFormattedMessage()
+                        .equals("Hmac signature is missing, rejecting Adyen token notification")), is(true));
+    }
+
+    @Test
+    void shouldRejectTokenNotificationWhenHmacSignatureIsInvalid() {
+        var primaryTestKey = "primaryTest";
+        String payload = TestTemplateResourceLoader.load(TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION);
+        var tokenKeys = new HmacKeys.WebhookHmacKeyPair(new WebhookHmacKeys(primaryTestKey, "secondaryTest"),
+                new WebhookHmacKeys("primaryLive", "secondaryLive"));
+        when(mockAdyenNotificationValidator.isValidIpAddress(FORWARDED_IP)).thenReturn(true);
+        when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(new HmacKeys(null, tokenKeys));
+        when(mockAdyenNotificationValidator.isValidHmac(HMAC_SIGNATURE, primaryTestKey,
+                payload)).thenReturn(false);
+
+        boolean result = adyenNotificationService.handleNotificationFor(payload, HMAC_SIGNATURE, FORWARDED_IP);
+
+        assertFalse(result);
+        verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+        assertThat(loggingEvents.stream()
+                        .anyMatch(event -> event.getFormattedMessage().equals("Hmac signature is invalid, rejecting Adyen token notification")),
+                is(true));
+        verifyNoInteractions(mockTaskQueueService);
+    }
+    
+    @Test
+    void shouldAcceptValidTokenNotification() {
+        var primaryTestKey = "primaryTest";
+        String payload = TestTemplateResourceLoader.load(TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION);
+        var tokenKeys = new HmacKeys.WebhookHmacKeyPair(new WebhookHmacKeys(primaryTestKey, "secondaryTest"),
+                new WebhookHmacKeys("primaryLive", "secondaryLive"));
+        when(mockAdyenNotificationValidator.isValidIpAddress(FORWARDED_IP)).thenReturn(true);
+        when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(new HmacKeys(null, tokenKeys));
+        when(mockAdyenNotificationValidator.isValidHmac(HMAC_SIGNATURE, primaryTestKey,
+                payload)).thenReturn(true);
+
+        boolean result = adyenNotificationService.handleNotificationFor(payload, HMAC_SIGNATURE, FORWARDED_IP);
+
+        assertTrue(result);
+    }
+
+    @Test
+    void shouldThrowWebApplicationExceptionWhenTokenNotificationCannotBeDeserialised() {
+        String payload = "invalidJson";
+
+        when(mockAdyenNotificationValidator.isValidIpAddress(FORWARDED_IP)).thenReturn(true);
+
+        WebApplicationException exception = Assert.assertThrows(WebApplicationException.class,
+                () -> adyenNotificationService.handleNotificationFor(payload, HMAC_SIGNATURE, FORWARDED_IP));
+
+        assertThat(exception.getMessage(), is("Error deserialising token webhook Json"));
+
+        verifyNoInteractions(mockTaskQueueService);
+        verify(mockAppender, atLeastOnce())
+                .doAppend(loggingEventArgumentCaptor.capture());
+
+        List<LoggingEvent> loggingEvents =
+                loggingEventArgumentCaptor.getAllValues();
+
+        assertThat(loggingEvents.stream().anyMatch(event -> event.getFormattedMessage().equals(
+                "Error deserialising token notification payload")), is(true));
+    }
+    
 
     @ParameterizedTest
     @EnumSource(AdyenPaymentEvent.class)

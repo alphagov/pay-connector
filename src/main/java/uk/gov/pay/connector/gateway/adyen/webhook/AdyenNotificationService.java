@@ -8,16 +8,19 @@ import jakarta.ws.rs.WebApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
+import uk.gov.pay.connector.gateway.adyen.response.AdyenTokenNotification;
 import uk.gov.pay.connector.gateway.exception.AdyenNotificationException;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.queue.tasks.TaskType;
 import uk.gov.pay.connector.queue.tasks.model.Task;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import java.util.List;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getHmacKey;
+import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getTokenHmacKey;
 import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 
 public class AdyenNotificationService {
@@ -27,12 +30,14 @@ public class AdyenNotificationService {
     private final AdyenGatewayConfig adyenGatewayConfig;
     private final TaskQueueService taskQueueService;
     private final AdyenNotificationValidator adyenNotificationValidator;
-
+    private final JsonObjectMapper jsonObjectMapper;
     @Inject
-    public AdyenNotificationService(AdyenGatewayConfig adyenGatewayConfig, TaskQueueService taskQueueService, AdyenNotificationValidator adyenNotificationValidator) {
+    public AdyenNotificationService(AdyenGatewayConfig adyenGatewayConfig, TaskQueueService taskQueueService, 
+                                    AdyenNotificationValidator adyenNotificationValidator, JsonObjectMapper jsonObjectMapper) {
         this.adyenGatewayConfig = adyenGatewayConfig;
         this.taskQueueService = taskQueueService;
         this.adyenNotificationValidator = adyenNotificationValidator;
+        this.jsonObjectMapper = jsonObjectMapper;
     }
 
     public boolean handleNotificationFor(String payload, String forwardedIpAddresses) {
@@ -62,7 +67,7 @@ public class AdyenNotificationService {
                         kv("eventCode", item.getEventCode()));
             }
         } catch (AdyenNotificationException e) {
-            LOGGER.error("Failed to validate Adyen notification payload", e);
+            logValidationFailure("payment", e);
             return false;
         }
 
@@ -104,5 +109,58 @@ public class AdyenNotificationService {
             throw new AdyenNotificationException("Notification request is empty");
         }
         return notificationRequest.getNotificationItems();
+    }
+
+
+    public boolean handleNotificationFor(
+            String payload,
+            String hmacSignature,
+            String forwardedIpAddresses
+    ) {
+        try {
+            if (!adyenNotificationValidator.isValidIpAddress(forwardedIpAddresses)) {
+                return false;
+            }
+            
+            if (hmacSignature == null || hmacSignature.isBlank()) {
+                LOGGER.atInfo().setMessage("Hmac signature is missing, rejecting Adyen token notification")
+                        .addKeyValue(PROVIDER, ADYEN.getName()).log();
+                return false;
+            }
+
+            AdyenTokenNotification adyenTokenResponse = deserialiseTokenPayload(payload, AdyenTokenNotification.class);
+            boolean live = adyenTokenResponse.environment().equalsIgnoreCase("live");
+            
+            String hmacKey = getTokenHmacKey(adyenGatewayConfig, live);
+
+            if (!adyenNotificationValidator.isValidHmac(hmacSignature, hmacKey, payload)) {
+                LOGGER.atInfo().setMessage("Hmac signature is invalid, rejecting Adyen token notification")
+                        .addKeyValue(PROVIDER, ADYEN.getName()).log();
+                return false;
+            }
+
+            return true;
+
+        } catch (AdyenNotificationException e) {
+            logValidationFailure("token", e);
+            return false;
+        }
+
+    }
+
+    public <T> T deserialiseTokenPayload(String payload, Class<T> targetClass) throws AdyenNotificationException {
+        try {
+            return jsonObjectMapper.getObject(payload, targetClass);
+        } catch (Exception e) {
+            LOGGER.info("Error deserialising token notification payload", e);
+            throw new WebApplicationException("Error deserialising token webhook Json", e);
+        }
+    }
+    private void logValidationFailure(String notificationType, AdyenNotificationException e) {
+        LOGGER.error(
+                "Failed to validate Adyen {} notification payload",
+                notificationType,
+                e
+        );
     }
 }
