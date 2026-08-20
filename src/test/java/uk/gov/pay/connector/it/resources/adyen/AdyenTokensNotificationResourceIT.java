@@ -80,7 +80,7 @@ public class AdyenTokensNotificationResourceIT {
                 .then()
                 .statusCode(403);
 
-        logs.assertContains("Hmac signature is invalid, rejecting Adyen token notification");
+        logs.assertContains("Hmac signature is invalid or missing, rejecting Adyen token notification");
     }
 
     @Test

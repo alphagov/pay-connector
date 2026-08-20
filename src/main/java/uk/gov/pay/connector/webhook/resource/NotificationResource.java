@@ -148,8 +148,9 @@ public class NotificationResource {
     )
     public Response authoriseAdyenPaymentsNotifications(String notification,
                                                         @Parameter(in = HEADER, example = "5.6.7.8")
-                                                        @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
-        if (!adyenNotificationService.handleNotificationFor(notification, forwardedIpAddresses)) {
+                                                        @HeaderParam("X-Forwarded-For") String forwardedIpAddresses,
+                                                        @HeaderParam("hmacSignature") String hmacSignature){
+        if (!adyenNotificationService.handleNotificationFor(notification, hmacSignature, forwardedIpAddresses )) {
             logRejectionMessage(forwardedIpAddresses, ADYEN);
             return forbiddenErrorResponse();
         }

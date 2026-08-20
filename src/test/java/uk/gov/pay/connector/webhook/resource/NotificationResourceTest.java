@@ -28,9 +28,9 @@ class NotificationResourceTest {
     void shouldReturn200WhenAdyenNotificationSuccessfullyHandled() {
         String rawNotification = "{Adyen}";
         String forwardedIpAddress = "10.20.30.40";
-        when(adyenNotificationService.handleNotificationFor(anyString(), eq(forwardedIpAddress))).thenReturn(true);
+        when(adyenNotificationService.handleNotificationFor(anyString(), eq(null), eq(forwardedIpAddress))).thenReturn(true);
 
-        try (Response response = notificationResource.authoriseAdyenPaymentsNotifications(rawNotification, forwardedIpAddress)) {
+        try (Response response = notificationResource.authoriseAdyenPaymentsNotifications(rawNotification, forwardedIpAddress, null)) {
             assertThat(response.getStatus(), is(200));
         }
     }
@@ -39,9 +39,10 @@ class NotificationResourceTest {
     void shouldReturn403WhenAdyenNotificationValidationFails() {
         String rawNotification = "{Adyen}";
         String forwardedIpAddress = " ";
-        when(adyenNotificationService.handleNotificationFor(anyString(), eq(forwardedIpAddress))).thenReturn(false);
+        
+        when(adyenNotificationService.handleNotificationFor(anyString(), eq(null), eq(forwardedIpAddress))).thenReturn(false);
 
-        try (Response response = notificationResource.authoriseAdyenPaymentsNotifications(rawNotification, forwardedIpAddress)) {
+        try (Response response = notificationResource.authoriseAdyenPaymentsNotifications(rawNotification,  forwardedIpAddress, null)) {
             assertThat(response.getStatus(), is(403));
         }
     }
