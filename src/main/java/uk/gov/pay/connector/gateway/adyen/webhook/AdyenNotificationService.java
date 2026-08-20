@@ -51,21 +51,17 @@ public class AdyenNotificationService {
             List<NotificationRequestItem> items = extractNotificationItems(notificationRequest);
 
             boolean live = "true".equalsIgnoreCase(notificationRequest.getLive());
+            
+            String hmacKey = getHmacKey(adyenGatewayConfig, live);
 
             for (NotificationRequestItem item : items) {
-                if (!adyenNotificationValidator.isValidHmac(item, getHmacKey(adyenGatewayConfig, live))) {
+                if (!adyenNotificationValidator.isValidHmac(item, hmacKey)) {
                     return false;
                 }
-
-                if (AdyenPaymentEvent.contains(item.getEventCode())) {
-                    addNotificationToTaskQueue(payload, item);
-                    continue;
-                }
-
-                LOGGER.info("Ignored Adyen notification",
-                        kv("originalReference", item.getOriginalReference()),
-                        kv("eventCode", item.getEventCode()));
             }
+
+            addPaymentNotificationToTaskQueue(payload);
+            
         } catch (AdyenNotificationException e) {
             logValidationFailure("payment", e);
             return false;
@@ -78,17 +74,25 @@ public class AdyenNotificationService {
         return true;
     }
 
-    private void addNotificationToTaskQueue(String payload, NotificationRequestItem item) {
+    private void addPaymentNotificationToTaskQueue(String payload) {
         try {
-            taskQueueService.add(new Task(payload, TaskType.HANDLE_ADYEN_PAYMENTS_WEBHOOK_NOTIFICATION));
+            taskQueueService.add(
+                    new Task(
+                            payload,
+                            TaskType.HANDLE_ADYEN_PAYMENTS_WEBHOOK_NOTIFICATION
+                    )
+            );
+            
         } catch (Exception e) {
-            LOGGER.error("Error sending Adyen webhook notification to task SQS queue",
-                    kv("pspReference", item.getPspReference()),
-                    kv("eventCode", item.getEventCode()),
-                    e);
+            LOGGER.error(
+                    "Error sending Adyen webhook notification to task SQS queue",
+                    e
+            );
+
             throw new WebApplicationException(
                     "Error sending message to task SQS queue",
-                    e);
+                    e
+            );
         }
     }
 
@@ -138,6 +142,13 @@ public class AdyenNotificationService {
                         .addKeyValue(PROVIDER, ADYEN.getName()).log();
                 return false;
             }
+            addTokenNotificationToTaskQueue(payload);
+
+            LOGGER.info(
+                    "Processed Adyen notification",
+                    kv(PROVIDER, ADYEN.getName()),
+                    kv("notification_source", forwardedIpAddresses)
+            );
 
             return true;
 
@@ -162,5 +173,25 @@ public class AdyenNotificationService {
                 notificationType,
                 e
         );
+    }
+    private void addTokenNotificationToTaskQueue(String payload) {
+        try {
+            taskQueueService.add(
+                    new Task(
+                            payload,
+                            TaskType.HANDLE_ADYEN_TOKEN_WEBHOOK_NOTIFICATION
+                    )
+            );
+        } catch (Exception e) {
+            LOGGER.error(
+                    "Error sending Adyen token webhook notification to task SQS queue",
+                    e
+            );
+
+            throw new WebApplicationException(
+                    "Error sending message to task SQS queue",
+                    e
+            );
+        }
     }
 }

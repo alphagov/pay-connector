@@ -17,7 +17,7 @@ import uk.gov.pay.connector.charge.service.LinkPaymentInstrumentToAgreementServi
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.response.AdyenTokenEventData;
 import uk.gov.pay.connector.gateway.adyen.response.AdyenTokenNotification;
-import uk.gov.pay.connector.gateway.adyen.webhook.AdyenRecurringTokenNotificationService;
+import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 import uk.gov.pay.connector.paymentinstrument.dao.PaymentInstrumentDao;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
@@ -47,7 +47,7 @@ class AdyenTokenWebhookNotificationHandlerTest {
     @Mock private AgreementDao agreementDao;
     @Mock private PaymentInstrumentDao paymentInstrumentDao;
     @Mock private LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService;
-    @Mock private AdyenRecurringTokenNotificationService adyenRecurringTokenNotificationService;
+    @Mock private AdyenNotificationService adyenNotificationService;
 
     @Captor
     private ArgumentCaptor<PaymentInstrumentEntity> paymentInstrumentCaptor;
@@ -63,7 +63,7 @@ class AdyenTokenWebhookNotificationHandlerTest {
                 .build();
         var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
 
-        given(adyenRecurringTokenNotificationService.deserialisePayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
                 .willReturn(tokenCreatedNotification(SHOPPER_REFERENCE, STORED_PAYMENT_METHOD_ID));
         given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
         given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(paymentInstrument));
@@ -87,7 +87,7 @@ class AdyenTokenWebhookNotificationHandlerTest {
                 .build();
         var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
 
-        given(adyenRecurringTokenNotificationService.deserialisePayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
                 .willReturn(tokenCreatedNotification(SHOPPER_REFERENCE, STORED_PAYMENT_METHOD_ID));
         given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
         given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(paymentInstrument));
@@ -100,7 +100,7 @@ class AdyenTokenWebhookNotificationHandlerTest {
 
     @Test
     void shouldIgnoreAndLogWhenAgreementNotFound() {
-        given(adyenRecurringTokenNotificationService.deserialisePayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
                 .willReturn(tokenCreatedNotification(SHOPPER_REFERENCE, STORED_PAYMENT_METHOD_ID));
         given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.empty());
 
@@ -113,7 +113,7 @@ class AdyenTokenWebhookNotificationHandlerTest {
 
     @Test
     void shouldIgnoreUnsupportedWebhookType() {
-        given(adyenRecurringTokenNotificationService.deserialisePayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
                 .willReturn(new AdyenTokenNotification(null, null, null,
                         new AdyenTokenEventData(null, STORED_PAYMENT_METHOD_ID, null, null, SHOPPER_REFERENCE),
                         "recurring.token.deleted"));
@@ -129,7 +129,7 @@ class AdyenTokenWebhookNotificationHandlerTest {
     @NullAndEmptySource
     @ValueSource(strings = {"badId", "one-two-three", "aaaaaaaaaaaaaaaaaaaaaaaaaa-short", "short-bbbbbbbbbbbbbbbbbbbbbbbbbb"})
     void shouldLogErrorForInvalidShopperReferenceLengthFormat(String invalidShopperReference) {
-        given(adyenRecurringTokenNotificationService.deserialisePayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
                 .willReturn(tokenCreatedNotification(invalidShopperReference, STORED_PAYMENT_METHOD_ID));
 
         handler.process(PAYLOAD);
@@ -148,7 +148,7 @@ class AdyenTokenWebhookNotificationHandlerTest {
                 .build();
         var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
 
-        given(adyenRecurringTokenNotificationService.deserialisePayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
                 .willReturn(tokenCreatedNotification(SHOPPER_REFERENCE, STORED_PAYMENT_METHOD_ID));
         given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
         given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(paymentInstrument));

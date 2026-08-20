@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
-import uk.gov.pay.connector.gateway.adyen.webhook.AdyenRecurringTokenNotificationService;
 import uk.gov.pay.connector.gateway.sandbox.SandboxNotificationService;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationService;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayNotificationService;
@@ -41,21 +40,17 @@ public class NotificationResource {
     private final SandboxNotificationService sandboxNotificationService;
     private final StripeNotificationService stripeNotificationService;
     private final AdyenNotificationService adyenNotificationService;
-    private final AdyenRecurringTokenNotificationService adyenRecurringTokenNotificationService;
 
     @Inject
     public NotificationResource(WorldpayNotificationService worldpayNotificationService,
                                 SandboxNotificationService sandboxNotificationService,
                                 StripeNotificationService stripeNotificationService,
-                                AdyenNotificationService adyenNotificationService,
-                                AdyenRecurringTokenNotificationService adyenRecurringTokenNotificationService
+                                AdyenNotificationService adyenNotificationService
     ) {
         this.worldpayNotificationService = worldpayNotificationService;
         this.sandboxNotificationService = sandboxNotificationService;
         this.stripeNotificationService = stripeNotificationService;
-        this.adyenNotificationService = adyenNotificationService;
-        this.adyenRecurringTokenNotificationService = adyenRecurringTokenNotificationService;
-    }
+        this.adyenNotificationService = adyenNotificationService;}
 
     @POST
     @Consumes(APPLICATION_JSON)
@@ -181,7 +176,7 @@ public class NotificationResource {
                                                               @HeaderParam("X-Forwarded-For") String forwardedIpAddresses,
                                                               @Parameter(in = HEADER, example = "sha256=example-signature")
                                                               @HeaderParam("hmacSignature") String hmacSignature) {
-        if (!adyenRecurringTokenNotificationService.handleNotificationFor(notification, hmacSignature, forwardedIpAddresses)) {
+        if (!adyenNotificationService.handleNotificationFor(notification, hmacSignature, forwardedIpAddresses)) {
             logRejectionMessage(forwardedIpAddresses, ADYEN);
             return forbiddenErrorResponse();
         }
