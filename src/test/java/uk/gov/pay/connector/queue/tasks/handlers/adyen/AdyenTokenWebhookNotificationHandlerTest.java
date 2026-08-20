@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.service.LinkPaymentInstrumentToAgreementService;
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.response.AdyenTokenEventData;
@@ -30,13 +31,16 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntityFixture.aPaymentInstrumentEntity;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus.CREATED;
 
 @ExtendWith(MockitoExtension.class)
 class AdyenTokenWebhookNotificationHandlerTest {
 
     private static final String AGREEMENT_EXTERNAL_ID = "aaaaaaaaaaaaaaaaaaaaaaaaaa";
-    private static final String CHARGE_EXTERNAL_ID    = "bbbbbbbbbbbbbbbbbbbbbbbbbb";
+    private static final String CHARGE_EXTERNAL_ID = "bbbbbbbbbbbbbbbbbbbbbbbbbb";
+    private static final String LATEST_CHARGE_EXTERNAL_ID = "cccccccccccccccccccccccccc";
     private static final String SHOPPER_REFERENCE = AGREEMENT_EXTERNAL_ID + "-" + CHARGE_EXTERNAL_ID;
     private static final String STORED_PAYMENT_METHOD_ID = "pm-id-123";
     private static final String PAYLOAD = "{}";
@@ -46,6 +50,7 @@ class AdyenTokenWebhookNotificationHandlerTest {
 
     @Mock private AgreementDao agreementDao;
     @Mock private PaymentInstrumentDao paymentInstrumentDao;
+    @Mock private ChargeDao chargeDao;
     @Mock private LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService;
     @Mock private AdyenNotificationService adyenNotificationService;
 
@@ -58,14 +63,20 @@ class AdyenTokenWebhookNotificationHandlerTest {
     @Test
     void shouldSetTokenAndLinkPaymentInstrumentToAgreement() {
         var paymentInstrument = aPaymentInstrumentEntity()
-                .withPaymentInstrumentStatus(PaymentInstrumentStatus.CREATED)
+                .withPaymentInstrumentStatus(CREATED)
                 .withChargeExternalId(CHARGE_EXTERNAL_ID)
                 .build();
         var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
 
+        var chargeEntity = aValidChargeEntity()
+                .withExternalId(CHARGE_EXTERNAL_ID)
+                .withPaymentInstrument(paymentInstrument)
+                .withAgreementEntity(agreement).build();
+
         given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
-                .willReturn(tokenCreatedNotification(SHOPPER_REFERENCE, STORED_PAYMENT_METHOD_ID));
+                .willReturn(tokenCreatedNotification(SHOPPER_REFERENCE));
         given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
+        given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
         given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(paymentInstrument));
 
         handler.process(PAYLOAD);
@@ -87,9 +98,15 @@ class AdyenTokenWebhookNotificationHandlerTest {
                 .build();
         var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
 
+        var chargeEntity = aValidChargeEntity()
+                .withExternalId(CHARGE_EXTERNAL_ID)
+                .withPaymentInstrument(paymentInstrument)
+                .withAgreementEntity(agreement).build();
+        
         given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
-                .willReturn(tokenCreatedNotification(SHOPPER_REFERENCE, STORED_PAYMENT_METHOD_ID));
+                .willReturn(tokenCreatedNotification(SHOPPER_REFERENCE));
         given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
+        given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
         given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(paymentInstrument));
 
         handler.process(PAYLOAD);
@@ -99,9 +116,36 @@ class AdyenTokenWebhookNotificationHandlerTest {
     }
 
     @Test
+    void shouldCancelPaymentInstrumentWhenNewerOneExists() {
+        var webhookPaymentInstrument = aPaymentInstrumentEntity()
+                .withPaymentInstrumentStatus(CREATED)
+                .withChargeExternalId(CHARGE_EXTERNAL_ID)
+                .build();
+        var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
+
+        var latestChargeEntity = aValidChargeEntity()
+                .withExternalId(LATEST_CHARGE_EXTERNAL_ID)
+                .withAgreementEntity(agreement).build();
+
+        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+                .willReturn(tokenCreatedNotification(SHOPPER_REFERENCE));
+        given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
+        given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(latestChargeEntity));
+        given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(webhookPaymentInstrument));
+
+        handler.process(PAYLOAD);
+
+        then(linkPaymentInstrumentToAgreementService)
+                .should()
+                .cancelPaymentInstrument(eq(agreement), paymentInstrumentCaptor.capture());
+
+        then(linkPaymentInstrumentToAgreementService).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
     void shouldIgnoreAndLogWhenAgreementNotFound() {
         given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
-                .willReturn(tokenCreatedNotification(SHOPPER_REFERENCE, STORED_PAYMENT_METHOD_ID));
+                .willReturn(tokenCreatedNotification(SHOPPER_REFERENCE));
         given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.empty());
 
         handler.process(PAYLOAD);
@@ -109,6 +153,43 @@ class AdyenTokenWebhookNotificationHandlerTest {
         then(paymentInstrumentDao).shouldHaveNoInteractions();
         then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
         logs.assertContains("Agreement not found, ignoring Adyen token webhook");
+    }
+
+    @Test
+    void shouldIgnoreAndLogWhenValidChargesAreNotFound() {
+        var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
+
+        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+                .willReturn(tokenCreatedNotification(SHOPPER_REFERENCE));
+        given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
+        given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.empty());
+
+        handler.process(PAYLOAD);
+
+        then(paymentInstrumentDao).shouldHaveNoInteractions();
+        then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
+        logs.assertContains("No charges for the agreement were found with payment instruments in a valid state (ACTIVE or CREATED)");
+    }
+
+    @Test
+    void shouldIgnoreAndLogWhenPaymentInstrumentNotFound() {
+        var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
+
+        var chargeEntity = aValidChargeEntity()
+                .withExternalId(CHARGE_EXTERNAL_ID)
+                .withAgreementEntity(agreement).build();
+
+        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+                .willReturn(tokenCreatedNotification(SHOPPER_REFERENCE));
+        given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
+        given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
+        given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.empty());
+
+
+        handler.process(PAYLOAD);
+
+        then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
+        logs.assertContains("Payment instrument not found for charge in Adyen token webhook, ignoring");
     }
 
     @Test
@@ -130,7 +211,7 @@ class AdyenTokenWebhookNotificationHandlerTest {
     @ValueSource(strings = {"badId", "one-two-three", "aaaaaaaaaaaaaaaaaaaaaaaaaa-short", "short-bbbbbbbbbbbbbbbbbbbbbbbbbb"})
     void shouldLogErrorForInvalidShopperReferenceLengthFormat(String invalidShopperReference) {
         given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
-                .willReturn(tokenCreatedNotification(invalidShopperReference, STORED_PAYMENT_METHOD_ID));
+                .willReturn(tokenCreatedNotification(invalidShopperReference));
 
         handler.process(PAYLOAD);
 
@@ -143,14 +224,20 @@ class AdyenTokenWebhookNotificationHandlerTest {
     @Test
     void shouldNotLogStoredPaymentMethodId() {
         var paymentInstrument = aPaymentInstrumentEntity()
-                .withPaymentInstrumentStatus(PaymentInstrumentStatus.CREATED)
+                .withPaymentInstrumentStatus(CREATED)
                 .withChargeExternalId(CHARGE_EXTERNAL_ID)
                 .build();
         var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
 
+        var chargeEntity = aValidChargeEntity()
+                .withExternalId(CHARGE_EXTERNAL_ID)
+                .withPaymentInstrument(paymentInstrument)
+                .withAgreementEntity(agreement).build();
+
         given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
-                .willReturn(tokenCreatedNotification(SHOPPER_REFERENCE, STORED_PAYMENT_METHOD_ID));
+                .willReturn(tokenCreatedNotification(SHOPPER_REFERENCE));
         given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
+        given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
         given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(paymentInstrument));
 
         handler.process(PAYLOAD);
@@ -160,12 +247,12 @@ class AdyenTokenWebhookNotificationHandlerTest {
                         event.getMessage().contains(STORED_PAYMENT_METHOD_ID), is(false)));
     }
 
-    private AdyenTokenNotification tokenCreatedNotification(String shopperReference, String storedPaymentMethodId) {
+    private AdyenTokenNotification tokenCreatedNotification(String shopperReference) {
         return new AdyenTokenNotification(
                 "2026-07-14T18:10:49+01:00",
                 "event-id-123",
                 "test",
-                new AdyenTokenEventData("YOUR_MERCHANT_ACCOUNT", storedPaymentMethodId, "visa", "created", shopperReference),
+                new AdyenTokenEventData("YOUR_MERCHANT_ACCOUNT", STORED_PAYMENT_METHOD_ID, "visa", "created", shopperReference),
                 "recurring.token.created"
         );
     }
