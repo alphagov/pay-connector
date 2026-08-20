@@ -8,7 +8,7 @@ import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.charge.service.LinkPaymentInstrumentToAgreementService;
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.response.AdyenTokenNotification;
-import uk.gov.pay.connector.gateway.adyen.webhook.AdyenRecurringTokenNotificationService;
+import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 import uk.gov.pay.connector.paymentinstrument.dao.PaymentInstrumentDao;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -26,21 +26,21 @@ public class AdyenTokenWebhookNotificationHandler {
 
     private final PaymentInstrumentDao paymentInstrumentDao;
     private final LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService;
-    private final AdyenRecurringTokenNotificationService adyenRecurringTokenNotificationService;
+    private final AdyenNotificationService adyenNotificationService;
     private final AgreementDao agreementDao;
 
     @Inject
-    public AdyenTokenWebhookNotificationHandler(PaymentInstrumentDao paymentInstrumentDao, AgreementDao agreementDao, LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService, AdyenRecurringTokenNotificationService adyenRecurringTokenNotificationService) {
+    public AdyenTokenWebhookNotificationHandler(PaymentInstrumentDao paymentInstrumentDao, AgreementDao agreementDao, LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService, AdyenNotificationService adyenNotificationService) {
 
         this.paymentInstrumentDao = paymentInstrumentDao;
         this.agreementDao = agreementDao;
         this.linkPaymentInstrumentToAgreementService = linkPaymentInstrumentToAgreementService;
-        this.adyenRecurringTokenNotificationService = adyenRecurringTokenNotificationService;
+        this.adyenNotificationService = adyenNotificationService;
     }
 
     @Transactional
     public void process(String payload) {
-        AdyenTokenNotification notification = adyenRecurringTokenNotificationService.deserialisePayload(payload, AdyenTokenNotification.class);
+        AdyenTokenNotification notification = adyenNotificationService.deserialiseTokenPayload(payload, AdyenTokenNotification.class);
 
         if (!RECURRING_TOKEN_CREATED.equals(notification.type())) {
             LOGGER.atInfo().setMessage("Ignoring Adyen token webhook notification with unsupported type").addKeyValue("type", notification.type()).log();

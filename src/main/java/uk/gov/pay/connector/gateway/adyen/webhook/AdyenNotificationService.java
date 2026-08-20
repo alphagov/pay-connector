@@ -31,65 +31,84 @@ public class AdyenNotificationService {
     private final TaskQueueService taskQueueService;
     private final AdyenNotificationValidator adyenNotificationValidator;
     private final JsonObjectMapper jsonObjectMapper;
+
     @Inject
-    public AdyenNotificationService(AdyenGatewayConfig adyenGatewayConfig, TaskQueueService taskQueueService, 
-                                    AdyenNotificationValidator adyenNotificationValidator, JsonObjectMapper jsonObjectMapper) {
+    public AdyenNotificationService(AdyenGatewayConfig adyenGatewayConfig, TaskQueueService taskQueueService, AdyenNotificationValidator adyenNotificationValidator, JsonObjectMapper jsonObjectMapper) {
         this.adyenGatewayConfig = adyenGatewayConfig;
         this.taskQueueService = taskQueueService;
         this.adyenNotificationValidator = adyenNotificationValidator;
         this.jsonObjectMapper = jsonObjectMapper;
     }
 
-    public boolean handleNotificationFor(String payload, String forwardedIpAddresses) {
-
+    public boolean handleNotificationFor(String payload, String hmacSignature, String forwardedIpAddresses) {
         if (!adyenNotificationValidator.isValidIpAddress(forwardedIpAddresses)) {
             return false;
         }
-
         try {
-            NotificationRequest notificationRequest = deserialisePayloadToNotificationRequest(payload);
-            List<NotificationRequestItem> items = extractNotificationItems(notificationRequest);
+            var notificationProcessed = hmacSignature == null ? handlePaymentNotifications(payload) : handleTokenNotifications(payload,
+                    hmacSignature);
 
-            boolean live = "true".equalsIgnoreCase(notificationRequest.getLive());
-
-            for (NotificationRequestItem item : items) {
-                if (!adyenNotificationValidator.isValidHmac(item, getHmacKey(adyenGatewayConfig, live))) {
-                    return false;
-                }
-
-                if (AdyenPaymentEvent.contains(item.getEventCode())) {
-                    addNotificationToTaskQueue(payload, item);
-                    continue;
-                }
-
-                LOGGER.info("Ignored Adyen notification",
-                        kv("originalReference", item.getOriginalReference()),
-                        kv("eventCode", item.getEventCode()));
+            if (notificationProcessed) {
+                LOGGER.info("Processed Adyen notification", kv(PROVIDER, ADYEN.getName()),
+                        kv("notification_source", forwardedIpAddresses));
             }
+
+            return notificationProcessed;
         } catch (AdyenNotificationException e) {
-            logValidationFailure("payment", e);
+            logValidationFailure(e);
+            return false;
+        }
+    }
+    
+    private boolean handlePaymentNotifications(String payload) {
+
+        NotificationRequest notificationRequest = deserialisePayloadToNotificationRequest(payload);
+        List<NotificationRequestItem> items = extractNotificationItems(notificationRequest);
+
+        boolean live = "true".equalsIgnoreCase(notificationRequest.getLive());
+
+        String hmacKey = getHmacKey(adyenGatewayConfig, live);
+
+        for (NotificationRequestItem item : items) {
+            if (!adyenNotificationValidator.isValidHmac(item, hmacKey)) {
+                return false;
+            }
+        }
+
+        addNotificationToTaskQueue(payload, TaskType.HANDLE_ADYEN_PAYMENTS_WEBHOOK_NOTIFICATION);
+        
+        return true;
+    }
+
+    private boolean handleTokenNotifications(String payload, String hmacSignature) {
+        
+        if (hmacSignature.isBlank()) {
+            logInvalidHmacSignature();
             return false;
         }
 
-        LOGGER.info("Processed Adyen notification",
-                kv(PROVIDER, ADYEN.getName()),
-                kv("notification_source", forwardedIpAddresses));
+        AdyenTokenNotification adyenTokenResponse = deserialiseTokenPayload(payload, AdyenTokenNotification.class);
+        boolean live = adyenTokenResponse
+                .environment()
+                .equalsIgnoreCase("live");
+
+        String hmacKey = getTokenHmacKey(adyenGatewayConfig, live);
+
+        if (!adyenNotificationValidator.isValidHmac(hmacSignature, hmacKey, payload)) {
+            logInvalidHmacSignature();
+            return false;
+        }
+        addNotificationToTaskQueue(payload, TaskType.HANDLE_ADYEN_TOKEN_WEBHOOK_NOTIFICATION);
 
         return true;
     }
 
-    private void addNotificationToTaskQueue(String payload, NotificationRequestItem item) {
-        try {
-            taskQueueService.add(new Task(payload, TaskType.HANDLE_ADYEN_PAYMENTS_WEBHOOK_NOTIFICATION));
-        } catch (Exception e) {
-            LOGGER.error("Error sending Adyen webhook notification to task SQS queue",
-                    kv("pspReference", item.getPspReference()),
-                    kv("eventCode", item.getEventCode()),
-                    e);
-            throw new WebApplicationException(
-                    "Error sending message to task SQS queue",
-                    e);
-        }
+    private static void logInvalidHmacSignature() {
+        LOGGER
+                .atInfo()
+                .setMessage("Hmac signature is invalid or missing, rejecting Adyen token notification")
+                .addKeyValue(PROVIDER, ADYEN.getName())
+                .log();
     }
 
     public NotificationRequest deserialisePayloadToNotificationRequest(String rawAdyenJson) {
@@ -103,50 +122,15 @@ public class AdyenNotificationService {
     }
 
     public List<NotificationRequestItem> extractNotificationItems(NotificationRequest notificationRequest) {
-        if (notificationRequest == null ||
-                (notificationRequest.getNotificationItems() == null || notificationRequest.getNotificationItems().isEmpty())) {
+        if (notificationRequest == null || (notificationRequest.getNotificationItems() == null || notificationRequest
+                .getNotificationItems()
+                .isEmpty())) {
             LOGGER.info("Adyen notification request is empty or missing items");
             throw new AdyenNotificationException("Notification request is empty");
         }
         return notificationRequest.getNotificationItems();
     }
 
-
-    public boolean handleNotificationFor(
-            String payload,
-            String hmacSignature,
-            String forwardedIpAddresses
-    ) {
-        try {
-            if (!adyenNotificationValidator.isValidIpAddress(forwardedIpAddresses)) {
-                return false;
-            }
-            
-            if (hmacSignature == null || hmacSignature.isBlank()) {
-                LOGGER.atInfo().setMessage("Hmac signature is missing, rejecting Adyen token notification")
-                        .addKeyValue(PROVIDER, ADYEN.getName()).log();
-                return false;
-            }
-
-            AdyenTokenNotification adyenTokenResponse = deserialiseTokenPayload(payload, AdyenTokenNotification.class);
-            boolean live = adyenTokenResponse.environment().equalsIgnoreCase("live");
-            
-            String hmacKey = getTokenHmacKey(adyenGatewayConfig, live);
-
-            if (!adyenNotificationValidator.isValidHmac(hmacSignature, hmacKey, payload)) {
-                LOGGER.atInfo().setMessage("Hmac signature is invalid, rejecting Adyen token notification")
-                        .addKeyValue(PROVIDER, ADYEN.getName()).log();
-                return false;
-            }
-
-            return true;
-
-        } catch (AdyenNotificationException e) {
-            logValidationFailure("token", e);
-            return false;
-        }
-
-    }
 
     public <T> T deserialiseTokenPayload(String payload, Class<T> targetClass) throws AdyenNotificationException {
         try {
@@ -156,11 +140,18 @@ public class AdyenNotificationService {
             throw new WebApplicationException("Error deserialising token webhook Json", e);
         }
     }
-    private void logValidationFailure(String notificationType, AdyenNotificationException e) {
-        LOGGER.error(
-                "Failed to validate Adyen {} notification payload",
-                notificationType,
-                e
-        );
+
+    private void logValidationFailure(AdyenNotificationException e) {
+        LOGGER.error("Failed to validate Adyen notification payload", e);
+    }
+
+    private void addNotificationToTaskQueue(String payload, TaskType task) {
+        try {
+            taskQueueService.add(new Task(payload, task));
+        } catch (Exception e) {
+            LOGGER.error("Error sending Adyen webhook notification to task SQS queue", e);
+
+            throw new WebApplicationException("Error sending message to task SQS queue", e);
+        }
     }
 }

@@ -1141,6 +1141,10 @@ paths:
         name: X-Forwarded-For
         schema:
           type: string
+      - in: header
+        name: hmacSignature
+        schema:
+          type: string
       requestBody:
         content:
           application/json:

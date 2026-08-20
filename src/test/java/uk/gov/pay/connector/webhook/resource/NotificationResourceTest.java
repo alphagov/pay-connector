@@ -7,7 +7,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
-import uk.gov.pay.connector.gateway.adyen.webhook.AdyenRecurringTokenNotificationService;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -21,10 +20,7 @@ class NotificationResourceTest {
 
     @Mock
     AdyenNotificationService adyenNotificationService;
-
-    @Mock
-    AdyenRecurringTokenNotificationService adyenRecurringTokenNotificationService;
-
+    
     @InjectMocks
     private NotificationResource notificationResource;
 
@@ -32,9 +28,9 @@ class NotificationResourceTest {
     void shouldReturn200WhenAdyenNotificationSuccessfullyHandled() {
         String rawNotification = "{Adyen}";
         String forwardedIpAddress = "10.20.30.40";
-        when(adyenNotificationService.handleNotificationFor(anyString(), eq(forwardedIpAddress))).thenReturn(true);
+        when(adyenNotificationService.handleNotificationFor(anyString(), eq(null), eq(forwardedIpAddress))).thenReturn(true);
 
-        try (Response response = notificationResource.authoriseAdyenPaymentsNotifications(rawNotification, forwardedIpAddress)) {
+        try (Response response = notificationResource.authoriseAdyenPaymentsNotifications(rawNotification, forwardedIpAddress, null)) {
             assertThat(response.getStatus(), is(200));
         }
     }
@@ -43,9 +39,10 @@ class NotificationResourceTest {
     void shouldReturn403WhenAdyenNotificationValidationFails() {
         String rawNotification = "{Adyen}";
         String forwardedIpAddress = " ";
-        when(adyenNotificationService.handleNotificationFor(anyString(), eq(forwardedIpAddress))).thenReturn(false);
+        
+        when(adyenNotificationService.handleNotificationFor(anyString(), eq(null), eq(forwardedIpAddress))).thenReturn(false);
 
-        try (Response response = notificationResource.authoriseAdyenPaymentsNotifications(rawNotification, forwardedIpAddress)) {
+        try (Response response = notificationResource.authoriseAdyenPaymentsNotifications(rawNotification,  forwardedIpAddress, null)) {
             assertThat(response.getStatus(), is(403));
         }
     }
@@ -55,13 +52,13 @@ class NotificationResourceTest {
         String rawNotification = "{\"type\":\"recurring.token.created\"}";
         String forwardedIpAddress = "10.20.30.40";
         String hmacSignature = "sha256=test-signature";
-        when(adyenRecurringTokenNotificationService.handleNotificationFor(rawNotification, hmacSignature, forwardedIpAddress)).thenReturn(true);
+        when(adyenNotificationService.handleNotificationFor(rawNotification, hmacSignature, forwardedIpAddress)).thenReturn(true);
 
         try (Response response = notificationResource.authoriseAdyenRecurringTokenNotifications(rawNotification, forwardedIpAddress, hmacSignature)) {
             assertThat(response.getStatus(), is(200));
         }
 
-        verify(adyenRecurringTokenNotificationService).handleNotificationFor(rawNotification, hmacSignature, forwardedIpAddress);
+        verify(adyenNotificationService).handleNotificationFor(rawNotification, hmacSignature, forwardedIpAddress);
     }
 
     @Test
@@ -69,7 +66,7 @@ class NotificationResourceTest {
         String rawNotification = "{\"type\":\"recurring.token.created\"}";
         String forwardedIpAddress = " ";
         String hmacSignature = "sha256=test-signature";
-        when(adyenRecurringTokenNotificationService.handleNotificationFor(rawNotification, hmacSignature, forwardedIpAddress)).thenReturn(false);
+        when(adyenNotificationService.handleNotificationFor(rawNotification, hmacSignature, forwardedIpAddress)).thenReturn(false);
 
         try (Response response = notificationResource.authoriseAdyenRecurringTokenNotifications(rawNotification, forwardedIpAddress, hmacSignature)) {
             assertThat(response.getStatus(), is(403));

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
-import uk.gov.pay.connector.gateway.adyen.webhook.AdyenRecurringTokenNotificationService;
+import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 import uk.gov.pay.connector.util.ConnectorAppWithCustomInjector;
 import uk.gov.pay.connector.util.DnsPointerResourceRecord;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
@@ -24,7 +24,7 @@ public class AdyenTokensNotificationResourceIT {
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(ConnectorAppWithCustomInjector.class);
 
     @RegisterExtension
-    LogCapturer logs = LogCapturer.create().captureForType(AdyenRecurringTokenNotificationService.class);
+    LogCapturer logs = LogCapturer.create().captureForType(AdyenNotificationService.class);
 
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/adyen/tokens";
     private static final String ADYEN_IP_ADDRESS = "192.168.0.1";
@@ -80,7 +80,7 @@ public class AdyenTokensNotificationResourceIT {
                 .then()
                 .statusCode(403);
 
-        logs.assertContains("Hmac signature is invalid, rejecting Adyen token notification");
+        logs.assertContains("Hmac signature is invalid or missing, rejecting Adyen token notification");
     }
 
     @Test
@@ -106,7 +106,7 @@ public class AdyenTokensNotificationResourceIT {
     }
 
     @Test
-    void shouldIgnoreUnsupportedRecurringTokenNotification() {
+    void shouldAcceptValidRecurringTokenNotificationWithUnrecognisedEventType() {
         String payload = TestTemplateResourceLoader.load(
                 TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION
         ).replace(
@@ -123,10 +123,6 @@ public class AdyenTokensNotificationResourceIT {
                 .post(NOTIFICATION_PATH)
                 .then()
                 .statusCode(200);
-
-        logs.assertContains(
-                "Ignoring unsupported Adyen token notification"
-        );
         
     }
     @Test
