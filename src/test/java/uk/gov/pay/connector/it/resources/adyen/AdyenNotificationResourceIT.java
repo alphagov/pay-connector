@@ -1,9 +1,11 @@
 package uk.gov.pay.connector.it.resources.adyen;
 
+import io.github.netmikey.logunit.api.LogCapturer;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
+import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 import uk.gov.pay.connector.util.ConnectorAppWithCustomInjector;
 import uk.gov.pay.connector.util.DnsPointerResourceRecord;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
@@ -22,9 +24,13 @@ public class AdyenNotificationResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(ConnectorAppWithCustomInjector.class);
 
-    private static final String NOTIFICATION_PATH = "/v1/api/notifications/adyen/payments";
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(AdyenNotificationService.class);
+
+    private static final String NOTIFICATION_PATH = "/v1/api/notifications/adyen";
     private static final String ADYEN_IP_ADDRESS = "192.168.0.1";
     private static final String UNEXPECTED_IP_ADDRESS = "8.8.8.8";
+    private static final String HMAC_SIGNATURE = "hLz2zuhuylC8q36sCWWH7PpvbVpyaWDpoBqoEeTjj7w="; // pragma: allowlist secret
 
     @BeforeAll
     static void before() {
@@ -80,7 +86,7 @@ public class AdyenNotificationResourceIT {
     }
 
     @Test
-    void shouldReturn500WhenInvalidJsonPayload() {
+    void shouldReturn500WhenInvalidJsonPayloadForPaymentNotification() {
         String payload = "not-json";
         given()
                 .port(app.getLocalPort())
@@ -90,5 +96,75 @@ public class AdyenNotificationResourceIT {
                 .post(NOTIFICATION_PATH)
                 .then()
                 .statusCode(500);
+    }
+
+    @Test
+    void shouldHandleRecurringTokenNotification() {
+        String payload = TestTemplateResourceLoader.load(TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION);
+
+        given()
+                .port(app.getLocalPort())
+                .body(payload)
+                .header("X-Forwarded-For", ADYEN_IP_ADDRESS)
+                .header("hmacSignature", HMAC_SIGNATURE)
+                .contentType(APPLICATION_JSON)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    void shouldRejectNotificationWithInvalidHmacSignatureForRecurringTokenNotification() {
+        String payload = TestTemplateResourceLoader.load(TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION);
+
+        given()
+                .port(app.getLocalPort())
+                .body(payload)
+                .header("X-Forwarded-For", ADYEN_IP_ADDRESS)
+                .header("hmacSignature", "some invalid Hmac Signature")
+                .contentType(APPLICATION_JSON)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(403);
+
+        logs.assertContains("Hmac signature is invalid or missing, rejecting Adyen token notification");
+    }
+
+    @Test
+    void shouldReturn500WhenInvalidJsonPayloadForTokenNotification() {
+        given()
+                .port(app.getLocalPort())
+                .body("invalidJson")
+                .header("X-Forwarded-For", ADYEN_IP_ADDRESS)
+                .header("hmacSignature", HMAC_SIGNATURE)
+                .contentType(APPLICATION_JSON)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(500);
+
+        logs.assertContains("Error deserialising token notification payload");
+    }
+
+    @Test
+    void shouldAcceptValidRecurringTokenNotificationWithUnrecognisedEventType() {
+        String payload = TestTemplateResourceLoader.load(
+                TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION
+        ).replace(
+                "\"type\": \"recurring.token.created\"",
+                "\"type\": \"recurring.token.updated\""
+        );
+
+        String HMAC_SIGNATURE_FOR_PAYLOAD_WITH_UPDATED_TOKEN = "+309uQLT5A/L658R+4GlsOVwQ0rDTDcm2e5yln6+KGM="; // pragma: allowlist secret
+
+        given()
+                .port(app.getLocalPort())
+                .body(payload)
+                .header("X-Forwarded-For", ADYEN_IP_ADDRESS)
+                .header("hmacSignature", HMAC_SIGNATURE_FOR_PAYLOAD_WITH_UPDATED_TOKEN)
+                .contentType(APPLICATION_JSON)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(200);
+
     }
 }
