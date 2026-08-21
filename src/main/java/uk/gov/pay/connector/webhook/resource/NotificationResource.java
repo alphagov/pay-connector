@@ -50,7 +50,8 @@ public class NotificationResource {
         this.worldpayNotificationService = worldpayNotificationService;
         this.sandboxNotificationService = sandboxNotificationService;
         this.stripeNotificationService = stripeNotificationService;
-        this.adyenNotificationService = adyenNotificationService;}
+        this.adyenNotificationService = adyenNotificationService;
+    }
 
     @POST
     @Consumes(APPLICATION_JSON)
@@ -135,10 +136,10 @@ public class NotificationResource {
 
     @POST
     @Consumes(APPLICATION_JSON)
-    @Path("/v1/api/notifications/adyen/payments")
+    @Path("/v1/api/notifications/adyen")
     @Operation(
-            summary = "Handle Adyen payment notifications",
-            description = "Accepts Adyen payment webhooks as JSON and preserves the raw request body for signature verification.",
+            summary = "Handle Adyen payment and token notifications",
+            description = "Accepts Adyen payment and token webhooks as JSON and preserves the raw request body for signature verification.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK"),
                     @ApiResponse(responseCode = "403", description = "Forbidden - notification rejected"),
@@ -146,38 +147,11 @@ public class NotificationResource {
                     @ApiResponse(responseCode = "415", description = "Unsupported Media Type - Unsupported content type")
             }
     )
-    public Response authoriseAdyenPaymentsNotifications(String notification,
-                                                        @Parameter(in = HEADER, example = "5.6.7.8")
-                                                        @HeaderParam("X-Forwarded-For") String forwardedIpAddresses,
-                                                        @HeaderParam("hmacSignature") String hmacSignature){
-        if (!adyenNotificationService.handleNotificationFor(notification, hmacSignature, forwardedIpAddresses )) {
-            logRejectionMessage(forwardedIpAddresses, ADYEN);
-            return forbiddenErrorResponse();
-        }
-        logResponseMessage("[accepted]", ADYEN);
-        return Response.ok().build();
-    }
-
-    @POST
-    @Consumes(APPLICATION_JSON)
-    @Path("/v1/api/notifications/adyen/tokens")
-    @Operation(
-            summary = "Handle Adyen token notifications",
-            description = "Accepts Adyen recurring token webhooks as JSON and preserves the raw request body for signature verification.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "OK"),
-                    @ApiResponse(responseCode = "400", description = "Bad Request - invalid JSON payload or missing required headers"),
-                    @ApiResponse(responseCode = "403", description = "Forbidden - notification rejected"),
-                    @ApiResponse(responseCode = "405", description = "Method Not Allowed - Unsupported HTTP method"),
-                    @ApiResponse(responseCode = "415", description = "Unsupported Media Type - Unsupported content type")
-            }
-    )
-    public Response authoriseAdyenRecurringTokenNotifications(String notification,
-                                                              @Parameter(in = HEADER, example = "5.6.7.8")
-                                                              @HeaderParam("X-Forwarded-For") String forwardedIpAddresses,
-                                                              @Parameter(in = HEADER, example = "sha256=example-signature")
-                                                              @HeaderParam("hmacSignature") String hmacSignature) {
-        if (!adyenNotificationService.handleNotificationFor(notification, hmacSignature, forwardedIpAddresses)) {
+    public Response authoriseAdyenNotifications(String notification,
+                                                @Parameter(in = HEADER, example = "5.6.7.8")
+                                                @HeaderParam("X-Forwarded-For") String forwardedIpAddresses,
+                                                @HeaderParam("hmacSignature") String hmacSignature) {
+        if (!adyenNotificationService.handleNotificationFor(notification, forwardedIpAddresses, hmacSignature)) {
             logRejectionMessage(forwardedIpAddresses, ADYEN);
             return forbiddenErrorResponse();
         }

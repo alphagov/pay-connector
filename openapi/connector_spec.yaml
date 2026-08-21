@@ -1130,11 +1130,11 @@ paths:
       summary: Resolve charge status discrepancy
       tags:
       - Discrepancies
-  /v1/api/notifications/adyen/payments:
+  /v1/api/notifications/adyen:
     post:
-      description: Accepts Adyen payment webhooks as JSON and preserves the raw request
+      description: Accepts Adyen payment and token webhooks as JSON and preserves the raw request
         body for signature verification.
-      operationId: authoriseAdyenPaymentsNotifications
+      operationId: authoriseAdyenNotifications
       parameters:
       - example: 5.6.7.8
         in: header
