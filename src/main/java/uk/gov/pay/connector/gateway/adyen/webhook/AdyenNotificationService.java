@@ -40,7 +40,7 @@ public class AdyenNotificationService {
         this.jsonObjectMapper = jsonObjectMapper;
     }
 
-    public boolean handleNotificationFor(String payload, String hmacSignature, String forwardedIpAddresses) {
+    public boolean handleNotificationFor(String payload, String forwardedIpAddresses, String hmacSignature) {
         if (!adyenNotificationValidator.isValidIpAddress(forwardedIpAddresses)) {
             return false;
         }
