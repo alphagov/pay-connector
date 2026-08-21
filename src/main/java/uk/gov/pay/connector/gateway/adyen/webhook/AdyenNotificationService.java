@@ -59,7 +59,7 @@ public class AdyenNotificationService {
             return false;
         }
     }
-    
+
     private boolean handlePaymentNotifications(String payload) {
 
         NotificationRequest notificationRequest = deserialisePayloadToNotificationRequest(payload);
@@ -73,15 +73,17 @@ public class AdyenNotificationService {
             if (!adyenNotificationValidator.isValidHmac(item, hmacKey)) {
                 return false;
             }
-        }
 
-        addNotificationToTaskQueue(payload, TaskType.HANDLE_ADYEN_PAYMENTS_WEBHOOK_NOTIFICATION);
-        
+            if (!AdyenPaymentEvent.contains(item.getEventCode())) {
+                return false;
+            }
+            addNotificationToTaskQueue(payload, TaskType.HANDLE_ADYEN_PAYMENTS_WEBHOOK_NOTIFICATION);
+        }
         return true;
     }
 
     private boolean handleTokenNotifications(String payload, String hmacSignature) {
-        
+
         if (hmacSignature.isBlank()) {
             logInvalidHmacSignature();
             return false;
@@ -92,12 +94,16 @@ public class AdyenNotificationService {
                 .environment()
                 .equalsIgnoreCase("live");
 
-        String hmacKey = getTokenHmacKey(adyenGatewayConfig, live);
+        if (!AdyenTokenEvent.contains(adyenTokenResponse.type())) {
+            return false;
+        }
 
+        String hmacKey = getTokenHmacKey(adyenGatewayConfig, live);
         if (!adyenNotificationValidator.isValidHmac(hmacSignature, hmacKey, payload)) {
             logInvalidHmacSignature();
             return false;
         }
+
         addNotificationToTaskQueue(payload, TaskType.HANDLE_ADYEN_TOKEN_WEBHOOK_NOTIFICATION);
 
         return true;

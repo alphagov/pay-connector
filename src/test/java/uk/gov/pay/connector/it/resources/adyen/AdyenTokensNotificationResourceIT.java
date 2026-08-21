@@ -30,7 +30,7 @@ public class AdyenTokensNotificationResourceIT {
     private static final String ADYEN_IP_ADDRESS = "192.168.0.1";
     private static final String UNEXPECTED_IP_ADDRESS = "8.8.8.8";
     private static final String HMAC_SIGNATURE = "hLz2zuhuylC8q36sCWWH7PpvbVpyaWDpoBqoEeTjj7w="; // pragma: allowlist secret
-    private final String HMAC_SIGNATURE_FOR_PAYLOAD_WITH_UPDATED_TOKEN = "+309uQLT5A/L658R+4GlsOVwQ0rDTDcm2e5yln6+KGM="; // pragma: allowlist secret
+    private static final String HMAC_SIGNATURE_FOR_PAYLOAD_WITH_UPDATED_TOKEN = "+309uQLT5A/L658R+4GlsOVwQ0rDTDcm2e5yln6+KGM="; // pragma: allowlist secret
 
     @BeforeAll
     static void before() {
@@ -106,7 +106,7 @@ public class AdyenTokensNotificationResourceIT {
     }
 
     @Test
-    void shouldAcceptValidRecurringTokenNotificationWithUnrecognisedEventType() {
+    void shouldRejectInvalidRecurringTokenNotificationWithUnrecognisedEventType() {
         String payload = TestTemplateResourceLoader.load(
                 TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION
         ).replace(
@@ -122,7 +122,7 @@ public class AdyenTokensNotificationResourceIT {
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH)
                 .then()
-                .statusCode(200);
+                .statusCode(403);
         
     }
     @Test
