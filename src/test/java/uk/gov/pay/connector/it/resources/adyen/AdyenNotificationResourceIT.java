@@ -19,6 +19,7 @@ import static jakarta.ws.rs.core.MediaType.TEXT_XML;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.util.ConnectorModuleWithOverrides.reverseDnsLookup;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_NOTIFICATION;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION;
 
 public class AdyenNotificationResourceIT {
 
@@ -108,7 +109,7 @@ public class AdyenNotificationResourceIT {
 
         @Test
         void shouldHandleRecurringTokenNotification() {
-            String payload = TestTemplateResourceLoader.load(TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION);
+            String payload = TestTemplateResourceLoader.load(ADYEN_TOKEN_NOTIFICATION);
 
             given()
                     .port(app.getLocalPort())
@@ -123,7 +124,7 @@ public class AdyenNotificationResourceIT {
 
         @Test
         void shouldRejectNotificationWithInvalidHmacSignatureForRecurringTokenNotification() {
-            String payload = TestTemplateResourceLoader.load(TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION);
+            String payload = TestTemplateResourceLoader.load(ADYEN_TOKEN_NOTIFICATION);
 
             given()
                     .port(app.getLocalPort())
@@ -141,7 +142,7 @@ public class AdyenNotificationResourceIT {
         @Test
         void shouldRejectInvalidRecurringTokenNotificationWithUnrecognisedEventType() {
             String payload = TestTemplateResourceLoader.load(
-                    TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION
+                    ADYEN_TOKEN_NOTIFICATION
             ).replace(
                     "\"type\": \"recurring.token.created\"",
                     "\"type\": \"recurring.token.updated\""
