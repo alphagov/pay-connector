@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.model.request.records;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import org.jspecify.annotations.NullMarked;
-import uk.gov.pay.connector.gateway.adyen.request.json.AdyenApplePayPaymentMethod;
+import uk.gov.pay.connector.gateway.adyen.request.json.AdyenGooglePayPaymentMethod;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 import uk.gov.pay.connector.gateway.adyen.response.json.AdyenBrowserInfo;
 
@@ -27,7 +27,7 @@ public record AdyenGooglePayAuthorisePayload(
 
         @JsonProperty("paymentMethod")
         @NotNull
-        AdyenApplePayPaymentMethod paymentMethod,
+        AdyenGooglePayPaymentMethod paymentMethod,
 
         @JsonProperty("browserInfo")
         @NotNull       
