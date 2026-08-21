@@ -2,21 +2,31 @@ package uk.gov.pay.connector.wallets.googlepay;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.AdyenGooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthorisationRequest;
 
 public class GooglePayAuthorisationGatewayRequest extends AuthorisationGatewayRequest {
-    private GooglePayAuthRequest googlePayAuthRequest;
+    private final GooglePayAuthorisationRequest googlePayAuthorisationRequest;
 
-    public GooglePayAuthorisationGatewayRequest(ChargeEntity charge, GooglePayAuthRequest googlePayAuthRequest) {
+    public GooglePayAuthorisationGatewayRequest(ChargeEntity charge, GooglePayAuthorisationRequest googlePayAuthRequest) {
         super(charge);
-        this.googlePayAuthRequest = googlePayAuthRequest;
+        this.googlePayAuthorisationRequest = googlePayAuthRequest;
     }
 
     public GooglePayAuthRequest getGooglePayAuthRequest() {
-        return googlePayAuthRequest;
+        return (GooglePayAuthRequest) getGooglePayAuthorisationRequest();
     }
 
-    public static GooglePayAuthorisationGatewayRequest valueOf(ChargeEntity charge, GooglePayAuthRequest googlePayAuthRequest) {
+    public AdyenGooglePayAuthRequest getAdyenGooglePayAuthRequest() {
+        return (AdyenGooglePayAuthRequest) getGooglePayAuthorisationRequest();
+    }
+
+    private GooglePayAuthorisationRequest getGooglePayAuthorisationRequest() {
+        return googlePayAuthorisationRequest;
+    }
+
+    public static GooglePayAuthorisationGatewayRequest valueOf(ChargeEntity charge, GooglePayAuthorisationRequest googlePayAuthRequest) {
         return new GooglePayAuthorisationGatewayRequest(charge, googlePayAuthRequest);
     }
 }

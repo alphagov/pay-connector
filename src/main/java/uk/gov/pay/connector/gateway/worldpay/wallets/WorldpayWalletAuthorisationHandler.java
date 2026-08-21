@@ -20,6 +20,7 @@ import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthorisationRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 import uk.gov.service.payments.commons.api.exception.ValidationException;
 
@@ -64,11 +65,12 @@ public class WorldpayWalletAuthorisationHandler implements WorldpayGatewayRespon
 
     public GatewayResponse<BaseAuthoriseResponse> authoriseGooglePay(GooglePayAuthorisationGatewayRequest authorisationGatewayRequest) throws GatewayException {
         GooglePayAuthRequest googlePayAuthRequest = authorisationGatewayRequest.getGooglePayAuthRequest();
+        
         if (googlePayAuthRequest.getEncryptedPaymentData().isEmpty()) {
             throw new ValidationException(List.of("Field [encrypted_payment_data] is required"));
         }
         WorldpayOrderRequestBuilder worldpayOrderRequestBuilder = aWorldpayAuthoriseGooglePayOrderRequestBuilder();
-        worldpayOrderRequestBuilder.withGooglePayPaymentData(authorisationGatewayRequest.getGooglePayAuthRequest());
+        worldpayOrderRequestBuilder.withGooglePayPaymentData(googlePayAuthRequest);
 
         boolean is3dsRequired = authorisationGatewayRequest.getGatewayAccount().isRequires3ds();
         boolean isSendIpAddress = authorisationGatewayRequest.getGatewayAccount().isSendPayerIpAddressToGateway();

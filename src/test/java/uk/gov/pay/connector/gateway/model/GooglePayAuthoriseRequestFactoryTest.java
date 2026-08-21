@@ -10,19 +10,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.adyen.AdyenApplePayAuthoriseRequestFactory;
-import uk.gov.pay.connector.gateway.adyen.utils.AdyenCredentialsHelper;
-import uk.gov.pay.connector.gateway.adyen.utils.AdyenMerchantAccountHelper;
-import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorisePayload;
-import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequestFixture;
-import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequest;
-import uk.gov.pay.connector.gateway.util.ChargeFrontendUrlHelper;
+import uk.gov.pay.connector.gateway.adyen.AdyenGooglePayAuthorisePayloadFactory;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenGooglePayAuthorisePayload;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenGooglePayAuthoriseRequestFixture;
+import uk.gov.pay.connector.gateway.model.request.records.GooglePayAuthoriseRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.model.domain.applepay.ApplePayAuthRequestFixture;
-import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
-import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.model.domain.googlepay.GooglePayAuthRequestFixture;
+import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,18 +32,11 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @ExtendWith(MockitoExtension.class)
-class ApplePayAuthoriseRequestFactoryTest {
+class GooglePayAuthoriseRequestFactoryTest {
+    @Mock
+    private AdyenGooglePayAuthorisePayloadFactory mockAdyenGooglePayAuthoriseRequestFactory;
 
-    @Mock
-    private AdyenApplePayAuthoriseRequestFactory mockAdyenApplePayAuthoriseRequestFactory;
-    @Mock
-    private AdyenMerchantAccountHelper mockAdyenMerchantAccountHelper;
-    @Mock
-    private AdyenCredentialsHelper mockAdyenCredentialsHelper;
-    @Mock
-    private ChargeFrontendUrlHelper mockChargeFrontendUrlHelper;
-    
-    private ApplePayAuthoriseRequestFactory authoriseRequestFactory;
+    private GooglePayAuthoriseRequestFactory authoriseRequestFactory;
 
     private final AdyenCredentials adyenCredentials = new AdyenCredentials(
             "legalEntityId",
@@ -57,7 +47,7 @@ class ApplePayAuthoriseRequestFactoryTest {
 
     @BeforeEach
     void setUp() {
-        authoriseRequestFactory = new ApplePayAuthoriseRequestFactory(mockAdyenApplePayAuthoriseRequestFactory);
+        authoriseRequestFactory = new GooglePayAuthoriseRequestFactory(mockAdyenGooglePayAuthoriseRequestFactory);
 
     }
 
@@ -74,19 +64,19 @@ class ApplePayAuthoriseRequestFactoryTest {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
-        
-        ApplePayAuthRequest applePayAuthRequest = ApplePayAuthRequestFixture.anApplePayAuthRequest().build();
 
-        ApplePayAuthorisationGatewayRequest applePayAuthorisationGatewayRequest = ApplePayAuthorisationGatewayRequest.valueOf(chargeEntity, applePayAuthRequest);
-        
-        AdyenApplePayAuthorisePayload adyenApplePayAuthorisePayload = AdyenApplePayAuthoriseRequestFixture.anAdyenApplePayAuthoriseRequestFixture().build();
+        GooglePayAuthRequest googlePayAuthRequest = GooglePayAuthRequestFixture.aGooglePayAuthRequest().build();
 
-        given(mockAdyenApplePayAuthoriseRequestFactory.create(applePayAuthorisationGatewayRequest)).willReturn(adyenApplePayAuthorisePayload);
+        GooglePayAuthorisationGatewayRequest googlePayAuthorisationGatewayRequest = GooglePayAuthorisationGatewayRequest.valueOf(chargeEntity, googlePayAuthRequest);
 
-        Optional<? extends ApplePayAuthoriseRequest> applePayAuthoriseRequest = authoriseRequestFactory.create(applePayAuthorisationGatewayRequest);
-        
-        assertThat(applePayAuthoriseRequest.isPresent(), is(true));
-        assertThat(applePayAuthoriseRequest.get(), is(adyenApplePayAuthorisePayload));
+        AdyenGooglePayAuthorisePayload adyenGooglePayAuthorisePayload = AdyenGooglePayAuthoriseRequestFixture.anAdyenGooglePayAuthoriseRequestFixture().build();
+
+        given(mockAdyenGooglePayAuthoriseRequestFactory.create(googlePayAuthorisationGatewayRequest)).willReturn(adyenGooglePayAuthorisePayload);
+
+        Optional<? extends GooglePayAuthoriseRequest> googlePayAuthoriseRequest = authoriseRequestFactory.create(googlePayAuthorisationGatewayRequest);
+
+        assertThat(googlePayAuthoriseRequest.isPresent(), is(true));
+        assertThat(googlePayAuthoriseRequest.get(), is(adyenGooglePayAuthorisePayload));
     }
 
     @ParameterizedTest
@@ -103,14 +93,13 @@ class ApplePayAuthoriseRequestFactoryTest {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
-        
-        ApplePayAuthRequest applePayAuthRequest = ApplePayAuthRequestFixture.anApplePayAuthRequest().build();
 
-        ApplePayAuthorisationGatewayRequest applePayAuthorisationGatewayRequest = ApplePayAuthorisationGatewayRequest.valueOf(chargeEntity, applePayAuthRequest);
+        GooglePayAuthRequest googlePayAuthRequest = GooglePayAuthRequestFixture.aGooglePayAuthRequest().build();
 
-        Optional<? extends ApplePayAuthoriseRequest> applePayAuthoriseRequest = authoriseRequestFactory.create(applePayAuthorisationGatewayRequest);
-        
-        assertThat(applePayAuthoriseRequest.isEmpty(), is(true));
+        GooglePayAuthorisationGatewayRequest googlePayAuthorisationGatewayRequest = GooglePayAuthorisationGatewayRequest.valueOf(chargeEntity, googlePayAuthRequest);
+
+        Optional<? extends GooglePayAuthoriseRequest> googlePayAuthoriseRequest = authoriseRequestFactory.create(googlePayAuthorisationGatewayRequest);
+
+        assertThat(googlePayAuthoriseRequest.isEmpty(), is(true));
     }
-
 }
