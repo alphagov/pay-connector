@@ -2,6 +2,8 @@ package uk.gov.pay.connector.queue.tasks.handlers.adyen;
 
 import io.github.netmikey.logunit.api.LogCapturer;
 import jakarta.validation.constraints.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -75,215 +77,237 @@ class AdyenTokenWebhookNotificationHandlerTest {
     @Captor
     private ArgumentCaptor<PaymentInstrumentEntity> paymentInstrumentCaptor;
 
-    @InjectMocks
-    private AdyenTokenWebhookNotificationHandler handler;
-
-    @Test
-    void shouldSetTokenAndLinkPaymentInstrumentToAgreement() {
-        var paymentInstrument = aPaymentInstrumentEntity()
-                .withPaymentInstrumentStatus(CREATED)
-                .withChargeExternalId(CHARGE_EXTERNAL_ID)
-                .build();
-        var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
-
-        var chargeEntity = aValidChargeEntity()
-                .withExternalId(CHARGE_EXTERNAL_ID)
-                .withPaymentInstrument(paymentInstrument)
-                .withAgreementEntity(agreement).build();
-
-        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
-                .willReturn(tokenNotification(SHOPPER_REFERENCE, "created"));
-        given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
-        given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
-        given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(paymentInstrument));
-
-        handler.process(PAYLOAD);
-
-        then(linkPaymentInstrumentToAgreementService)
-                .should()
-                .linkPaymentInstrumentToAgreement(eq(agreement), paymentInstrumentCaptor.capture());
-
-        var captured = paymentInstrumentCaptor.getValue();
-        assertThat(captured.getRecurringAuthToken().orElseThrow().get(AdyenRequestFactory.STORED_PAYMENT_METHOD_ID),
-                is(STORED_PAYMENT_METHOD_ID));
-    }
-
-    @Test
-    void shouldIgnoreAndLogWhenPaymentInstrumentIsAlreadyActive() {
-        createAndMockPaymentInstrument(ACTIVE, "created");
-
-        handler.process(PAYLOAD);
-
-        then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
-        logs.assertContains("Payment instrument is already in ACTIVE state, ignoring Adyen token webhook");
-    }
-
-    @Test
-    void shouldCancelPaymentInstrumentWhenNewerOneExists() {
-        var webhookPaymentInstrument = aPaymentInstrumentEntity()
-                .withPaymentInstrumentStatus(CREATED)
-                .withChargeExternalId(CHARGE_EXTERNAL_ID)
-                .build();
-        var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
-
-        var latestChargeEntity = aValidChargeEntity()
-                .withExternalId(LATEST_CHARGE_EXTERNAL_ID)
-                .withAgreementEntity(agreement).build();
-
-        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
-                .willReturn(tokenNotification(SHOPPER_REFERENCE, "created"));
-        given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
-        given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(latestChargeEntity));
-        given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(webhookPaymentInstrument));
-
-        handler.process(PAYLOAD);
-
-        then(linkPaymentInstrumentToAgreementService)
-                .should()
-                .cancelPaymentInstrument(eq(agreement), paymentInstrumentCaptor.capture());
-
-        then(linkPaymentInstrumentToAgreementService).shouldHaveNoMoreInteractions();
-    }
-
-    @Test
-    void shouldIgnoreAndLogWhenAgreementNotFound() {
-        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
-                .willReturn(tokenNotification(SHOPPER_REFERENCE, "created"));
-        given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.empty());
-
-        handler.process(PAYLOAD);
-
-        then(paymentInstrumentDao).shouldHaveNoInteractions();
-        then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
-        logs.assertContains("Agreement not found, ignoring Adyen token webhook");
-    }
-
-    @Test
-    void shouldIgnoreAndLogWhenValidChargesAreNotFound() {
-        var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
-
-        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
-                .willReturn(tokenNotification(SHOPPER_REFERENCE, "created"));
-        given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
-        given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.empty());
-
-        handler.process(PAYLOAD);
-
-        then(paymentInstrumentDao).shouldHaveNoInteractions();
-        then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
-        logs.assertContains("No charges for the agreement were found with payment instruments in a valid state (ACTIVE or CREATED)");
-    }
-
-    @Test
-    void shouldIgnoreAndLogWhenPaymentInstrumentNotFound() {
-        var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
-
-        var chargeEntity = aValidChargeEntity()
-                .withExternalId(CHARGE_EXTERNAL_ID)
-                .withAgreementEntity(agreement).build();
-
-        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
-                .willReturn(tokenNotification(SHOPPER_REFERENCE, "created"));
-        given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
-        given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
-        given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.empty());
-
-
-        handler.process(PAYLOAD);
-
-        then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
-        logs.assertContains("Payment instrument not found for charge in Adyen token webhook, ignoring");
-    }
-
-    @Test
-    void shouldIgnoreUnsupportedWebhookType() {
-        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
-                .willReturn(new AdyenTokenNotification(null, null, null,
-                        new AdyenTokenEventData(null, STORED_PAYMENT_METHOD_ID, null, null, SHOPPER_REFERENCE),
-                        "recurring.token.deleted"));
-
-        handler.process(PAYLOAD);
-
-        then(agreementDao).shouldHaveNoInteractions();
-        then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
-        logs.assertContains("Ignoring Adyen token webhook notification with unsupported type");
-    }
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {"badId", "one-two-three", "aaaaaaaaaaaaaaaaaaaaaaaaaa-short", "short-bbbbbbbbbbbbbbbbbbbbbbbbbb"})
-    void shouldLogErrorForInvalidShopperReferenceLengthFormat(String invalidShopperReference) {
-        given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
-                .willReturn(tokenNotification(invalidShopperReference, "created"));
-
-        handler.process(PAYLOAD);
-
-        then(agreementDao).shouldHaveNoInteractions();
-        then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
-        logs.assertContains("Invalid shopper reference");
-
-    }
-
-    @Test
-    void shouldNotLogStoredPaymentMethodId() {
-        createAndMockPaymentInstrument(CREATED, "created");
-
-        handler.process(PAYLOAD);
-
-        logs.getEvents().forEach(event ->
-                assertThat("Log must not contain storedPaymentMethodId value",
-                        event.getMessage().contains(STORED_PAYMENT_METHOD_ID), is(false)));
-    }
-
     @Captor
     private ArgumentCaptor<AgreementInactivated> agreementInactivatedArgumentCaptor;
 
-    @Test
-    void shouldSetPaymentInstrumentToInactive() {
-        var paymentInstrument = createAndMockPaymentInstrument(ACTIVE, "disabled");
+    @InjectMocks
+    private AdyenTokenWebhookNotificationHandler handler;
 
-        handler.process(PAYLOAD);
+    private String tokenOperation;
 
-        assertThat(paymentInstrument.getStatus(), is(INACTIVE));
-        logs.assertContains("Payment instrument and agreement successfully inactivated");
+    @Nested
+    class TokenCreatedWebhooks {
+
+        @BeforeEach
+        void setUp() {
+            tokenOperation = "created";
+        }
+
+        @Test
+        void shouldSetTokenAndLinkPaymentInstrumentToAgreement() {
+            var paymentInstrument = aPaymentInstrumentEntity()
+                    .withPaymentInstrumentStatus(CREATED)
+                    .withChargeExternalId(CHARGE_EXTERNAL_ID)
+                    .build();
+            var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
+
+            var chargeEntity = aValidChargeEntity()
+                    .withExternalId(CHARGE_EXTERNAL_ID)
+                    .withPaymentInstrument(paymentInstrument)
+                    .withAgreementEntity(agreement).build();
+
+            given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+                    .willReturn(tokenNotification(SHOPPER_REFERENCE));
+            given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
+            given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
+            given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(paymentInstrument));
+
+            handler.process(PAYLOAD);
+
+            then(linkPaymentInstrumentToAgreementService)
+                    .should()
+                    .linkPaymentInstrumentToAgreement(eq(agreement), paymentInstrumentCaptor.capture());
+
+            var captured = paymentInstrumentCaptor.getValue();
+            assertThat(captured.getRecurringAuthToken().orElseThrow().get(AdyenRequestFactory.STORED_PAYMENT_METHOD_ID),
+                    is(STORED_PAYMENT_METHOD_ID));
+        }
+
+        @Test
+        void shouldIgnoreAndLogWhenPaymentInstrumentIsAlreadyActive() {
+            createAndMockPaymentInstrument(ACTIVE);
+
+            handler.process(PAYLOAD);
+
+            then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
+            logs.assertContains("Payment instrument is already in ACTIVE state, ignoring Adyen token webhook");
+        }
+
+        @Test
+        void shouldCancelPaymentInstrumentWhenNewerOneExists() {
+            var webhookPaymentInstrument = aPaymentInstrumentEntity()
+                    .withPaymentInstrumentStatus(CREATED)
+                    .withChargeExternalId(CHARGE_EXTERNAL_ID)
+                    .build();
+            var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
+
+            var latestChargeEntity = aValidChargeEntity()
+                    .withExternalId(LATEST_CHARGE_EXTERNAL_ID)
+                    .withAgreementEntity(agreement).build();
+
+            given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+                    .willReturn(tokenNotification(SHOPPER_REFERENCE));
+            given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
+            given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(latestChargeEntity));
+            given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(webhookPaymentInstrument));
+
+            handler.process(PAYLOAD);
+
+            then(linkPaymentInstrumentToAgreementService)
+                    .should()
+                    .cancelPaymentInstrument(eq(agreement), paymentInstrumentCaptor.capture());
+
+            then(linkPaymentInstrumentToAgreementService).shouldHaveNoMoreInteractions();
+        }
+
+        @Test
+        void shouldIgnoreAndLogWhenAgreementNotFound() {
+            given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+                    .willReturn(tokenNotification(SHOPPER_REFERENCE));
+            given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.empty());
+
+            handler.process(PAYLOAD);
+
+            then(paymentInstrumentDao).shouldHaveNoInteractions();
+            then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
+            logs.assertContains("Agreement not found, ignoring Adyen token webhook");
+        }
+
+        @Test
+        void shouldIgnoreAndLogWhenValidChargesAreNotFound() {
+            var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
+
+            given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+                    .willReturn(tokenNotification(SHOPPER_REFERENCE));
+            given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
+            given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.empty());
+
+            handler.process(PAYLOAD);
+
+            then(paymentInstrumentDao).shouldHaveNoInteractions();
+            then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
+            logs.assertContains("No charges for the agreement were found with payment instruments in a valid state (ACTIVE or CREATED)");
+        }
+
+        @Test
+        void shouldIgnoreAndLogWhenPaymentInstrumentNotFound() {
+            var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
+
+            var chargeEntity = aValidChargeEntity()
+                    .withExternalId(CHARGE_EXTERNAL_ID)
+                    .withAgreementEntity(agreement).build();
+
+            given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+                    .willReturn(tokenNotification(SHOPPER_REFERENCE));
+            given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
+            given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
+            given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.empty());
+
+
+            handler.process(PAYLOAD);
+
+            then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
+            logs.assertContains("Payment instrument not found for charge in Adyen token webhook, ignoring");
+        }
+
+        @Test
+        void shouldIgnoreUnsupportedWebhookType() {
+            given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+                    .willReturn(new AdyenTokenNotification(null, null, null,
+                            new AdyenTokenEventData(null, STORED_PAYMENT_METHOD_ID, null, null, SHOPPER_REFERENCE),
+                            "recurring.token.deleted"));
+
+            handler.process(PAYLOAD);
+
+            then(agreementDao).shouldHaveNoInteractions();
+            then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
+            logs.assertContains("Ignoring Adyen token webhook notification with unsupported type");
+        }
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = {"badId", "one-two-three", "aaaaaaaaaaaaaaaaaaaaaaaaaa-short", "short-bbbbbbbbbbbbbbbbbbbbbbbbbb"})
+        void shouldLogErrorForInvalidShopperReferenceLengthFormat(String invalidShopperReference) {
+            given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+                    .willReturn(tokenNotification(invalidShopperReference));
+
+            handler.process(PAYLOAD);
+
+            then(agreementDao).shouldHaveNoInteractions();
+            then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
+            logs.assertContains("Invalid shopper reference");
+
+        }
+
+        @Test
+        void shouldNotLogStoredPaymentMethodId() {
+            createAndMockPaymentInstrument(CREATED);
+
+            handler.process(PAYLOAD);
+
+            logs.getEvents().forEach(event ->
+                    assertThat("Log must not contain storedPaymentMethodId value",
+                            event.getMessage().contains(STORED_PAYMENT_METHOD_ID), is(false)));
+        }
+
     }
 
-    @Test
-    void shouldEmitAgreementInactivatedEventToLedger() {
-        createAndMockPaymentInstrument(ACTIVE, "disabled");
+    @Nested
+    class TokenDisabledWebhooks {
 
-        handler.process(PAYLOAD);
+        @BeforeEach
+        void setUp() {
+            tokenOperation = "disabled";
+        }
 
-        verify(ledgerService).postEvent(agreementInactivatedArgumentCaptor.capture());
+        @Test
+        void shouldSetPaymentInstrumentToInactive() {
+            var paymentInstrument = createAndMockPaymentInstrument(ACTIVE);
 
-        var event = agreementInactivatedArgumentCaptor.getValue();
-        assertThat(event.getEventType(), is("AGREEMENT_INACTIVATED"));
-        var eventDetails = (AgreementInactivated.AgreementInactivatedEventDetails) event.getEventDetails();
-        assertThat(eventDetails.getReason(), equalTo("Adyen agreement inactivated"));
+            handler.process(PAYLOAD);
+
+            assertThat(paymentInstrument.getStatus(), is(INACTIVE));
+            logs.assertContains("Payment instrument and agreement successfully inactivated");
+        }
+
+        @Test
+        void shouldEmitAgreementInactivatedEventToLedger() {
+            createAndMockPaymentInstrument(ACTIVE);
+
+            handler.process(PAYLOAD);
+
+            verify(ledgerService).postEvent(agreementInactivatedArgumentCaptor.capture());
+
+            var event = agreementInactivatedArgumentCaptor.getValue();
+            assertThat(event.getEventType(), is("AGREEMENT_INACTIVATED"));
+            var eventDetails = (AgreementInactivated.AgreementInactivatedEventDetails) event.getEventDetails();
+            assertThat(eventDetails.getReason(), equalTo("Adyen agreement inactivated"));
+        }
+
+        @ParameterizedTest
+        @EnumSource(value = PaymentInstrumentStatus.class, names = {"CANCELLED", "INACTIVE"})
+        void shouldIgnoreWhenInvalidPaymentInstrumentStatus(PaymentInstrumentStatus status) {
+            var paymentInstrument = createAndMockPaymentInstrument(status);
+
+            handler.process(PAYLOAD);
+            assertThat(paymentInstrument.getStatus(), is(status));
+            verifyNoInteractions(ledgerService);
+            logs.assertContains("Payment instrument is already in " + status + " state, ignoring Adyen token webhook");
+        }
+
+        @Test
+        void shouldIgnoreAndErrorWhenDisablingPaymentInstrumentWithCreatedStatus() {
+            var paymentInstrument = createAndMockPaymentInstrument(CREATED);
+
+            handler.process(PAYLOAD);
+            assertThat(paymentInstrument.getStatus(), is(CREATED));
+            verifyNoInteractions(ledgerService);
+            logs.forLevel(ERROR).assertContains("Payment instrument is not in the correct state to be inactivated, ignoring Adyen token webhook");
+        }
+
     }
 
-    @ParameterizedTest
-    @EnumSource(value = PaymentInstrumentStatus.class, names = {"CANCELLED", "INACTIVE"})
-    void shouldIgnoreWhenInvalidPaymentInstrumentStatus(PaymentInstrumentStatus status) {
-        var paymentInstrument = createAndMockPaymentInstrument(status, "disabled");
-
-        handler.process(PAYLOAD);
-        assertThat(paymentInstrument.getStatus(), is(status));
-        verifyNoInteractions(ledgerService);
-        logs.assertContains("Payment instrument is already in " + status + " state, ignoring Adyen token webhook");
-    }
-
-    @Test
-    void shouldIgnoreAndErrorWhenDisablingPaymentInstrumentWithCreatedStatus() {
-        var paymentInstrument = createAndMockPaymentInstrument(CREATED, "disabled");
-
-        handler.process(PAYLOAD);
-        assertThat(paymentInstrument.getStatus(), is(CREATED));
-        verifyNoInteractions(ledgerService);
-        logs.forLevel(ERROR).assertContains("Payment instrument is not in the correct state to be inactivated, ignoring Adyen token webhook");
-    }
-
-    private @NotNull PaymentInstrumentEntity createAndMockPaymentInstrument(PaymentInstrumentStatus active, String operation) {
+    private @NotNull PaymentInstrumentEntity createAndMockPaymentInstrument(PaymentInstrumentStatus active) {
         var paymentInstrument = aPaymentInstrumentEntity()
                 .withPaymentInstrumentStatus(active)
                 .withChargeExternalId(CHARGE_EXTERNAL_ID)
@@ -299,7 +323,7 @@ class AdyenTokenWebhookNotificationHandlerTest {
                 .withAgreementEntity(agreement).build();
 
         given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
-                .willReturn(tokenNotification(SHOPPER_REFERENCE, operation));
+                .willReturn(tokenNotification(SHOPPER_REFERENCE));
         given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
         given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
         given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(paymentInstrument));
@@ -307,13 +331,13 @@ class AdyenTokenWebhookNotificationHandlerTest {
     }
 
 
-    private AdyenTokenNotification tokenNotification(String shopperReference, String operation) {
+    private AdyenTokenNotification tokenNotification(String shopperReference) {
         return new AdyenTokenNotification(
                 "2026-07-14T18:10:49+01:00",
                 "event-id-123",
                 "test",
-                new AdyenTokenEventData("YOUR_MERCHANT_ACCOUNT", STORED_PAYMENT_METHOD_ID, "visa", operation.equals("created") ? "created" : null, shopperReference),
-                "recurring.token." + operation
+                new AdyenTokenEventData("YOUR_MERCHANT_ACCOUNT", STORED_PAYMENT_METHOD_ID, "visa", tokenOperation.equals("created") ? "created" : null, shopperReference),
+                "recurring.token." + tokenOperation
         );
     }
 }
