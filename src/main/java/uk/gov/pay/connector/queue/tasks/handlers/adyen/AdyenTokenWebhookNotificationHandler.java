@@ -8,47 +8,64 @@ import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.service.LinkPaymentInstrumentToAgreementService;
+import uk.gov.pay.connector.client.ledger.service.LedgerService;
+import uk.gov.pay.connector.events.model.agreement.AgreementInactivated;
 import uk.gov.pay.connector.gateway.adyen.response.AdyenTokenNotification;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
+import uk.gov.pay.connector.gateway.adyen.webhook.AdyenTokenEvent;
 import uk.gov.pay.connector.paymentinstrument.dao.PaymentInstrumentDao;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
+import java.time.Instant;
 import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory.SHOPPER_REFERENCE_DELIMITER;
 import static uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory.STORED_PAYMENT_METHOD_ID;
+import static uk.gov.pay.connector.gateway.adyen.webhook.AdyenTokenEvent.RECURRING_TOKEN_CREATED;
+import static uk.gov.pay.connector.gateway.adyen.webhook.AdyenTokenEvent.RECURRING_TOKEN_DISABLED;
 import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus.ACTIVE;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus.CANCELLED;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus.CREATED;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus.INACTIVE;
 import static uk.gov.service.payments.logging.LoggingKeys.AGREEMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_INSTRUMENT_EXTERNAL_ID;
 
 public class AdyenTokenWebhookNotificationHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdyenTokenWebhookNotificationHandler.class);
-    private static final String RECURRING_TOKEN_CREATED = "recurring.token.created";
 
     private final PaymentInstrumentDao paymentInstrumentDao;
     private final ChargeDao chargeDao;
     private final LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService;
     private final AdyenNotificationService adyenNotificationService;
     private final AgreementDao agreementDao;
+    private final LedgerService ledgerService;
 
     @Inject
-    public AdyenTokenWebhookNotificationHandler(PaymentInstrumentDao paymentInstrumentDao, AgreementDao agreementDao, ChargeDao chargeDao, LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService, AdyenNotificationService adyenNotificationService) {
+    public AdyenTokenWebhookNotificationHandler(PaymentInstrumentDao paymentInstrumentDao,
+                                                AgreementDao agreementDao,
+                                                ChargeDao chargeDao,
+                                                LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService,
+                                                AdyenNotificationService adyenNotificationService,
+                                                LedgerService ledgerService) {
 
         this.paymentInstrumentDao = paymentInstrumentDao;
         this.agreementDao = agreementDao;
         this.chargeDao = chargeDao;
         this.linkPaymentInstrumentToAgreementService = linkPaymentInstrumentToAgreementService;
         this.adyenNotificationService = adyenNotificationService;
+        this.ledgerService = ledgerService;
     }
 
     @Transactional
     public void process(String payload) {
         AdyenTokenNotification notification = adyenNotificationService.deserialiseTokenPayload(payload, AdyenTokenNotification.class);
+        String notificationType = notification.type();
 
-        if (!RECURRING_TOKEN_CREATED.equals(notification.type())) {
-            LOGGER.atInfo().setMessage("Ignoring Adyen token webhook notification with unsupported type").addKeyValue("type", notification.type()).log();
+        if (!AdyenTokenEvent.contains(notificationType)) {
+            LOGGER.atInfo().setMessage("Ignoring Adyen token webhook notification with unsupported type").addKeyValue("type", notificationType).log();
             return;
         }
 
@@ -82,7 +99,7 @@ public class AdyenTokenWebhookNotificationHandler {
 
                                     var latestChargeId = latestCharge.getExternalId();
 
-                                    processWebhooks(latestChargeId, paymentInstrument, webhookChargeExternalId, webhookAgreementExternalId, agreementEntity.get());
+                                    processWebhooks(latestChargeId, paymentInstrument, webhookChargeExternalId, webhookAgreementExternalId, agreementEntity.get(), notificationType);
                                 },
                                 () -> LOGGER.atInfo()
                                         .setMessage("Payment instrument not found for charge in Adyen token webhook, ignoring")
@@ -95,17 +112,21 @@ public class AdyenTokenWebhookNotificationHandler {
     }
 
     private void processWebhooks(String latestChargeId, PaymentInstrumentEntity paymentInstrument, String webhookChargeExternalId,
-                                 String webhookAgreementExternalId, AgreementEntity agreementEntity) {
+                                 String webhookAgreementExternalId, AgreementEntity agreementEntity, String notificationType) {
         // Webhook refers to latest Payment Instrument
         if (latestChargeId.equals(webhookChargeExternalId)) {
-            if (paymentInstrument.getStatus() == ACTIVE) {
-                LOGGER.atInfo().setMessage("Payment instrument is already in ACTIVE state, ignoring Adyen token webhook")
-                        .addKeyValue(AGREEMENT_EXTERNAL_ID, webhookAgreementExternalId)
-                        .addKeyValue(PAYMENT_INSTRUMENT_EXTERNAL_ID, paymentInstrument.getExternalId())
-                        .log();
-                return;
+            if (RECURRING_TOKEN_CREATED.getName().equals(notificationType)) {
+                if (paymentInstrument.getStatus().equals(ACTIVE)) {
+                    logIgnoreWebhookBasedOnDuplicateStatus(paymentInstrument.getStatus(), webhookAgreementExternalId, paymentInstrument.getExternalId());
+                    return;
+                }
+                linkPaymentInstrumentToAgreementService.linkPaymentInstrumentToAgreement(agreementEntity, paymentInstrument);
             }
-            linkPaymentInstrumentToAgreementService.linkPaymentInstrumentToAgreement(agreementEntity, paymentInstrument);
+
+            if (RECURRING_TOKEN_DISABLED.getName().equals(notificationType)) {
+                inactivateAgreement(agreementEntity, paymentInstrument);
+            }
+
         }
         // Webhook does not refer to latest - cancel payment instrument
         else {
@@ -115,5 +136,36 @@ public class AdyenTokenWebhookNotificationHandler {
 
     private static void logInvalidShopperReference() {
         LOGGER.atInfo().setMessage("Invalid shopper reference").log();
+    }
+
+    private void inactivateAgreement(AgreementEntity agreementEntity, PaymentInstrumentEntity paymentInstrument) {
+        PaymentInstrumentStatus paymentInstrumentStatus = paymentInstrument.getStatus();
+        if (paymentInstrumentStatus.equals(INACTIVE) || paymentInstrumentStatus.equals(CANCELLED)) {
+            logIgnoreWebhookBasedOnDuplicateStatus(paymentInstrumentStatus, agreementEntity.getExternalId(), paymentInstrument.getExternalId());
+            return;
+        }
+
+        if (paymentInstrumentStatus.equals(CREATED)) {
+            LOGGER.atError().setMessage("Payment instrument is not in the correct state to be inactivated, ignoring Adyen token webhook")
+                    .addKeyValue(AGREEMENT_EXTERNAL_ID, agreementEntity.getExternalId())
+                    .addKeyValue(PAYMENT_INSTRUMENT_EXTERNAL_ID, paymentInstrument.getExternalId())
+                    .log();
+            return;
+        }
+        var inactivatedEvent = AgreementInactivated.from(agreementEntity, "Adyen agreement inactivated", Instant.now());
+        ledgerService.postEvent(inactivatedEvent);
+
+        paymentInstrument.setStatus(INACTIVE);
+        LOGGER.atInfo().setMessage("Payment instrument and agreement successfully inactivated")
+                .addKeyValue(AGREEMENT_EXTERNAL_ID, agreementEntity.getExternalId())
+                .addKeyValue(PAYMENT_INSTRUMENT_EXTERNAL_ID, paymentInstrument.getExternalId())
+                .log();
+    }
+
+    private static void logIgnoreWebhookBasedOnDuplicateStatus(PaymentInstrumentStatus paymentInstrumentStatus, String agreementExternalId, String paymentInstrumentExternalId) {
+        LOGGER.atInfo().setMessage("Payment instrument is already in " + paymentInstrumentStatus + " state, ignoring Adyen token webhook")
+                .addKeyValue(AGREEMENT_EXTERNAL_ID, agreementExternalId)
+                .addKeyValue(PAYMENT_INSTRUMENT_EXTERNAL_ID, paymentInstrumentExternalId)
+                .log();
     }
 }
