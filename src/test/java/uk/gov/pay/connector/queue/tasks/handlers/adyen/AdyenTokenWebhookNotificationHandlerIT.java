@@ -28,6 +28,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus.ACTIVE;
 import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus.CANCELLED;
 import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus.CREATED;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus.INACTIVE;
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
@@ -104,7 +105,7 @@ class AdyenTokenWebhookNotificationHandlerIT {
         insertChargeForAgreement(OTHER_CHARGE_EXTERNAL_ID, FIRST_PAYMENT_INSTRUMENT_ID);
         insertChargeForAgreement(WEBHOOK_CHARGE_EXTERNAL_ID, SECOND_PAYMENT_INSTRUMENT_ID);
 
-        handler.process(tokenNotificationPayload());
+        handler.process(tokenNotificationPayload("recurring.token.created"));
 
         var updatedAgreement = app.getDatabaseTestHelper().getAgreementByExternalId(AGREEMENT_EXTERNAL_ID);
         var updatedFirstPaymentInstrument = app.getDatabaseTestHelper().getPaymentInstrument(FIRST_PAYMENT_INSTRUMENT_ID);
@@ -115,6 +116,29 @@ class AdyenTokenWebhookNotificationHandlerIT {
         assertThat(updatedSecondPaymentInstrument.get("agreement_external_id"), is(AGREEMENT_EXTERNAL_ID));
         assertThat(recurringAuthToken(updatedSecondPaymentInstrument), is(Map.of(STORED_PAYMENT_METHOD_ID, STORED_PAYMENT_METHOD_ID_VALUE)));
         assertThat(updatedFirstPaymentInstrument.get("status"), is(PaymentInstrumentStatus.CANCELLED.name()));
+    }
+
+    @Test
+    void shouldInactivatePaymentInstrument() {
+        insertAgreement();
+        insertPaymentInstrument(
+                FIRST_PAYMENT_INSTRUMENT_ID,
+                FIRST_PAYMENT_INSTRUMENT_EXTERNAL_ID,
+                ACTIVE,
+                AGREEMENT_EXTERNAL_ID,
+                WEBHOOK_CHARGE_EXTERNAL_ID,
+                STORED_PAYMENT_METHOD_ID_VALUE,
+                Instant.now()
+        );
+
+        insertChargeForAgreement(WEBHOOK_CHARGE_EXTERNAL_ID, FIRST_PAYMENT_INSTRUMENT_ID);
+
+        handler.process(tokenNotificationPayload("recurring.token.disabled"));
+
+        var paymentInstrument = app.getDatabaseTestHelper().getPaymentInstrument(FIRST_PAYMENT_INSTRUMENT_ID);
+
+        assertThat(paymentInstrument.get("status"), is(INACTIVE.name()));
+        logs.assertContains("Payment instrument and agreement successfully inactivated");
     }
 
     @ParameterizedTest
@@ -145,7 +169,7 @@ class AdyenTokenWebhookNotificationHandlerIT {
         insertChargeForAgreement(WEBHOOK_CHARGE_EXTERNAL_ID, FIRST_PAYMENT_INSTRUMENT_ID);
         insertChargeForAgreement(OTHER_CHARGE_EXTERNAL_ID, SECOND_PAYMENT_INSTRUMENT_ID);
 
-        handler.process(tokenNotificationPayload());
+        handler.process(tokenNotificationPayload("recurring.token.created"));
 
         var firstPaymentInstrument = app.getDatabaseTestHelper().getPaymentInstrument(FIRST_PAYMENT_INSTRUMENT_ID);
         var secondPaymentInstrument = app.getDatabaseTestHelper().getPaymentInstrument(SECOND_PAYMENT_INSTRUMENT_ID);
@@ -206,8 +230,9 @@ class AdyenTokenWebhookNotificationHandlerIT {
         app.getDatabaseTestHelper().getPaymentInstrument(paymentInstrumentId);
     }
 
-    private String tokenNotificationPayload() {
+    private String tokenNotificationPayload(String operation) {
         return load(ADYEN_TOKEN_NOTIFICATION)
+                .replace("recurring.token.created", operation)
                 .replace("YOUR_SHOPPER_REFERENCE", SHOPPER_REFERENCE)
                 .replace("M5N7TQ4TG5PFWR50", STORED_PAYMENT_METHOD_ID_VALUE);
     }
