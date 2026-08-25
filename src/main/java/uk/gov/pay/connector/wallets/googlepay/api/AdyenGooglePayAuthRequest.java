@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 
 public record AdyenGooglePayAuthRequest(
         @Schema(name = "payment_info", implementation = GooglePayPaymentInfo.class)
@@ -18,7 +19,7 @@ public record AdyenGooglePayAuthRequest(
         @Valid
         @JsonProperty("token") 
         String token
-) implements WalletAuthorisationRequest {
+) implements GooglePayAuthorisationRequest {
 
     @Override
     public GooglePayPaymentInfo getPaymentInfo() {

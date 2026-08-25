@@ -29,6 +29,8 @@ import uk.gov.pay.connector.gateway.stripe.request.StripeTokenRequest;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthorisationRequest;
 import uk.gov.service.payments.commons.api.exception.ValidationException;
 
 import java.util.List;
@@ -133,7 +135,12 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                 .GatewayResponseBuilder
                 .responseBuilder();
         try {
-            String tokenId = request.getGooglePayAuthRequest().getTokenId().orElseThrow(() -> new ValidationException(List.of("Field [token_id] is required")));
+            GooglePayAuthorisationRequest googlePayAuthorisationRequest = request.getGooglePayAuthRequest();
+            String tokenId = switch (googlePayAuthorisationRequest) {
+                case GooglePayAuthRequest googlePayAuthRequest -> googlePayAuthRequest.getTokenId().orElseThrow(() -> new ValidationException(List.of("Field [token_id] is required")));
+                default -> throw new ValidationException(List.of("Field [token_id] is required"));
+            };
+            
             StripePaymentIntent StripePaymentIntent = createPaymentIntentFromWalletToken(request, tokenId);
             return responseBuilder
                     .withResponse(StripeAuthorisationResponse.of(StripePaymentIntent)).build();

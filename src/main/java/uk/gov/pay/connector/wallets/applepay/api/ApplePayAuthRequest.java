@@ -46,4 +46,5 @@ public class ApplePayAuthRequest implements WalletAuthorisationRequest {
     public WalletType getWalletType() {
         return WalletType.APPLE_PAY;
     }
+
 }
