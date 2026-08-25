@@ -4,6 +4,7 @@ import net.logstash.logback.argument.StructuredArgument;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorisePayload;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenGooglePayAuthorisePayload;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestLog;
 import uk.gov.pay.connector.wallets.WalletType;
 
@@ -23,6 +24,7 @@ public class AdyenAuthoriseRequestLogGenerator {
     public AuthorisationRequestLog generate(AdyenAuthoriseRequest adyenAuthoriseRequest, AuthCardDetails authCardDetails) {
         return switch (adyenAuthoriseRequest) {
             case AdyenApplePayAuthorisePayload adyenApplePayAuthorisePayload -> generate(adyenApplePayAuthorisePayload, authCardDetails);
+            case AdyenGooglePayAuthorisePayload adyenGooglePayAuthorisePayload -> null;
         };
     }
 
