@@ -25,6 +25,7 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.ApplePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.GooglePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
@@ -100,6 +101,9 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
     
     @Mock
     private ApplePayAuthoriseRequestFactory mockApplePayAuthoriseRequestFactory;
+    
+    @Mock
+    private GooglePayAuthoriseRequestFactory mockGooglePayAuthoriseRequestFactory;
 
     @Mock
     EventService mockEventService;
@@ -127,6 +131,7 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
                 chargeService,
                 authorisationService,
                 mockApplePayAuthoriseRequestFactory,
+                mockGooglePayAuthoriseRequestFactory,
                 mockWalletPaymentInfoToAuthCardDetailsConverter,
                 mock(AuthorisationLogger.class), 
                 mockEnvironment);

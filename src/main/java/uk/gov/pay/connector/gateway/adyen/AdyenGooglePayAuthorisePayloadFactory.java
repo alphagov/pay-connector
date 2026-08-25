@@ -35,7 +35,7 @@ public class AdyenGooglePayAuthorisePayloadFactory {
                 adyenCredentialsHelper.getStore(request),
                 request.getGovUkPayPaymentId(),
                 new Amount("GBP", Long.valueOf(request.getAmount())),
-                new AdyenGooglePayPaymentMethod(googlePayAuthRequest.getPaymentInfo().toString()), // slight confusion about this
+                new AdyenGooglePayPaymentMethod(googlePayAuthRequest.token()),
                 new AdyenBrowserInfoFactory().create(googlePayAuthRequest.getPaymentInfo()),
                 chargeFrontendUrlHelper.getFrontendUrlForCharge(request.getGovUkPayPaymentId())
         );

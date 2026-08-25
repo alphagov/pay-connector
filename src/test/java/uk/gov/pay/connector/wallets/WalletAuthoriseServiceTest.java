@@ -40,9 +40,12 @@ import uk.gov.pay.connector.gateway.adyen.AdyenPaymentProvider;
 import uk.gov.pay.connector.gateway.adyen.utils.AdyenAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gateway.model.ApplePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.GooglePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequestFixture;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenGooglePayAuthoriseRequestFixture;
 import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.GooglePayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -110,6 +113,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayAuthRequestFixture.anApplePayAuthRequest;
+import static uk.gov.pay.connector.model.domain.googlepay.GooglePayAuthRequestFixture.aGooglePayAuthRequest;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
@@ -178,13 +182,18 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
     
     @Mock
     private ApplePayAuthoriseRequestFactory mockApplePayAuthoriseRequestFactory;
+    
+    @Mock
+    private GooglePayAuthoriseRequestFactory mockGooglePayAuthoriseRequestFactory;
 
     private WalletAuthoriseService walletAuthoriseService;
 
     private final ApplePayAuthRequest validApplePayDetails =
             anApplePayAuthRequest()
                     .build();
-
+    
+    private final GooglePayAuthRequest validGooglePayDetails = aGooglePayAuthRequest().build();
+    
     @Mock
     private EventService mockEventService;
 
@@ -219,6 +228,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
                 chargeService,
                 authorisationService,
                 mockApplePayAuthoriseRequestFactory,
+                mockGooglePayAuthoriseRequestFactory,
                 mockWalletPaymentInfoToAuthCardDetailsConverter,
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging(), new AdyenAuthoriseRequestLogGenerator(), new WorldpayAuthoriseRequestLogGenerator()),
                 mockEnvironment);
@@ -331,6 +341,49 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
                 "wallet=" + WalletType.APPLE_PAY
         ));
 
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
+    }
+
+    @Test
+    void doAuthoriseCard_googlePay_with_AdyenGooglePayAuthoriseRequest_shouldRespondAuthorisationSuccess() throws Exception {
+
+        ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
+        GooglePayAuthoriseRequest googlePayAuthoriseRequest = AdyenGooglePayAuthoriseRequestFixture.anAdyenGooglePayAuthoriseRequestFixture().build();
+
+        charge.setPaymentProvider(ADYEN.getName());
+
+        AdyenPaymentProvider mockAdyenPaymentProvider = mock(AdyenPaymentProvider.class);
+        providerWillAuthoriseGooglePayWithGooglePayAuthoriseRequest(mockAdyenPaymentProvider);
+
+        doReturn(Optional.of(googlePayAuthoriseRequest))
+                .when(mockGooglePayAuthoriseRequestFactory)
+                .create(any(GooglePayAuthorisationGatewayRequest.class));
+        when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
+
+        GatewayResponse response = walletAuthoriseService.authorise(charge.getExternalId(), validGooglePayDetails);
+
+        assertThat(response.getBaseResponse().isPresent(), is(true));
+        assertThat(response.getSessionIdentifier().isPresent(), is(true));
+        assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
+
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
+        assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
+        assertThat(charge.getCardDetails(), is(mockCardDetailsEntity));
+        assertThat(charge.getWalletType(), is(WalletType.GOOGLE_PAY));
+        assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
+        assertThat(charge.getEmail(), is(validGooglePayDetails.getPaymentInfo().getEmail()));
+        assertThat(charge.getRequires3ds(), is(false));
+
+        verify(mockStateTransitionService).offerPaymentStateTransition(charge.getExternalId(), AUTHORISATION_READY, AUTHORISATION_SUCCESS, chargeEventEntity);
+
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(mockEventService, times(2)).emitAndRecordEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getAllValues().getFirst().getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(eventCaptor.getAllValues().getFirst().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
 
         verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
@@ -652,6 +705,13 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockPaymentProvider);
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED, null, EXPIRY_DATE);
         when(mockPaymentProvider.authoriseApplePay(any(ApplePayAuthoriseRequest.class), any(GatewayAccountType.class))).thenReturn(authResponse);
+        return authResponse;
+    }
+
+    private GatewayResponse providerWillAuthoriseGooglePayWithGooglePayAuthoriseRequest(PaymentProvider mockPaymentProvider) throws Exception {
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockPaymentProvider);
+        GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED, null, EXPIRY_DATE);
+        when(mockPaymentProvider.authoriseGooglePay(any(GooglePayAuthoriseRequest.class), any(GatewayAccountType.class))).thenReturn(authResponse);
         return authResponse;
     }
 

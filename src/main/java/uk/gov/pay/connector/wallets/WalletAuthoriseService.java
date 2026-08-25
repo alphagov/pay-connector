@@ -20,8 +20,10 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.adyen.AdyenPaymentProvider;
 import uk.gov.pay.connector.gateway.model.ApplePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.GooglePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorisePayload;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenGooglePayAuthorisePayload;
 import uk.gov.pay.connector.gateway.model.request.records.WalletAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -32,7 +34,7 @@ import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
-import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthorisationRequest;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Optional;
@@ -44,6 +46,7 @@ public class WalletAuthoriseService {
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletAuthoriseService.class);
     private final AuthorisationService authorisationService;
     private final ApplePayAuthoriseRequestFactory applePayAuthoriseRequestFactory;
+    private final GooglePayAuthoriseRequestFactory googlePayAuthoriseRequestFactory;
     private final ChargeService chargeService;
     private final PaymentProviders paymentProviders;
     private final WalletPaymentInfoToAuthCardDetailsConverter walletPaymentInfoToAuthCardDetailsConverter;
@@ -66,12 +69,14 @@ public class WalletAuthoriseService {
                                   ChargeService chargeService,
                                   AuthorisationService authorisationService,
                                   ApplePayAuthoriseRequestFactory applePayAuthoriseRequestFactory,
+                                  GooglePayAuthoriseRequestFactory googlePayAuthoriseRequestFactory,
                                   WalletPaymentInfoToAuthCardDetailsConverter walletPaymentInfoToAuthCardDetailsConverter,
                                   AuthorisationLogger authorisationLogger,
                                   Environment environment) {
         this.paymentProviders = paymentProviders;
         this.authorisationService = authorisationService;
         this.applePayAuthoriseRequestFactory = applePayAuthoriseRequestFactory;
+        this.googlePayAuthoriseRequestFactory = googlePayAuthoriseRequestFactory;
         this.walletPaymentInfoToAuthCardDetailsConverter = walletPaymentInfoToAuthCardDetailsConverter;
         this.chargeService = chargeService;
         this.authorisationLogger = authorisationLogger;
@@ -238,7 +243,6 @@ public class WalletAuthoriseService {
         var authorisationGatewayRequest = ApplePayAuthorisationGatewayRequest.valueOf
                 (chargeEntity, (ApplePayAuthRequest) walletAuthorisationRequest);
 
-        
         var applePayAuthoriseRequest = applePayAuthoriseRequestFactory.create(authorisationGatewayRequest).orElse(null);
         PaymentProvider paymentProvider = getPaymentProviderFor(chargeEntity);
         
@@ -253,11 +257,27 @@ public class WalletAuthoriseService {
         return new RequestAndResponse(applePayAuthoriseRequest, response);
     }
 
-    private RequestAndResponse authoriseGooglePay(ChargeEntity chargeEntity, WalletAuthorisationRequest walletAuthorisationRequest)
-            throws GatewayException {
-        var authorisationGatewayRequest = GooglePayAuthorisationGatewayRequest.valueOf
-                (chargeEntity, (GooglePayAuthRequest) walletAuthorisationRequest);
-        GatewayResponse<BaseAuthoriseResponse> response = getPaymentProviderFor(chargeEntity).authoriseGooglePay(authorisationGatewayRequest);
+    private RequestAndResponse authoriseGooglePay(
+            ChargeEntity chargeEntity, 
+            WalletAuthorisationRequest walletAuthorisationRequest
+    ) throws GatewayException {
+
+        var authorisationGatewayRequest = GooglePayAuthorisationGatewayRequest.valueOf(
+                chargeEntity,
+                (GooglePayAuthorisationRequest) walletAuthorisationRequest
+        );
+        
+        var googlePayAuthoriseRequest = googlePayAuthoriseRequestFactory.create(authorisationGatewayRequest).orElse(null);
+        PaymentProvider paymentProvider = getPaymentProviderFor(chargeEntity);
+
+        GatewayResponse<BaseAuthoriseResponse> response = switch (googlePayAuthoriseRequest) {
+            case AdyenGooglePayAuthorisePayload adyenGooglePayAuthorisePayload when paymentProvider instanceof AdyenPaymentProvider ->
+                    paymentProvider.authoriseGooglePay(
+                            adyenGooglePayAuthorisePayload,
+                            authorisationGatewayRequest.getGatewayAccount().getGatewayAccountType()
+                    );
+            case null, default ->  getPaymentProviderFor(chargeEntity).authoriseGooglePay(authorisationGatewayRequest);
+        };
 
         return new RequestAndResponse(null, response);
     }

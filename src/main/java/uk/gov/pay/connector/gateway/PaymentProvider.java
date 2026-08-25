@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationG
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.request.records.CardAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.GooglePayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
@@ -60,6 +61,10 @@ public interface PaymentProvider {
     }
 
     default GatewayResponse<BaseAuthoriseResponse> authoriseGooglePay(GooglePayAuthorisationGatewayRequest authorisationGatewayRequest) throws GatewayException {
+        throw new UnsupportedOperationException("Google Pay is not supported for " + getPaymentGatewayName());
+    }
+
+    default GatewayResponse<BaseAuthoriseResponse> authoriseGooglePay(GooglePayAuthoriseRequest googlePayAuthoriseRequest, GatewayAccountType gatewayAccountType) throws GatewayException {
         throw new UnsupportedOperationException("Google Pay is not supported for " + getPaymentGatewayName());
     }
 

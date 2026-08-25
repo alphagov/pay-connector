@@ -5,6 +5,7 @@ import uk.gov.pay.connector.wallets.googlepay.api.GooglePayPaymentInfo;
 
 public final class AdyenGooglePayAuthRequestFixture {
     private GooglePayPaymentInfo googlePaymentInfo;
+    private String token;
     
     private AdyenGooglePayAuthRequestFixture() {
     }
@@ -16,12 +17,17 @@ public final class AdyenGooglePayAuthRequestFixture {
     public AdyenGooglePayAuthRequest build() {
         return new AdyenGooglePayAuthRequest(
                 googlePaymentInfo,
-                "token"
+                token
         );
     }
 
     public AdyenGooglePayAuthRequestFixture withGooglePaymentInfo(GooglePayPaymentInfo googlePaymentInfo) {
         this.googlePaymentInfo = googlePaymentInfo;
+        return this;
+    }
+    
+    public AdyenGooglePayAuthRequestFixture withToken(String token) {
+        this.token = token;
         return this;
     }
 }
