@@ -29,6 +29,7 @@ import uk.gov.pay.connector.paymentinstrument.dao.PaymentInstrumentDao;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -97,6 +98,38 @@ class AdyenTokenWebhookNotificationHandlerTest {
             var paymentInstrument = aPaymentInstrumentEntity()
                     .withPaymentInstrumentStatus(CREATED)
                     .withChargeExternalId(CHARGE_EXTERNAL_ID)
+                    .withRecurringAuthToken(Map.of(AdyenRequestFactory.STORED_PAYMENT_METHOD_ID, STORED_PAYMENT_METHOD_ID))
+                    .build();
+
+            var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
+
+            var chargeEntity = aValidChargeEntity()
+                    .withExternalId(CHARGE_EXTERNAL_ID)
+                    .withPaymentInstrument(paymentInstrument)
+                    .withAgreementEntity(agreement).build();
+
+            given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+                    .willReturn(tokenNotification(SHOPPER_REFERENCE));
+            given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
+            given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
+
+            handler.process(PAYLOAD);
+
+            then(linkPaymentInstrumentToAgreementService)
+                    .should()
+                    .linkPaymentInstrumentToAgreement(eq(agreement), paymentInstrumentCaptor.capture());
+
+            var captured = paymentInstrumentCaptor.getValue();
+            assertThat(captured.getRecurringAuthToken().orElseThrow().get(AdyenRequestFactory.STORED_PAYMENT_METHOD_ID),
+                    is(STORED_PAYMENT_METHOD_ID));
+        }
+
+        @Test
+        void shouldSetRecurringAuthTokenOnPaymentInstrumentWhenItsMissing() {
+            var paymentInstrument = aPaymentInstrumentEntity()
+                    .withPaymentInstrumentStatus(CREATED)
+                    .withChargeExternalId(CHARGE_EXTERNAL_ID)
+                    .withRecurringAuthToken(null)
                     .build();
             var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
 
@@ -109,7 +142,6 @@ class AdyenTokenWebhookNotificationHandlerTest {
                     .willReturn(tokenNotification(SHOPPER_REFERENCE));
             given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
             given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
-            given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(paymentInstrument));
 
             handler.process(PAYLOAD);
 
@@ -120,6 +152,9 @@ class AdyenTokenWebhookNotificationHandlerTest {
             var captured = paymentInstrumentCaptor.getValue();
             assertThat(captured.getRecurringAuthToken().orElseThrow().get(AdyenRequestFactory.STORED_PAYMENT_METHOD_ID),
                     is(STORED_PAYMENT_METHOD_ID));
+
+            logs.assertContains("storedPaymentMethodId has been used to set the recurring auth token asynchronously");
+
         }
 
         @Test
@@ -189,7 +224,7 @@ class AdyenTokenWebhookNotificationHandlerTest {
         }
 
         @Test
-        void shouldIgnoreAndLogWhenPaymentInstrumentNotFound() {
+        void shouldIgnoreAndLogWhenPaymentInstrumentNotFoundForLatestCharge() {
             var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
 
             var chargeEntity = aValidChargeEntity()
@@ -200,8 +235,26 @@ class AdyenTokenWebhookNotificationHandlerTest {
                     .willReturn(tokenNotification(SHOPPER_REFERENCE));
             given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
             given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
-            given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.empty());
 
+            handler.process(PAYLOAD);
+
+            then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
+            logs.assertContains("Ignoring Adyen token webhook notification as payment instrument is not found");
+        }
+
+        @Test
+        void shouldIgnoreAndLogWhenPaymentInstrumentNotFoundForWebhookCharge() {
+            var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
+
+            var chargeEntity = aValidChargeEntity()
+                    .withExternalId(LATEST_CHARGE_EXTERNAL_ID)
+                    .withAgreementEntity(agreement).build();
+
+            given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+                    .willReturn(tokenNotification(SHOPPER_REFERENCE));
+            given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
+            given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
+            given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.empty());
 
             handler.process(PAYLOAD);
 
@@ -328,10 +381,12 @@ class AdyenTokenWebhookNotificationHandlerTest {
         given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
                 .willReturn(tokenNotification(SHOPPER_REFERENCE));
         given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
-        if (tokenOperation.equals("created")) {
+        if (tokenOperation.equals("disabled")) {
+            given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(paymentInstrument));
+        } else {
             given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
+
         }
-        given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(paymentInstrument));
         return paymentInstrument;
     }
 
