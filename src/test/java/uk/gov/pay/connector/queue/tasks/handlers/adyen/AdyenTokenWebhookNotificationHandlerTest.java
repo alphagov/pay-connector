@@ -39,7 +39,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.slf4j.event.Level.ERROR;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
@@ -207,7 +206,7 @@ class AdyenTokenWebhookNotificationHandlerTest {
             handler.process(PAYLOAD);
 
             then(linkPaymentInstrumentToAgreementService).shouldHaveNoInteractions();
-            logs.assertContains("Payment instrument not found for charge in Adyen token webhook, ignoring");
+            logs.assertContains("Ignoring Adyen token webhook notification as payment instrument is not found");
         }
 
         @Test
@@ -281,7 +280,7 @@ class AdyenTokenWebhookNotificationHandlerTest {
             var event = agreementInactivatedArgumentCaptor.getValue();
             assertThat(event.getEventType(), is("AGREEMENT_INACTIVATED"));
             var eventDetails = (AgreementInactivated.AgreementInactivatedEventDetails) event.getEventDetails();
-            assertThat(eventDetails.getReason(), equalTo("Adyen agreement inactivated"));
+            assertThat(eventDetails.getReason(), equalTo("Token is disabled"));
         }
 
         @ParameterizedTest
@@ -296,20 +295,24 @@ class AdyenTokenWebhookNotificationHandlerTest {
         }
 
         @Test
-        void shouldIgnoreAndErrorWhenDisablingPaymentInstrumentWithCreatedStatus() {
-            var paymentInstrument = createAndMockPaymentInstrument(CREATED);
+        void shouldIgnoreAndLogWhenPaymentInstrumentNotFound() {
+            var agreement = anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build();
+
+            given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
+                    .willReturn(tokenNotification(SHOPPER_REFERENCE));
+            given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
+            given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.empty());
 
             handler.process(PAYLOAD);
-            assertThat(paymentInstrument.getStatus(), is(CREATED));
-            verifyNoInteractions(ledgerService);
-            logs.forLevel(ERROR).assertContains("Payment instrument is not in the correct state to be inactivated, ignoring Adyen token webhook");
-        }
 
+            verifyNoInteractions(ledgerService);
+            logs.assertContains("Ignoring Adyen token webhook notification as payment instrument is not found");
+        }
     }
 
-    private @NotNull PaymentInstrumentEntity createAndMockPaymentInstrument(PaymentInstrumentStatus active) {
+    private @NotNull PaymentInstrumentEntity createAndMockPaymentInstrument(PaymentInstrumentStatus status) {
         var paymentInstrument = aPaymentInstrumentEntity()
-                .withPaymentInstrumentStatus(active)
+                .withPaymentInstrumentStatus(status)
                 .withChargeExternalId(CHARGE_EXTERNAL_ID)
                 .build();
         var agreement = anAgreementEntity()
@@ -325,7 +328,9 @@ class AdyenTokenWebhookNotificationHandlerTest {
         given(adyenNotificationService.deserialiseTokenPayload(eq(PAYLOAD), eq(AdyenTokenNotification.class)))
                 .willReturn(tokenNotification(SHOPPER_REFERENCE));
         given(agreementDao.findByExternalId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(agreement));
-        given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
+        if (tokenOperation.equals("created")) {
+            given(chargeDao.findLatestChargeForAgreementId(AGREEMENT_EXTERNAL_ID)).willReturn(Optional.of(chargeEntity));
+        }
         given(paymentInstrumentDao.findByChargeExternalId(CHARGE_EXTERNAL_ID)).willReturn(Optional.of(paymentInstrument));
         return paymentInstrument;
     }
