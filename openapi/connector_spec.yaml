@@ -1149,7 +1149,11 @@ paths:
         content:
           application/json:
             schema:
-              type: string
+              oneOf:
+              - $ref: "#/components/schemas/NotificationRequest"
+              - $ref: "#/components/schemas/AdyenTokenNotification"
+        description: Adyen notification payload
+        required: true
       responses:
         "200":
           description: OK
@@ -3675,6 +3679,32 @@ components:
           type: string
         value:
           type: string
+    AdyenTokenEventData:
+      type: object
+      properties:
+        merchantAccount:
+          type: string
+        operation:
+          type: string
+        shopperReference:
+          type: string
+        storedPaymentMethodId:
+          type: string
+        type:
+          type: string
+    AdyenTokenNotification:
+      type: object
+      properties:
+        createdAt:
+          type: string
+        data:
+          $ref: "#/components/schemas/AdyenTokenEventData"
+        environment:
+          type: string
+        eventId:
+          type: string
+        type:
+          type: string
     AgreementCancelRequest:
       type: object
       properties:
@@ -3721,6 +3751,16 @@ components:
         user_identifier:
           type: string
           example: reference for the paying user
+    Amount:
+      type: object
+      properties:
+        currency:
+          type: string
+        decimalValue:
+          type: number
+        value:
+          type: integer
+          format: int64
     ApplePayAuthRequest:
       type: object
       properties:
@@ -5779,6 +5819,54 @@ components:
           minLength: 1
       required:
       - new_status
+    NotificationRequest:
+      type: object
+      properties:
+        live:
+          type: string
+        notificationItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationRequestItemContainer"
+    NotificationRequestItem:
+      type: object
+      properties:
+        additionalData:
+          type: object
+          additionalProperties:
+            type: string
+        amount:
+          $ref: "#/components/schemas/Amount"
+        eventCode:
+          type: string
+        eventDate:
+          type: string
+          format: date-time
+        merchantAccountCode:
+          type: string
+        merchantReference:
+          type: string
+        operations:
+          type: array
+          items:
+            type: string
+        originalPsp:
+          type: string
+        originalReference:
+          type: string
+        paymentMethod:
+          type: string
+        pspReference:
+          type: string
+        reason:
+          type: string
+        success:
+          type: boolean
+    NotificationRequestItemContainer:
+      type: object
+      properties:
+        NotificationRequestItem:
+          $ref: "#/components/schemas/NotificationRequestItem"
     Outcome:
       type: object
       description: Object containing information about the outcome of the 3ds exemption

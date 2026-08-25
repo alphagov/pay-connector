@@ -1,7 +1,11 @@
 package uk.gov.pay.connector.webhook.resource;
 
+import com.adyen.model.notification.NotificationRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.inject.Inject;
@@ -14,6 +18,7 @@ import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.adyen.response.AdyenTokenNotification;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 import uk.gov.pay.connector.gateway.sandbox.SandboxNotificationService;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationService;
@@ -137,6 +142,7 @@ public class NotificationResource {
     @POST
     @Consumes(APPLICATION_JSON)
     @Path("/v1/api/notifications/adyen")
+    @Schema(oneOf = {NotificationRequest.class, AdyenTokenNotification.class})
     @Operation(
             summary = "Handle Adyen payment and token notifications",
             description = "Accepts Adyen payment and token webhooks as JSON and preserves the raw request body for signature verification.",
@@ -146,6 +152,14 @@ public class NotificationResource {
                     @ApiResponse(responseCode = "405", description = "Method Not Allowed - Unsupported HTTP method"),
                     @ApiResponse(responseCode = "415", description = "Unsupported Media Type - Unsupported content type")
             }
+    )
+    @RequestBody(
+            description = "Adyen notification payload",
+            required = true,
+            content = @Content(
+                    mediaType = APPLICATION_JSON,
+                    schema = @Schema(oneOf = {NotificationRequest.class, AdyenTokenNotification.class})
+            )
     )
     public Response authoriseAdyenNotifications(String notification,
                                                 @Parameter(in = HEADER, example = "5.6.7.8")
