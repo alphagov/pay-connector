@@ -36,9 +36,16 @@ public class CardCaptureProcess {
     }
 
     public void handleCaptureMessages() throws QueueException {
+        LOGGER.warn("DEBUG CAPTURE: retrieving messages from capture queue");
+
         List<ChargeCaptureMessage> captureMessages = captureQueue.retrieveChargesForCapture();
+        LOGGER.warn(
+                "DEBUG CAPTURE: retrieved {} messages from capture queue",
+                captureMessages.size()
+        );
         for (ChargeCaptureMessage message : captureMessages) {
             try {
+                LOGGER.warn("DEBUG CAPTURE: processing capture message for charge {} ",  message.getChargeId());
                 MDC.put(PAYMENT_EXTERNAL_ID, message.getChargeId());
                 LOGGER.info("Charge capture message received - [queueMessageId={}] [queueMessageReceiptHandle={}]",
                         message.getQueueMessageId(),
@@ -46,6 +53,10 @@ public class CardCaptureProcess {
                 );
 
                 runCapture(message);
+                LOGGER.warn(
+                        "DEBUG CAPTURE: finished runCapture for charge {}",
+                        message.getChargeId()
+                );
             } catch (Exception e) {
                 LOGGER.warn("Error capturing charge from SQS message [queueMessageId={}] [errorMessage={}]",
                         message.getQueueMessageId(),

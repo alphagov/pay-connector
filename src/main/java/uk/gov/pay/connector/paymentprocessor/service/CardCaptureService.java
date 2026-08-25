@@ -3,6 +3,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.core.setup.Environment;
+import org.jooq.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -69,15 +70,33 @@ public class CardCaptureService {
     }
 
     public CaptureResponse doCapture(String externalId) {
+        LOG.warn("DEBUG CAPTURE: entering doCapture externalId={}", externalId);
         ChargeEntity charge;
         try {
+            LOG.warn("DEBUG CAPTURE: preparing charge externalId={}", externalId);
+
             charge = prepareChargeForCapture(externalId);
+            LOG.warn(
+                    "DEBUG CAPTURE: charge prepared externalId={} status={}",
+                    externalId,
+                    charge.getStatus()
+            );
         } catch (OptimisticLockException e) {
+            LOG.warn(
+                    "DEBUG CAPTURE: OptimisticLockException externalId={}",
+                    externalId, e
+            );
             LOG.info("OptimisticLockException in doCapture for charge external_id={}", externalId);
             throw new ConflictRuntimeException(externalId);
         }
+        LOG.info("calling gateway capture for chargeexternal_id", externalId, charge.getStatus());
+
         CaptureResponse operationResponse = capture(charge);
+
+        LOG.info("gateway capture success for charge external_id{} success{}", externalId, operationResponse.isSuccessful());
+
         processGatewayCaptureResponse(externalId, charge.getStatus(), operationResponse);
+        LOG.info("finished processingcapture response for charge external_id{}", externalId);
 
         return operationResponse;
     }

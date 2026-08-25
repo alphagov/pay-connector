@@ -4,7 +4,6 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -27,6 +26,7 @@ import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -40,6 +40,7 @@ import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.time.temporal.ChronoUnit.SECONDS;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
@@ -48,6 +49,8 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static org.junit.Assert.fail;
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -91,9 +94,70 @@ public class ChargesApiResourceIT {
     private final DatabaseTestHelper databaseTestHelper = app.getDatabaseTestHelper();
     private final String accountId = testBaseExtension.getAccountId();
 
+//    @Test
+//    void makeChargeSubmitCaptureAndCheckSettlementSummary() throws QueueException, InterruptedException {
+//        Instant startOfTest = Instant.now();
+//        String expectedDayOfCapture = ISO_LOCAL_DATE_IN_UTC.format(startOfTest);
+//
+//        String chargeId = testBaseExtension.authoriseNewCharge();
+//        System.err.println("DEBUG TEST: charge authorised: " + chargeId);
+//
+//        app.givenSetup()
+//                .post(testBaseExtension.captureChargeUrlFor(chargeId))
+//                .then()
+//                .statusCode(204);
+//        System.err.println("DEBUG TEST: capture endpoint returned 204");
+//
+//        Thread.sleep(500);
+//
+//        // Trigger the capture process programmatically which normally would be invoked by the scheduler.
+//        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
+//        System.err.println("DEBUG TEST: handleCaptureMessages finished");
+//
+//        var response = testBaseExtension.getCharge(chargeId).extract().response();
+//        System.out.println("Test abzak after capture for charge = " +  response.asString());
+//
+//        testBaseExtension.getCharge(chargeId)
+//                .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
+//                .body("settlement_summary.capture_submit_time", isWithin(20, SECONDS))
+//                .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture));
+//    }
+//@Test
+//void makeChargeSubmitCaptureAndCheckSettlementSummary2() throws QueueException, InterruptedException {
+//    Instant startOfTest = Instant.now();
+//    String expectedDayOfCapture = ISO_LOCAL_DATE_IN_UTC.format(startOfTest);
+//
+//    String chargeId = testBaseExtension.authoriseNewCharge();
+//
+//    app
+//            .givenSetup()
+//            .post(testBaseExtension.captureChargeUrlFor(chargeId))
+//            .then()
+//            .statusCode(204);
+//
+//    Thread.sleep(500);
+//    app.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
+//
+//    var response = testBaseExtension.getCharge(chargeId).extract().response();
+//
+//    var responseBody = response.asString();
+//
+//    var captureSubmitTime = response.jsonPath().getString("settlement_summary.capture_submit_time");
+//
+//    assertThat("capture_submit_time is null, charge response after capture: " + responseBody,
+//            captureSubmitTime, notNullValue());
+//
+//    response.then().body("settlement_summary.capture_submit_time",
+//                    matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z"))
+//            .body("settlement_summary.capture_submit_time", isWithin(20, SECONDS))
+//            .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture));
+//
+//}
+
     @Test
-    @Disabled
-    void makeChargeSubmitCaptureAndCheckSettlementSummary() throws QueueException, InterruptedException {
+    void makeChargeSubmitCaptureAndCheckSettlementSummary3()
+            throws QueueException {
+
         Instant startOfTest = Instant.now();
         String expectedDayOfCapture = ISO_LOCAL_DATE_IN_UTC.format(startOfTest);
 
@@ -104,17 +168,33 @@ public class ChargesApiResourceIT {
                 .then()
                 .statusCode(204);
 
-        Thread.sleep(500);
+        CardCaptureProcess cardCaptureProcess =
+                app.getInstanceFromGuiceContainer(CardCaptureProcess.class);
 
-        // Trigger the capture process programmatically which normally would be invoked by the scheduler.
-        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
+        await()
+                .atMost(Duration.ofSeconds(10))
+                .pollInterval(Duration.ofMillis(200))
+                .untilAsserted(() -> {
 
-        testBaseExtension.getCharge(chargeId)
-                .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
-                .body("settlement_summary.capture_submit_time", isWithin(20, SECONDS))
-                .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture));
+                    cardCaptureProcess.handleCaptureMessages();
+
+                    testBaseExtension.getCharge(chargeId)
+                            .body(
+                                    "settlement_summary.capture_submit_time",
+                                    matchesPattern(
+                                            "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z"
+                                    )
+                            )
+                            .body(
+                                    "settlement_summary.capture_submit_time",
+                                    isWithin(20, SECONDS)
+                            )
+                            .body(
+                                    "settlement_summary.captured_date",
+                                    equalTo(expectedDayOfCapture)
+                            );
+                });
     }
-
     @Nested
     class GetChargeByAccountId {
         @Test

@@ -501,11 +501,36 @@ public class ChargeService {
         return cardDetailsEntity;
     }
 
+//    @Transactional
+//    public Optional<ChargeResponse> findChargeForAccount(String chargeId, Long accountId, UriInfo uriInfo) {
+//        return chargeDao
+//                .findByExternalIdAndGatewayAccount(chargeId, accountId)
+//                .map(chargeEntity -> populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build());
+//    }
+
     @Transactional
     public Optional<ChargeResponse> findChargeForAccount(String chargeId, Long accountId, UriInfo uriInfo) {
+
         return chargeDao
                 .findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(chargeEntity -> populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, chargeEntity).build());
+                .map(chargeEntity -> {
+
+                    LOGGER.warn(
+                            "DEBUGGING GET CHARGE: chargeId={}, status={}, events={}",
+                            chargeEntity.getExternalId(),
+                            chargeEntity.getStatus(),
+                            chargeEntity.getEvents()
+                                    .stream()
+                                    .map(ChargeEventEntity::getStatus)
+                                    .toList()
+                    );
+
+                    return populateResponseBuilderWith(
+                            aChargeResponseBuilder(),
+                            uriInfo,
+                            chargeEntity
+                    ).build();
+                });
     }
 
     @Transactional
