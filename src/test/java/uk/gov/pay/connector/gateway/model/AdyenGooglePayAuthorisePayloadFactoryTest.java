@@ -45,6 +45,7 @@ class AdyenGooglePayAuthorisePayloadFactoryTest {
         String merchantAccountId = "merchantAccountId";
         String storeId = "storeId";
         String frontendUrl = "http://frontend.test/card_details/" + externalId;
+        String token = "token";
         GooglePayPaymentInfo googlePaymentInfo = aGooglePayPaymentInfo().build();
         
         GatewayAccountEntity gatewayAccountEntity = GatewayAccountEntityFixture.aGatewayAccountEntity().build();
@@ -55,7 +56,10 @@ class AdyenGooglePayAuthorisePayloadFactoryTest {
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
 
-        AdyenGooglePayAuthRequest googlePayAuthRequest = AdyenGooglePayAuthRequestFixture.aGooglePayAuthRequest().withGooglePaymentInfo(googlePaymentInfo).build();
+        AdyenGooglePayAuthRequest googlePayAuthRequest = AdyenGooglePayAuthRequestFixture.aGooglePayAuthRequest()
+                .withGooglePaymentInfo(googlePaymentInfo)
+                .withToken(token)
+                .build();
 
         GooglePayAuthorisationGatewayRequest googlePayAuthorisationGatewayRequest = GooglePayAuthorisationGatewayRequest.valueOf(chargeEntity, googlePayAuthRequest);
 
@@ -74,7 +78,7 @@ class AdyenGooglePayAuthorisePayloadFactoryTest {
                 storeId,
                 externalId, 
                 new Amount("GBP", amountInPence),
-                new AdyenGooglePayPaymentMethod(googlePaymentInfo.toString()),
+                new AdyenGooglePayPaymentMethod(token),
                 adyenBrowserInfo,
                 frontendUrl
         );

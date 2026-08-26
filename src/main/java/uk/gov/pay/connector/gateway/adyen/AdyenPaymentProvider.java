@@ -32,7 +32,9 @@ import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGate
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorisePayload;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenGooglePayAuthorisePayload;
 import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.GooglePayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
@@ -101,6 +103,15 @@ public class AdyenPaymentProvider implements PaymentProvider {
             return adyenAuthoriseHandler.authorise(adyenApplePayAuthorisePayload, gatewayAccountType);
         } else {
             throw new IllegalArgumentException("ApplePayAuthoriseRequest is not of type AdyenApplePayAuthoriseRequest");
+        }
+    }
+    
+    @Override
+    public GatewayResponse authoriseGooglePay(GooglePayAuthoriseRequest googlePayAuthoriseRequest, GatewayAccountType gatewayAccountType) throws GatewayException {
+        if (googlePayAuthoriseRequest instanceof AdyenGooglePayAuthorisePayload adyenGooglePayAuthorisePayload) {
+            return adyenAuthoriseHandler.authorise(adyenGooglePayAuthorisePayload, gatewayAccountType);
+        } else {
+            throw new IllegalArgumentException("GooglePayAuthoriseRequest is not of type AdyenGooglePayAuthoriseRequest");
         }
     }
 

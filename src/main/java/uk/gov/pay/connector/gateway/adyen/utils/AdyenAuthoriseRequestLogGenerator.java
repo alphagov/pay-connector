@@ -24,7 +24,7 @@ public class AdyenAuthoriseRequestLogGenerator {
     public AuthorisationRequestLog generate(AdyenAuthoriseRequest adyenAuthoriseRequest, AuthCardDetails authCardDetails) {
         return switch (adyenAuthoriseRequest) {
             case AdyenApplePayAuthorisePayload adyenApplePayAuthorisePayload -> generate(adyenApplePayAuthorisePayload, authCardDetails);
-            case AdyenGooglePayAuthorisePayload adyenGooglePayAuthorisePayload -> null;
+            case AdyenGooglePayAuthorisePayload adyenGooglePayAuthorisePayload -> null; // TODO: Implement this resolves correctly in PP-15723
         };
     }
 
