@@ -71,8 +71,8 @@ public class AuthorisationLogger {
         AuthorisationRequestLog authoriseRequestLog = switch (authoriseRequest) {
             case WorldpayAuthoriseRequest worldpayAuthoriseRequest -> 
                     worldpayAuthoriseRequestLogGenerator.generate(worldpayAuthoriseRequest, authCardDetails);
-            case AdyenAuthoriseRequest applePayAuthoriseRequest -> 
-                    adyenAuthoriseRequestLogGenerator.generate(applePayAuthoriseRequest, authCardDetails);
+            case AdyenAuthoriseRequest adyenAuthoriseRequest -> 
+                    adyenAuthoriseRequestLogGenerator.generate(adyenAuthoriseRequest, authCardDetails);
         };
 
         logChargeAuthorisation(logger,

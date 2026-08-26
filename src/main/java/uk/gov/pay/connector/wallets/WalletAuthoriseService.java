@@ -279,7 +279,7 @@ public class WalletAuthoriseService {
             case null, default ->  getPaymentProviderFor(chargeEntity).authoriseGooglePay(authorisationGatewayRequest);
         };
 
-        return new RequestAndResponse(null, response);
+        return new RequestAndResponse(googlePayAuthoriseRequest, response);
     }
 
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {

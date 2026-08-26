@@ -1,10 +1,13 @@
 package uk.gov.pay.connector.gateway.adyen.utils;
 
 import org.junit.jupiter.api.Test;
+import uk.gov.pay.connector.gateway.adyen.AdyenBrowserInfoFactory;
 import uk.gov.pay.connector.gateway.adyen.request.json.AdyenApplePayPaymentMethod;
+import uk.gov.pay.connector.gateway.adyen.request.json.AdyenGooglePayPaymentMethod;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorisePayload;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenGooglePayAuthorisePayload;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestLog;
 import uk.gov.pay.connector.wallets.WalletType;
 
@@ -16,6 +19,7 @@ import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStruc
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.EMAIL;
 import static uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseRequestLogGenerator.GATEWAY_REQUEST_RECORD;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
+import static uk.gov.pay.connector.model.domain.googlepay.GooglePayPaymentInfoFixture.aGooglePayPaymentInfo;
 import static uk.gov.service.payments.logging.LoggingKeys.WALLET;
 
 class AdyenAuthoriseRequestLogGeneratorTest {
@@ -23,7 +27,7 @@ class AdyenAuthoriseRequestLogGeneratorTest {
     private final AdyenAuthoriseRequestLogGenerator generator = new AdyenAuthoriseRequestLogGenerator();
 
     @Test
-    public void generatesWorldpayMotoAuthoriseRequestLogWithCorporateCard() {
+    public void generatesAdyenApplePayAuthoriseRequestLogWithCorporateCard() {
         AdyenApplePayAuthorisePayload request = new AdyenApplePayAuthorisePayload(
                 "merchantAccount",
                 "store",
@@ -43,6 +47,32 @@ class AdyenAuthoriseRequestLogGeneratorTest {
                 kv(GATEWAY_REQUEST_RECORD, true),
                 kv(BILLING_ADDRESS, false),
                 kv(WALLET, WalletType.APPLE_PAY),
+                kv(EMAIL, false)
+        ));
+    }
+
+    @Test
+    public void generatesAdyenGooglePayAuthoriseRequestLogWithCorporateCard() {
+        AdyenGooglePayAuthorisePayload request = new AdyenGooglePayAuthorisePayload(
+                "merchantAccount",
+                "store",
+                "reference",
+                new Amount("GBP", 1000L),
+                new AdyenGooglePayPaymentMethod("googlePayToken"),
+                new AdyenBrowserInfoFactory().create(aGooglePayPaymentInfo().build()),
+                "https://govpay.com"
+        );
+
+        AuthCardDetails authCardDetails = anAuthCardDetails().build();
+
+        AuthorisationRequestLog result = generator.generate(request, authCardDetails);
+
+        assertThat(result.authorisationRequest(), is(" with Google Pay"));
+
+        assertThat(result.structuredArguments(), containsInAnyOrder(
+                kv(GATEWAY_REQUEST_RECORD, true),
+                kv(BILLING_ADDRESS, false),
+                kv(WALLET, WalletType.GOOGLE_PAY),
                 kv(EMAIL, false)
         ));
     }

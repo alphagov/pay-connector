@@ -24,7 +24,7 @@ public class AdyenAuthoriseRequestLogGenerator {
     public AuthorisationRequestLog generate(AdyenAuthoriseRequest adyenAuthoriseRequest, AuthCardDetails authCardDetails) {
         return switch (adyenAuthoriseRequest) {
             case AdyenApplePayAuthorisePayload adyenApplePayAuthorisePayload -> generate(adyenApplePayAuthorisePayload, authCardDetails);
-            case AdyenGooglePayAuthorisePayload adyenGooglePayAuthorisePayload -> null; // TODO: Implement this resolves correctly in PP-15723
+            case AdyenGooglePayAuthorisePayload adyenGooglePayAuthorisePayload -> generate(adyenGooglePayAuthorisePayload, authCardDetails);
         };
     }
 
@@ -36,6 +36,21 @@ public class AdyenAuthoriseRequestLogGenerator {
 
         stringJoiner.add("with Apple Pay");
         structuredArguments.add(kv(WALLET, WalletType.APPLE_PAY));
+
+        structuredArguments.add(kv(BILLING_ADDRESS, false));
+        structuredArguments.add(kv(EMAIL, false));
+
+        return new AuthorisationRequestLog(stringJoiner.toString(), List.copyOf(structuredArguments));
+    }
+
+    private AuthorisationRequestLog generate(AdyenGooglePayAuthorisePayload adyenGooglePayAuthorisePayload, AuthCardDetails authCardDetails) {
+        List<StructuredArgument> structuredArguments = new ArrayList<>();
+        structuredArguments.add(kv(GATEWAY_REQUEST_RECORD, true));
+
+        var stringJoiner = new StringJoiner(" and ", " ", "");
+
+        stringJoiner.add("with Google Pay");
+        structuredArguments.add(kv(WALLET, WalletType.GOOGLE_PAY));
 
         structuredArguments.add(kv(BILLING_ADDRESS, false));
         structuredArguments.add(kv(EMAIL, false));
