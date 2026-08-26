@@ -57,7 +57,6 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_NOTIFICATION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION;
 
-
 @ExtendWith(MockitoExtension.class)
 class AdyenNotificationServiceTest {
 
@@ -78,16 +77,23 @@ class AdyenNotificationServiceTest {
     @Mock
     private AdyenNotificationValidator mockAdyenNotificationValidator;
 
-    private final JsonObjectMapper jsonObjectMapper = new JsonObjectMapper(new ObjectMapper());
+    private AdyenWebhookNotificationParser adyenWebhookNotificationParser;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JsonObjectMapper jsonObjectMapper = new JsonObjectMapper(objectMapper);
     private static final String FORWARDED_IP = "5.6.7.8";
     private static final String HMAC_SIGNATURE = "sha256=test-signature";
 
     @BeforeEach
     void setUp() {
-        adyenNotificationService = new AdyenNotificationService(mockAdyenGatewayConfig,
+        adyenWebhookNotificationParser = new AdyenWebhookNotificationParser();
+        adyenNotificationService = new AdyenNotificationService(
                 mockTaskQueueService,
                 mockAdyenNotificationValidator,
-                jsonObjectMapper);
+                jsonObjectMapper,
+                objectMapper,
+                adyenWebhookNotificationParser
+        );
         Logger root = (Logger) LoggerFactory.getLogger(AdyenNotificationService.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
@@ -145,7 +151,7 @@ class AdyenNotificationServiceTest {
         void shouldRejectPaymentNotificationWhenHmacSignatureIsInvalid() {
             when(mockAdyenNotificationValidator.isValidIpAddress("5.6.7.8")).thenReturn(true);
             when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys());
-            when(mockAdyenNotificationValidator.isValidHmac(any(), any())).thenReturn(false);
+            when(mockAdyenNotificationValidator.isValidHmac(any(), any(), any())).thenReturn(false);
 
             String payload = getNotificationWithValidHmacSignature("AUTHORISATION");
 
@@ -234,7 +240,7 @@ class AdyenNotificationServiceTest {
         void shouldNotAddInvalidPaymentNotificationTypeToTaskQueue(String eventCode) {
             when(mockAdyenNotificationValidator.isValidIpAddress("5.6.7.8")).thenReturn(true);
             when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys());
-            when(mockAdyenNotificationValidator.isValidHmac(any(), any())).thenReturn(true);
+            when(mockAdyenNotificationValidator.isValidHmac(any(), any(), any())).thenReturn(true);
             String payload = getNotificationWithValidHmacSignature(eventCode);
 
             boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8", null);
@@ -249,7 +255,7 @@ class AdyenNotificationServiceTest {
         void shouldThrowWebApplicationExceptionWhenSendingPaymentNotificationToTaskQueueFails(AdyenPaymentEvent eventCode) {
             when(mockAdyenNotificationValidator.isValidIpAddress("5.6.7.8")).thenReturn(true);
             when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys());
-            when(mockAdyenNotificationValidator.isValidHmac(any(), any())).thenReturn(true);
+            when(mockAdyenNotificationValidator.isValidHmac(any(), any(), any())).thenReturn(true);
 
             String payload = getNotificationWithValidHmacSignature(eventCode.toString());
 
@@ -276,7 +282,7 @@ class AdyenNotificationServiceTest {
         void shouldAddValidPaymentNotificationToTaskQueue(AdyenPaymentEvent eventCode) {
             when(mockAdyenNotificationValidator.isValidIpAddress("5.6.7.8")).thenReturn(true);
             when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys());
-            when(mockAdyenNotificationValidator.isValidHmac(any(), any())).thenReturn(true);
+            when(mockAdyenNotificationValidator.isValidHmac(any(), any(), any())).thenReturn(true);
 
 
             String payload = getNotificationWithValidHmacSignature(eventCode.toString());
