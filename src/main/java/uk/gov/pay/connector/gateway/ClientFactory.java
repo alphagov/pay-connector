@@ -5,12 +5,15 @@ import com.codahale.metrics.httpclient5.InstrumentedHttpClientConnectionManager;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.util.Duration;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Client;
 import org.apache.hc.client5.http.SystemDefaultDnsResolver;
+import org.apache.hc.client5.http.impl.io.DefaultHttpClientConnectionOperator;
 import org.apache.hc.client5.http.impl.io.ManagedHttpClientConnectionFactory;
 import org.apache.hc.client5.http.io.HttpClientConnectionManager;
-import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
-import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
-import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.client5.http.io.HttpClientConnectionOperator;
+import org.apache.hc.client5.http.ssl.TlsSocketStrategy;
+import org.apache.hc.core5.http.URIScheme;
 import org.apache.hc.core5.http.config.RegistryBuilder;
 import org.apache.hc.core5.util.TimeValue;
 import org.glassfish.jersey.apache5.connector.Apache5ConnectorProvider;
@@ -19,9 +22,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.OperationOverrides;
 import uk.gov.service.payments.logging.RestClientLoggingFilter;
 
-import jakarta.inject.Inject;
 import javax.net.ssl.SSLContext;
-import jakarta.ws.rs.client.Client;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
@@ -34,8 +35,8 @@ public class ClientFactory {
     private final Environment environment;
     private final ConnectorConfiguration conf;
 
-    private final static String PROXY_HOST_PROPERTY = "https.proxyHost";
-    private final static String PROXY_PORT_PROPERTY = "https.proxyPort";
+    private static final String PROXY_HOST_PROPERTY = "https.proxyHost";
+    private static final String PROXY_PORT_PROPERTY = "https.proxyPort";
 
     @Inject
     public ClientFactory(Environment environment, ConnectorConfiguration conf) {
@@ -88,28 +89,29 @@ public class ClientFactory {
     private HttpClientConnectionManager createConnectionManager(String gatewayName, String operation,
                                                                 MetricRegistry metricRegistry,
                                                                 Duration connectionTimeToLive) {
-
-        SSLConnectionSocketFactory sslConnectionSocketFactory;
         try {
-            sslConnectionSocketFactory = new SSLConnectionSocketFactory(
-                    SSLContext.getDefault(),
-                    new String[]{"TLSv1.2", "TLSv1.3"},
+            var TlsSocketStrategyLookup = RegistryBuilder.<TlsSocketStrategy>create()
+                    .register(URIScheme.HTTPS.id, createTlsSocketStrategy(gatewayName, operation))
+                    .build();
+
+            HttpClientConnectionOperator httpClientConnectionOperator = new DefaultHttpClientConnectionOperator(
                     null,
-                    null
-            );
+                    SystemDefaultDnsResolver.INSTANCE,
+                    TlsSocketStrategyLookup);
+
+            return InstrumentedHttpClientConnectionManager.builder(metricRegistry)
+                    .httpClientConnectionOperator(httpClientConnectionOperator)
+                    .connFactory(new ManagedHttpClientConnectionFactory())
+                    .timeToLive(TimeValue.ofMilliseconds(connectionTimeToLive.toMilliseconds()))
+                    .name(format("%s.%s", gatewayName, operation)).build();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Unable to create SSL connection socket factory", e);
+            throw new RuntimeException("Unable to create TLS socket strategy", e);
         }
-
-       return InstrumentedHttpClientConnectionManager.builder(metricRegistry)
-                .socketFactoryRegistry(RegistryBuilder.<ConnectionSocketFactory>create()
-                        .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                        .register("https", sslConnectionSocketFactory)
-                        .build())
-                .connFactory(new ManagedHttpClientConnectionFactory())
-                .dnsResolver(SystemDefaultDnsResolver.INSTANCE)
-                .timeToLive(TimeValue.ofMilliseconds(connectionTimeToLive.toMilliseconds()))
-                .name(format("%s.%s", gatewayName, operation)).build();
     }
-}
 
+
+    static TlsSocketStrategy createTlsSocketStrategy(String gatewayName, String operation) throws NoSuchAlgorithmException {
+        return new TlsLoggingSocketStrategy(SSLContext.getDefault(), gatewayName, operation);
+    }
+
+}
