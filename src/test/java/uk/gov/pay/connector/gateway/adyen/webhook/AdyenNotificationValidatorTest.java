@@ -62,12 +62,16 @@ class AdyenNotificationValidatorTest {
     @Mock
     HMACValidator hmacValidator;
 
+    @Mock
+    AdyenWebhookDeserialiser mockAadyenWebhookDeserialiser;
+
     public static final String NOTIFICATION_DOMAIN = "notification.adyen.com";
 
     @BeforeEach
     void setUp() {
         when(gatewayConfig.getNotificationDomain()).thenReturn(NOTIFICATION_DOMAIN);
-        adyenNotificationValidator = new AdyenNotificationValidator(gatewayConfig, ipDomainMatcher, hmacValidator);
+        adyenNotificationValidator = new AdyenNotificationValidator(gatewayConfig, ipDomainMatcher, hmacValidator,
+                mockAadyenWebhookDeserialiser);
 
         Logger logger = (Logger) LoggerFactory.getLogger(AdyenNotificationValidator.class);
         logger.setLevel(Level.INFO);
@@ -215,7 +219,7 @@ class AdyenNotificationValidatorTest {
             when(hmacValidator.validateHMAC(any(), any(), any())).thenThrow(IllegalArgumentException.class);
 
             assertThrows(AdyenNotificationException.class, () ->
-                    adyenNotificationValidator.isValidHmac("some signature", "some hmac key", 
+                    adyenNotificationValidator.isValidHmac("some signature", "some hmac key",
                             "some payload")
             );
 
