@@ -35,4 +35,18 @@ class ChargeFrontendUrlHelperTest {
 
     }
 
+    @Test
+    void shouldBuildAdyen3dsRequiredInChargeFrontendUrl() {
+        given(mockConnectorConfiguration.getLinks()).willReturn(mockLinksConfig);
+        given(mockLinksConfig.getFrontendUrl()).willReturn("http://frontend.test");
+
+        ChargeFrontendUrlHelper helper = new ChargeFrontendUrlHelper(mockConnectorConfiguration);
+
+        String actual = helper.getAdyen3dsRequiredInFrontendUrlForCharge(CHARGE_EXTERNAL_ID);
+        String expected = "http://frontend.test/card_details/" + CHARGE_EXTERNAL_ID + "/3ds_required_in/adyen";
+
+        assertThat(actual, is(expected));
+
+    }
+
 }
