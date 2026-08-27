@@ -1230,7 +1230,7 @@ paths:
       - Notifications
   /v1/api/notifications/worldpay:
     post:
-      description: See https://github.com/alphagov/pay-connector/blob/master/src/test/resources/templates/worldpay/notification.txt
+      description: See https://github.com/govuk-pay/pay-connector/blob/master/src/test/resources/templates/worldpay/notification.txt
         for example notification
       operationId: authoriseWorldpayNotifications
       parameters:

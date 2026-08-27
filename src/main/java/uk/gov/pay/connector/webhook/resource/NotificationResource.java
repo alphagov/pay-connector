@@ -95,13 +95,13 @@ public class NotificationResource {
     @Produces({TEXT_XML, APPLICATION_JSON})
     @Operation(
             summary = "Handle Worldpay notifications",
-            description = "See https://github.com/alphagov/pay-connector/blob/master/src/test/resources/templates/worldpay/notification.txt for example notification",
+            description = "See https://github.com/govuk-pay/pay-connector/blob/master/src/test/resources/templates/worldpay/notification.txt for example notification",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK"),
                     @ApiResponse(responseCode = "403", description = "Forbidden - notification rejected")
             }
     )
-    public Response authoriseWorldpayNotifications(@Parameter(example = "see https://github.com/alphagov/pay-connector/blob/master/src/test/resources/templates/worldpay/notification.xml for example notification")
+    public Response authoriseWorldpayNotifications(@Parameter(example = "see https://github.com/govuk-pay/pay-connector/blob/master/src/test/resources/templates/worldpay/notification.xml for example notification")
                                                    String notification,
                                                    @Parameter(in = HEADER, example = "4.3.2.1")
                                                    @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {

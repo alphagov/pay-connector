@@ -96,7 +96,7 @@ the significant added complexity.
 Removing them will simplify the codebase and tests.
 
 We should be vigilant for unexpected status changes which might indicate
-missed notifications. These should be detected by the [charge status transition state machine](https://github.com/alphagov/pay-connector/blob/master/src/main/java/uk/gov/pay/connector/model/domain/StateTransitions.java). Currently that raises an unhandled exception which will trigger 500 errors. We probably will want to change this so that the errors are logged, but we return a 200 status code.
+missed notifications. These should be detected by the [charge status transition state machine](https://github.com/govuk-pay/pay-connector/blob/master/src/main/java/uk/gov/pay/connector/model/domain/StateTransitions.java). Currently that raises an unhandled exception which will trigger 500 errors. We probably will want to change this so that the errors are logged, but we return a 200 status code.
 
 Regarding other payment gateways, smartpay doesn't support order inquiry so
 this is not relevant. When integrating with other gateways we should
