@@ -15,5 +15,9 @@ public class ChargeFrontendUrlHelper {
     public String getFrontendUrlForCharge(String chargeExternalId) {
         return String.format("%s/card_details/%s", configuration.getLinks().getFrontendUrl(), chargeExternalId);
     }
+    
+    public String getAdyen3dsRequiredInFrontendUrlForCharge(String chargeExternalId) {
+        return String.format("%s/card_details/%s/3ds_required_in/adyen", configuration.getLinks().getFrontendUrl(), chargeExternalId);
+    }
 
 }

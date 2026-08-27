@@ -44,7 +44,7 @@ class AdyenGooglePayAuthorisePayloadFactoryTest {
         String externalId = "abcdefghijklmnopqrstuvwxyz";
         String merchantAccountId = "merchantAccountId";
         String storeId = "storeId";
-        String frontendUrl = "http://frontend.test/card_details/" + externalId;
+        String frontendUrl = "http://frontend.test/card_details/" + externalId + "/3ds_required_in/adyen";
         String token = "token";
         GooglePayPaymentInfo googlePaymentInfo = aGooglePayPaymentInfo().build();
         
@@ -67,7 +67,7 @@ class AdyenGooglePayAuthorisePayloadFactoryTest {
 
         given(mockAdyenMerchantAccountHelper.getMerchantAccount(gatewayAccountEntity)).willReturn(merchantAccountId);
         given(mockAdyenCredentialsHelper.getStore(googlePayAuthorisationGatewayRequest)).willReturn(storeId);
-        given(mockChargeFrontendUrlHelper.getFrontendUrlForCharge(externalId)).willReturn(frontendUrl);
+        given(mockChargeFrontendUrlHelper.getAdyen3dsRequiredInFrontendUrlForCharge(externalId)).willReturn(frontendUrl);
 
         AdyenGooglePayAuthorisePayloadFactory adyenGooglePayAuthoriseRequestFactory = new AdyenGooglePayAuthorisePayloadFactory(mockAdyenMerchantAccountHelper, mockAdyenCredentialsHelper, mockChargeFrontendUrlHelper);
         

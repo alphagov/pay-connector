@@ -85,7 +85,7 @@ public class AdyenRequestFactory {
                 adyenMerchantAccountHelper.getMerchantAccount(request.getGatewayAccount()),
                 paymentMethod,
                 request.getGovUkPayPaymentId(),
-                chargeFrontendUrlHelper.getFrontendUrlForCharge(request.getGovUkPayPaymentId()) + "/3ds_required_in/adyen", 
+                chargeFrontendUrlHelper.getAdyen3dsRequiredInFrontendUrlForCharge(request.getGovUkPayPaymentId()), 
                 getShopperInteraction(request),
                 adyenCredentialsHelper.getStore(request),
                 "Web",
