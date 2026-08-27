@@ -367,6 +367,9 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
         return "/v1/frontend/charges/{chargeId}/wallets/google".replace("{chargeId}", chargeId);
     }
 
+    public static String authoriseChargeUrlForAdyenGooglePay(String chargeId) {
+        return "/v1/frontend/charges/{chargeId}/wallets/google/adyen".replace("{chargeId}", chargeId);
+    }
 
     public static String authoriseChargeUrlFor(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeId);

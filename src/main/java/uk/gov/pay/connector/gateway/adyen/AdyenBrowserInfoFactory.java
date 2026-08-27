@@ -8,20 +8,30 @@ import java.util.Optional;
 
 
 public class AdyenBrowserInfoFactory {
+    
+    public static final String DEFAULT_BROWSER_ACCEPT_HEADER = "text/html";
+    public static final int DEFAULT_BROWSER_COLOR_DEPTH = 1;
+    public static final boolean DEFAULT_BROWSER_JAVA_SCRIPT_ENABLED = false;
+    public static final String DEFAULT_BROWSER_LANGUAGE = "en_GB";
+    public static final int DEFAULT_BROWSER_SCREEN_HEIGHT = 0;
+    public static final int DEFAULT_BROWSER_SCREEN_WIDTH = 0;
+    public static final int DEFAULT_BROWSER_TZ = 0;
+    public static final String DEFAULT_BROWSER_USER_AGENT = "Mozilla/5.0";
+
 
     public AdyenBrowserInfo create(BrowserDataFor3ds browserDataFor3ds) {
         return new AdyenBrowserInfo(
-                browserDataFor3ds.getBrowserAcceptHeader().orElse("text/html"),
-                browserDataFor3ds.getBrowserColorDepth().flatMap(this::parseInteger).map(this::parseColorDepth).orElse(1),
+                browserDataFor3ds.getBrowserAcceptHeader().orElse(DEFAULT_BROWSER_ACCEPT_HEADER),
+                browserDataFor3ds.getBrowserColorDepth().flatMap(this::parseInteger).map(this::parseColorDepth).orElse(DEFAULT_BROWSER_COLOR_DEPTH),
                 false,
-                browserDataFor3ds.getBrowserJavaScriptEnabled().orElse(false),
+                browserDataFor3ds.getBrowserJavaScriptEnabled().orElse(DEFAULT_BROWSER_JAVA_SCRIPT_ENABLED),
                 browserDataFor3ds.getBrowserLanguage()
                         .filter(value -> !Locale.forLanguageTag(value).getLanguage().isEmpty())
-                        .orElse("en-GB"),
-                browserDataFor3ds.getBrowserScreenHeight().flatMap(this::parseInteger).filter(value -> value >= 0).orElse(0),
-                browserDataFor3ds.getBrowserScreenWidth().flatMap(this::parseInteger).filter(value -> value >= 0).orElse(0),
-                browserDataFor3ds.getBrowserTZ().flatMap(this::parseInteger).filter(value -> value >= -1440 && value <= 1440).orElse(0),
-                browserDataFor3ds.getBrowserUserAgent().orElse("Mozilla/5.0")
+                        .orElse(DEFAULT_BROWSER_LANGUAGE),
+                browserDataFor3ds.getBrowserScreenHeight().flatMap(this::parseInteger).filter(value -> value >= 0).orElse(DEFAULT_BROWSER_SCREEN_HEIGHT),
+                browserDataFor3ds.getBrowserScreenWidth().flatMap(this::parseInteger).filter(value -> value >= 0).orElse(DEFAULT_BROWSER_SCREEN_WIDTH),
+                browserDataFor3ds.getBrowserTZ().flatMap(this::parseInteger).filter(value -> value >= -1440 && value <= 1440).orElse(DEFAULT_BROWSER_TZ),
+                browserDataFor3ds.getBrowserUserAgent().orElse(DEFAULT_BROWSER_USER_AGENT)
         );
     }
 
