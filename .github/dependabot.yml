@@ -15,6 +15,9 @@ updates:
         # org.eclipse.persistence.jpa 5 is incompatible with Guice 7, needs a lot of work on our end
         versions:
           - ">= 5"
+    cooldown:
+      exclude:
+        - "uk.gov.service.payments:*"
     open-pull-requests-limit: 10
     labels:
       - dependencies
