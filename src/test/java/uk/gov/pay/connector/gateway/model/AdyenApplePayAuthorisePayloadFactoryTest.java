@@ -7,7 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
-import uk.gov.pay.connector.gateway.adyen.AdyenApplePayAuthoriseRequestFactory;
+import uk.gov.pay.connector.gateway.adyen.AdyenApplePayAuthorisePayloadFactory;
 import uk.gov.pay.connector.gateway.adyen.request.json.AdyenApplePayPaymentMethod;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 import uk.gov.pay.connector.gateway.adyen.utils.AdyenCredentialsHelper;
@@ -59,9 +59,9 @@ class AdyenApplePayAuthorisePayloadFactoryTest {
         given(mockAdyenCredentialsHelper.getStore(applePayAuthorisationGatewayRequest)).willReturn(storeId);
         given(mockChargeFrontendUrlHelper.getFrontendUrlForCharge(externalId)).willReturn(frontendUrl);
         
-        AdyenApplePayAuthoriseRequestFactory adyenApplePayAuthoriseRequestFactory = new AdyenApplePayAuthoriseRequestFactory(mockAdyenMerchantAccountHelper, mockAdyenCredentialsHelper, mockChargeFrontendUrlHelper);
+        AdyenApplePayAuthorisePayloadFactory adyenApplePayAuthorisePayloadFactory = new AdyenApplePayAuthorisePayloadFactory(mockAdyenMerchantAccountHelper, mockAdyenCredentialsHelper, mockChargeFrontendUrlHelper);
         
-        var actual = adyenApplePayAuthoriseRequestFactory.create(applePayAuthorisationGatewayRequest);
+        var actual = adyenApplePayAuthorisePayloadFactory.create(applePayAuthorisationGatewayRequest);
 
         var expected = new AdyenApplePayAuthorisePayload(
                 merchantAccountId,

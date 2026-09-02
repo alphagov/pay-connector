@@ -39,8 +39,8 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequestFixture.anAdyenApplePayAuthoriseRequestFixture;
-import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequestFixture.aWorldpayMotoAuthoriseRequestFixture;
+import static uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorisePayloadFixture.anAdyenApplePayAuthorisePayloadFixture;
+import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthorisePayloadFixture.aWorldpayMotoAuthorisePayloadFixture;
 
 @ExtendWith(MockitoExtension.class)
 class AuthorisationLoggerTest {
@@ -72,9 +72,9 @@ class AuthorisationLoggerTest {
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
-    private final AdyenAuthoriseRequest adyenAuthoriseRequest = anAdyenApplePayAuthoriseRequestFixture().build();
+    private final AdyenAuthoriseRequest adyenAuthoriseRequest = anAdyenApplePayAuthorisePayloadFixture().build();
     
-    private final WorldpayCardAuthoriseRequest worldpayAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture().build();
+    private final WorldpayCardAuthoriseRequest worldpayAuthoriseRequest = aWorldpayMotoAuthorisePayloadFixture().build();
 
     private final GatewayAccountEntity gatewayAccountEntity = GatewayAccountEntityFixture.aGatewayAccountEntity()
             .withId(123L)

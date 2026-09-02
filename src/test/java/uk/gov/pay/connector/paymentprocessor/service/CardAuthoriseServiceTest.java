@@ -130,7 +130,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_CONNECTION_TIMEOUT_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
-import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequestFixture.aWorldpayMotoAuthoriseRequestFixture;
+import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthorisePayloadFixture.aWorldpayMotoAuthorisePayloadFixture;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REJECTED;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseRequestLogGenerator.GATEWAY_REQUEST_RECORD;
@@ -1362,7 +1362,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         WorldpayPaymentProvider mockWorldpayPaymentProvider = mock(WorldpayPaymentProvider.class);
 
-        WorldpayCardAuthoriseRequest authoriseRequest = aWorldpayMotoAuthoriseRequestFixture().build();
+        WorldpayCardAuthoriseRequest authoriseRequest = aWorldpayMotoAuthorisePayloadFixture().build();
 
         doReturn(Optional.of(authoriseRequest))
                 .when(mockCardAuthoriseRequestFactory)

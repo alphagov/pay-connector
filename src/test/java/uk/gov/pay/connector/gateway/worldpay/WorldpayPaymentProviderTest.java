@@ -97,7 +97,7 @@ import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.CORPORAT
 import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.OPTIMISED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
-import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequestFixture.aWorldpayMotoAuthoriseRequestFixture;
+import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthorisePayloadFixture.aWorldpayMotoAuthorisePayloadFixture;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.gateway.util.XMLUnmarshaller.unmarshall;
 import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.DO_NOT_SEND_EXEMPTION_REQUEST;
@@ -225,7 +225,7 @@ class WorldpayPaymentProviderTest {
 
     @Test
     void shouldPassWorldpayCardAuthoriseRequestToWorldpayAuthoriseHandler() throws GatewayException {
-        WorldpayCardAuthoriseRequest worldpayCardAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture().build();
+        WorldpayCardAuthoriseRequest worldpayCardAuthoriseRequest = aWorldpayMotoAuthorisePayloadFixture().build();
 
         @SuppressWarnings("unchecked")
         GatewayResponse<WorldpayOrderStatusResponse> expectedResponse =

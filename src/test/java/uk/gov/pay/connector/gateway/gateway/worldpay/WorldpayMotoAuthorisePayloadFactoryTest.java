@@ -12,7 +12,7 @@ import uk.gov.pay.connector.client.cardid.model.CardInformationFixture;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthorisePayload;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayMotoAuthoriseRequestFactory;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayMotoAuthorisePayloadFactory;
 import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseCredentialsHelper;
 import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseDescriptionHelper;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
@@ -24,7 +24,7 @@ import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 class WorldpayMotoAuthorisePayloadFactoryTest {
-    private WorldpayMotoAuthoriseRequestFactory worldpayMotoAuthoriseRequestFactory;
+    private WorldpayMotoAuthorisePayloadFactory worldpayMotoAuthorisePayloadFactory;
     
     @Mock
     private WorldpayAuthoriseDescriptionHelper mockDescriptionHelper;
@@ -34,7 +34,7 @@ class WorldpayMotoAuthorisePayloadFactoryTest {
     
     @BeforeEach
     void setUp(){
-        this.worldpayMotoAuthoriseRequestFactory = new WorldpayMotoAuthoriseRequestFactory(mockDescriptionHelper, mockCredentialsHelper);
+        this.worldpayMotoAuthorisePayloadFactory = new WorldpayMotoAuthorisePayloadFactory(mockDescriptionHelper, mockCredentialsHelper);
     }
     
     @Test
@@ -68,7 +68,7 @@ class WorldpayMotoAuthorisePayloadFactoryTest {
         given(mockDescriptionHelper.getDescription(cardAuthorisationGatewayRequest)).willReturn(descriptionOrReference);
         given(mockCredentialsHelper.getOneOffCredentials(cardAuthorisationGatewayRequest)).willReturn(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
         
-        WorldpayMotoAuthorisePayload actual = worldpayMotoAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
+        WorldpayMotoAuthorisePayload actual = worldpayMotoAuthorisePayloadFactory.create(cardAuthorisationGatewayRequest);
         WorldpayMotoAuthorisePayload expected = new WorldpayMotoAuthorisePayload(
                 username, 
                 password, 

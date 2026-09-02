@@ -7,13 +7,13 @@ import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseCredentialsH
 import uk.gov.pay.connector.gateway.worldpay.utils.WorldpayAuthoriseDescriptionHelper;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
 
-public class WorldpayMotoAuthoriseRequestFactory {
+public class WorldpayMotoAuthorisePayloadFactory {
 
     private final WorldpayAuthoriseDescriptionHelper descriptionHelper;
     private final WorldpayAuthoriseCredentialsHelper credentialsHelper;
 
     @Inject
-    public WorldpayMotoAuthoriseRequestFactory(WorldpayAuthoriseDescriptionHelper descriptionHelper, WorldpayAuthoriseCredentialsHelper credentialsHelper) {
+    public WorldpayMotoAuthorisePayloadFactory(WorldpayAuthoriseDescriptionHelper descriptionHelper, WorldpayAuthoriseCredentialsHelper credentialsHelper) {
         this.descriptionHelper = descriptionHelper;
         this.credentialsHelper = credentialsHelper;
     }

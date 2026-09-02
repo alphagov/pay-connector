@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.model.request.records;
 
-public class WorldpayMotoAuthoriseRequestFixture {
+public class WorldpayMotoAuthorisePayloadFixture {
 
     private String cardNumber = "4242424242424242";
     private String expiryDateMonth = "11";
@@ -14,61 +14,61 @@ public class WorldpayMotoAuthoriseRequestFixture {
     private String merchantCode = "MERCHANTCODE";
     private long amountInPence = 2000L;
 
-    public static WorldpayMotoAuthoriseRequestFixture aWorldpayMotoAuthoriseRequestFixture() {
-        return new WorldpayMotoAuthoriseRequestFixture();
+    public static WorldpayMotoAuthorisePayloadFixture aWorldpayMotoAuthorisePayloadFixture() {
+        return new WorldpayMotoAuthorisePayloadFixture();
     }
 
-    public WorldpayMotoAuthoriseRequestFixture withCardNumber(String cardNumber) {
+    public WorldpayMotoAuthorisePayloadFixture withCardNumber(String cardNumber) {
         this.cardNumber = cardNumber;
         return this;
     }
 
-    public WorldpayMotoAuthoriseRequestFixture withExpiryDateMonth(String expiryDateMonth) {
+    public WorldpayMotoAuthorisePayloadFixture withExpiryDateMonth(String expiryDateMonth) {
         this.expiryDateMonth = expiryDateMonth;
         return this;
     }
 
-    public WorldpayMotoAuthoriseRequestFixture withExpiryDateYear(String expiryDateYear) {
+    public WorldpayMotoAuthorisePayloadFixture withExpiryDateYear(String expiryDateYear) {
         this.expiryDateYear = expiryDateYear;
         return this;
     }
 
-    public WorldpayMotoAuthoriseRequestFixture withCardholderName(String cardholderName) {
+    public WorldpayMotoAuthorisePayloadFixture withCardholderName(String cardholderName) {
         this.cardholderName = cardholderName;
         return this;
     }
 
-    public WorldpayMotoAuthoriseRequestFixture withCvc(String cvc) {
+    public WorldpayMotoAuthorisePayloadFixture withCvc(String cvc) {
         this.cvc = cvc;
         return this;
     }
 
-    public WorldpayMotoAuthoriseRequestFixture withOrderCode(String orderCode) {
+    public WorldpayMotoAuthorisePayloadFixture withOrderCode(String orderCode) {
         this.orderCode = orderCode;
         return this;
     }
 
-    public WorldpayMotoAuthoriseRequestFixture withDescription(String description) {
+    public WorldpayMotoAuthorisePayloadFixture withDescription(String description) {
         this.description = description;
         return this;
     }
 
-    public WorldpayMotoAuthoriseRequestFixture withUsername(String username) {
+    public WorldpayMotoAuthorisePayloadFixture withUsername(String username) {
         this.username = username;
         return this;
     }
 
-    public WorldpayMotoAuthoriseRequestFixture withPassword(String password) {
+    public WorldpayMotoAuthorisePayloadFixture withPassword(String password) {
         this.password = password;
         return this;
     }
 
-    public WorldpayMotoAuthoriseRequestFixture withMerchantCode(String merchantCode) {
+    public WorldpayMotoAuthorisePayloadFixture withMerchantCode(String merchantCode) {
         this.merchantCode = merchantCode;
         return this;
     }
 
-    public WorldpayMotoAuthoriseRequestFixture withAmountInPence(long amountInPence) {
+    public WorldpayMotoAuthorisePayloadFixture withAmountInPence(long amountInPence) {
         this.amountInPence = amountInPence;
         return this;
     }
