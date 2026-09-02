@@ -6,12 +6,12 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public record AdyenBrowserInfo(
         @JsonProperty("acceptHeader") String acceptHeader,
-        @JsonProperty("colorDepth") Integer colorDepth,
-        @JsonProperty("javaEnabled") Boolean javaEnabled,
-        @JsonProperty("javaScriptEnabled") Boolean javaScriptEnabled,
+        @JsonProperty("colorDepth") int colorDepth,
+        @JsonProperty("javaEnabled") boolean javaEnabled,
+        @JsonProperty("javaScriptEnabled") boolean javaScriptEnabled,
         @JsonProperty("language") String language,
-        @JsonProperty("screenHeight") Integer screenHeight,
-        @JsonProperty("screenWidth") Integer screenWidth,
-        @JsonProperty("timeZoneOffset") Integer timeZoneOffset,
+        @JsonProperty("screenHeight") int screenHeight,
+        @JsonProperty("screenWidth") int screenWidth,
+        @JsonProperty("timeZoneOffset") int timeZoneOffset,
         @JsonProperty("userAgent") String userAgent
 ) {}
