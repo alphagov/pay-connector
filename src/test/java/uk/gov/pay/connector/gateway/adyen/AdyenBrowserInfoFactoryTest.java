@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.pay.connector.gateway.adyen.response.json.AdyenBrowserInfo;
 import uk.gov.pay.connector.gateway.model.BrowserDataFor3ds;
 
 import java.util.Optional;
@@ -124,161 +125,145 @@ class AdyenBrowserInfoFactoryTest {
 
     @Test
     void create_BrowserLanguageHasNoValue_ReturnsDefault() {
-        var expectedValue = "en-GB";
         given(mockBrowserDataFor3ds.getBrowserLanguage()).willReturn(Optional.empty());
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.language(), is(expectedValue));
+        assertThat(result.language(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_LANGUAGE));
     }
 
     @Test
     void create_BrowserLanguageHasInvalidValue_ReturnsDefault() {
-        var expectedValue = "en-GB";
         given(mockBrowserDataFor3ds.getBrowserLanguage()).willReturn(Optional.of("some fake language"));
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.language(), is(expectedValue));
+        assertThat(result.language(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_LANGUAGE));
     }
 
     @Test
     void create_BrowserHeightHasValue_ReturnsValue() {
-        var expectedValue = 1280;
-        given(mockBrowserDataFor3ds.getBrowserScreenHeight()).willReturn(Optional.of("" + expectedValue));
+        given(mockBrowserDataFor3ds.getBrowserScreenHeight()).willReturn(Optional.of("" + AdyenBrowserInfoFactory.DEFAULT_BROWSER_SCREEN_HEIGHT));
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.screenHeight(), is(expectedValue));
+        assertThat(result.screenHeight(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_SCREEN_HEIGHT));
     }
 
     @Test
     void create_BrowserHeightHasNoValue_ReturnsDefault() {
-        var expectedValue = 0;
         given(mockBrowserDataFor3ds.getBrowserScreenHeight()).willReturn(Optional.empty());
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.screenHeight(), is(expectedValue));
+        assertThat(result.screenHeight(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_SCREEN_HEIGHT));
     }
 
     @Test
     void create_BrowserHeightHasInvalidValue_ReturnsDefault() {
-        var expectedValue = 0;
         given(mockBrowserDataFor3ds.getBrowserScreenHeight()).willReturn(Optional.of("hello"));
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.screenHeight(), is(expectedValue));
+        assertThat(result.screenHeight(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_SCREEN_HEIGHT));
     }
 
     @Test
     void create_BrowserHeightHasNegativeValue_ReturnsDefault() {
-        var expectedValue = 0;
         given(mockBrowserDataFor3ds.getBrowserScreenHeight()).willReturn(Optional.of("-1"));
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.screenHeight(), is(expectedValue));
+        assertThat(result.screenHeight(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_SCREEN_HEIGHT));
     }
 
     @Test
     void create_BrowserWidthHasValue_ReturnsValue() {
-        var expectedValue = 1280;
-        given(mockBrowserDataFor3ds.getBrowserScreenWidth()).willReturn(Optional.of("" + expectedValue));
+        given(mockBrowserDataFor3ds.getBrowserScreenWidth()).willReturn(Optional.of("" + AdyenBrowserInfoFactory.DEFAULT_BROWSER_SCREEN_WIDTH));
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.screenWidth(), is(expectedValue));
+        assertThat(result.screenWidth(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_SCREEN_WIDTH));
     }
 
     @Test
     void create_BrowserWidthHasNoValue_ReturnsDefault() {
-        var expectedValue = 0;
         given(mockBrowserDataFor3ds.getBrowserScreenWidth()).willReturn(Optional.empty());
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.screenWidth(), is(expectedValue));
+        assertThat(result.screenWidth(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_SCREEN_HEIGHT));
     }
 
     @Test
     void create_BrowserWidthHasInvalidValue_ReturnsDefault() {
-        var expectedValue = 0;
         given(mockBrowserDataFor3ds.getBrowserScreenWidth()).willReturn(Optional.of("hello"));
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.screenWidth(), is(expectedValue));
+        assertThat(result.screenWidth(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_SCREEN_WIDTH));
     }
 
     @Test
     void create_BrowserWidthHasNegativeValue_ReturnsDefault() {
-        var expectedValue = 0;
         given(mockBrowserDataFor3ds.getBrowserScreenWidth()).willReturn(Optional.of("-1"));
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.screenWidth(), is(expectedValue));
+        assertThat(result.screenWidth(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_SCREEN_WIDTH));
     }
 
     @Test
     void create_BrowserTZHasValue_ReturnsValue() {
-        var expectedValue = 1280;
-        given(mockBrowserDataFor3ds.getBrowserTZ()).willReturn(Optional.of("" + expectedValue));
+        given(mockBrowserDataFor3ds.getBrowserTZ()).willReturn(Optional.of("" + AdyenBrowserInfoFactory.DEFAULT_BROWSER_TZ));
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.timeZoneOffset(), is(expectedValue));
+        assertThat(result.timeZoneOffset(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_TZ));
     }
 
     @Test
     void create_BrowserTZHasNoValue_ReturnsDefault() {
-        var expectedValue = 0;
         given(mockBrowserDataFor3ds.getBrowserTZ()).willReturn(Optional.empty());
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.timeZoneOffset(), is(expectedValue));
+        assertThat(result.timeZoneOffset(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_TZ));
     }
 
     @Test
     void create_BrowserTZHasTooHighValue_ReturnsDefault() {
-        var expectedValue = 0;
         given(mockBrowserDataFor3ds.getBrowserTZ()).willReturn(Optional.of("1441"));
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.timeZoneOffset(), is(expectedValue));
+        assertThat(result.timeZoneOffset(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_TZ));
     }
 
     @Test
     void create_BrowserTZHasTooLowValue_ReturnsDefault() {
-        var expectedValue = 0;
         given(mockBrowserDataFor3ds.getBrowserTZ()).willReturn(Optional.of("-1441"));
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.timeZoneOffset(), is(expectedValue));
+        assertThat(result.timeZoneOffset(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_TZ));
     }
 
     @Test
     void create_BrowserUserAgentHasValue_ReturnsValue() {
-        var expectedValue = "Safari/537.36";
-        given(mockBrowserDataFor3ds.getBrowserUserAgent()).willReturn(Optional.of(expectedValue));
+        given(mockBrowserDataFor3ds.getBrowserUserAgent()).willReturn(Optional.of(AdyenBrowserInfoFactory.DEFAULT_BROWSER_USER_AGENT));
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.userAgent(), is(expectedValue));
+        assertThat(result.userAgent(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_USER_AGENT));
     }
 
     @Test
     void create_BrowserUserAgentHasNoValue_ReturnsDefault() {
-        var expectedValue = "Mozilla/5.0";
         given(mockBrowserDataFor3ds.getBrowserUserAgent()).willReturn(Optional.empty());
 
         var result = adyenBrowserInfoFactory.create(mockBrowserDataFor3ds);
 
-        assertThat(result.userAgent(), is(expectedValue));
+        assertThat(result.userAgent(), is(AdyenBrowserInfoFactory.DEFAULT_BROWSER_USER_AGENT));
     }
 }
