@@ -43,4 +43,23 @@ public record AuthoriseRequestPayload(
         @JsonProperty("recurringProcessingModel")
         String recurringProcessingModel
 ) {
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "[amount=" + amount +
+                ", merchantAccount=" + merchantAccount +
+                ", paymentMethod=" + paymentMethod +
+                ", reference=" + reference +
+                ", returnUrl=" + returnUrl +
+                ", shopperInteraction=" + shopperInteraction +
+                ", store=" + store +
+                ", channel=" + channel +
+                ", browserInfo=" + browserInfo +
+                ", origin=" + origin +
+                ", shopperReference=" + shopperReference +
+                ", storePaymentMethod=" + storePaymentMethod +
+                ", recurringProcessingModel=" + recurringProcessingModel +
+                ']';
+    }
+
 }

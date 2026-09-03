@@ -31,4 +31,10 @@ public record PaymentMethod(
     public static PaymentMethod stored(String storedPaymentMethodId) {
         return new PaymentMethod(null, null, null, null, null, "scheme", storedPaymentMethodId);
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "[type" + type + ']';
+    }
+
 }
