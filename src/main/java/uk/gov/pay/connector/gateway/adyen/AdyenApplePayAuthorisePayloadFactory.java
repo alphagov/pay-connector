@@ -9,14 +9,14 @@ import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorise
 import uk.gov.pay.connector.gateway.util.ChargeFrontendUrlHelper;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 
-public class AdyenApplePayAuthoriseRequestFactory {
+public class AdyenApplePayAuthorisePayloadFactory {
 
     private final ChargeFrontendUrlHelper chargeFrontendUrlHelper;
     private final AdyenMerchantAccountHelper adyenMerchantAccountHelper;
     private final AdyenCredentialsHelper adyenCredentialsHelper;
     
     @Inject
-    public AdyenApplePayAuthoriseRequestFactory(
+    public AdyenApplePayAuthorisePayloadFactory(
             AdyenMerchantAccountHelper adyenMerchantAccountHelper, 
             AdyenCredentialsHelper adyenCredentialsHelper,
             ChargeFrontendUrlHelper chargeFrontendUrlHelper

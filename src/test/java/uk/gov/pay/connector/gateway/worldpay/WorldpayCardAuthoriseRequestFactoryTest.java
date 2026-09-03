@@ -19,19 +19,19 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE;
 import static org.mockito.BDDMockito.given;
 import static uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequestFixture.aCardAuthorisationGatewayRequest;
-import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequestFixture.aWorldpayMotoAuthoriseRequestFixture;
+import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthorisePayloadFixture.aWorldpayMotoAuthorisePayloadFixture;
 
 @ExtendWith(MockitoExtension.class)
 class WorldpayCardAuthoriseRequestFactoryTest {
 
     @Mock
-    private WorldpayMotoAuthoriseRequestFactory mockWorldpayMotoAuthoriseRequestFactory;
+    private WorldpayMotoAuthorisePayloadFactory mockWorldpayMotoAuthorisePayloadFactory;
     
     private WorldpayCardAuthoriseRequestFactory worldpayCardAuthoriseRequestFactory;
 
     @BeforeEach
     void setUp() {
-        worldpayCardAuthoriseRequestFactory = new WorldpayCardAuthoriseRequestFactory(mockWorldpayMotoAuthoriseRequestFactory);
+        worldpayCardAuthoriseRequestFactory = new WorldpayCardAuthoriseRequestFactory(mockWorldpayMotoAuthorisePayloadFactory);
     }
 
     @Test
@@ -42,9 +42,9 @@ class WorldpayCardAuthoriseRequestFactoryTest {
                 .withSavePaymentInstrumentToAgreement(false)
                 .build();
 
-        WorldpayMotoAuthorisePayload worldpayMotoAuthorisePayload = aWorldpayMotoAuthoriseRequestFixture().build();
+        WorldpayMotoAuthorisePayload worldpayMotoAuthorisePayload = aWorldpayMotoAuthorisePayloadFixture().build();
 
-        given(mockWorldpayMotoAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest)).willReturn(worldpayMotoAuthorisePayload);
+        given(mockWorldpayMotoAuthorisePayloadFactory.create(cardAuthorisationGatewayRequest)).willReturn(worldpayMotoAuthorisePayload);
 
         Optional<WorldpayCardAuthoriseRequest> result = worldpayCardAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
 

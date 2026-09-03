@@ -29,7 +29,7 @@ import uk.gov.pay.connector.gateway.stripe.StripeSdkClientFactory;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkWrapper;
 import uk.gov.pay.connector.gateway.templates.WorldpayRequestTemplateBuilder;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCardAuthoriseRequestFactory;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayMotoAuthoriseRequestFactory;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayMotoAuthorisePayloadFactory;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
@@ -85,7 +85,7 @@ public class ConnectorModule extends AbstractModule {
         bind(GatewayAccountRequestValidator.class).in(Singleton.class);
         bind(InetAddressValidator.class).in(Singleton.class);
         bind(WorldpayRequestTemplateBuilder.class).in(Singleton.class);
-        bind(WorldpayMotoAuthoriseRequestFactory.class).in(Singleton.class);
+        bind(WorldpayMotoAuthorisePayloadFactory.class).in(Singleton.class);
         bind(WorldpayCardAuthoriseRequestFactory.class).in(Singleton.class);
         bind(CardAuthoriseRequestFactory.class).in(Singleton.class);
 

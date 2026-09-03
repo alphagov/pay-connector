@@ -12,7 +12,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.adyen.AdyenGooglePayAuthorisePayloadFactory;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenGooglePayAuthorisePayload;
-import uk.gov.pay.connector.gateway.model.request.records.AdyenGooglePayAuthoriseRequestFixture;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenGooglePayAuthorisePayloadFixture;
 import uk.gov.pay.connector.gateway.model.request.records.GooglePayAuthoriseRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -69,7 +69,7 @@ class GooglePayAuthoriseRequestFactoryTest {
 
         GooglePayAuthorisationGatewayRequest googlePayAuthorisationGatewayRequest = GooglePayAuthorisationGatewayRequest.valueOf(chargeEntity, googlePayAuthRequest);
 
-        AdyenGooglePayAuthorisePayload adyenGooglePayAuthorisePayload = AdyenGooglePayAuthoriseRequestFixture.anAdyenGooglePayAuthoriseRequestFixture().build();
+        AdyenGooglePayAuthorisePayload adyenGooglePayAuthorisePayload = AdyenGooglePayAuthorisePayloadFixture.anAdyenGooglePayAuthorisePayloadFixture().build();
 
         given(mockAdyenGooglePayAuthoriseRequestFactory.create(googlePayAuthorisationGatewayRequest)).willReturn(adyenGooglePayAuthorisePayload);
 

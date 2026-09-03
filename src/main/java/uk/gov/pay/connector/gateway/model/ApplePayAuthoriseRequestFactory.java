@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.model;
 
 import jakarta.inject.Inject;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.adyen.AdyenApplePayAuthoriseRequestFactory;
+import uk.gov.pay.connector.gateway.adyen.AdyenApplePayAuthorisePayloadFactory;
 import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequest;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 
@@ -10,16 +10,16 @@ import java.util.Optional;
 
 public class ApplePayAuthoriseRequestFactory {
 
-    private final AdyenApplePayAuthoriseRequestFactory adyenApplePayAuthoriseRequestFactory;
+    private final AdyenApplePayAuthorisePayloadFactory adyenApplePayAuthorisePayloadFactory;
 
     @Inject
-    public ApplePayAuthoriseRequestFactory(AdyenApplePayAuthoriseRequestFactory adyenApplePayAuthoriseRequestFactory) {
-        this.adyenApplePayAuthoriseRequestFactory = adyenApplePayAuthoriseRequestFactory;
+    public ApplePayAuthoriseRequestFactory(AdyenApplePayAuthorisePayloadFactory adyenApplePayAuthorisePayloadFactory) {
+        this.adyenApplePayAuthorisePayloadFactory = adyenApplePayAuthorisePayloadFactory;
     }
     
     public Optional<? extends ApplePayAuthoriseRequest> create(ApplePayAuthorisationGatewayRequest request) {
         if (PaymentGatewayName.ADYEN.getName().equals(request.getGatewayAccount().getGatewayName())) {
-            return Optional.of(adyenApplePayAuthoriseRequestFactory.create(request));
+            return Optional.of(adyenApplePayAuthorisePayloadFactory.create(request));
         }
 
         return Optional.empty();

@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.model.request.records;
 import uk.gov.pay.connector.gateway.adyen.request.json.AdyenApplePayPaymentMethod;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 
-public class AdyenApplePayAuthoriseRequestFixture {
+public class AdyenApplePayAuthorisePayloadFixture {
 
     private String merchantAccount = "live";
     private String store = "storeId";
@@ -12,36 +12,36 @@ public class AdyenApplePayAuthoriseRequestFixture {
     private AdyenApplePayPaymentMethod paymentMethod = new AdyenApplePayPaymentMethod("token");
     private String returnUrl = "http://frontend.test/card_details/abcdefghijklmnopqrstuvwxyz";
 
-    public static AdyenApplePayAuthoriseRequestFixture anAdyenApplePayAuthoriseRequestFixture() {
-        return new AdyenApplePayAuthoriseRequestFixture();
+    public static AdyenApplePayAuthorisePayloadFixture anAdyenApplePayAuthorisePayloadFixture() {
+        return new AdyenApplePayAuthorisePayloadFixture();
     }
     
-    public AdyenApplePayAuthoriseRequestFixture withMerchantAccount(String merchantAccount) {
+    public AdyenApplePayAuthorisePayloadFixture withMerchantAccount(String merchantAccount) {
         this.merchantAccount = merchantAccount;
         return this;
     }
 
-    public AdyenApplePayAuthoriseRequestFixture withStore(String store) {
+    public AdyenApplePayAuthorisePayloadFixture withStore(String store) {
         this.store = store;
         return this;
     }
 
-    public AdyenApplePayAuthoriseRequestFixture withReference(String reference) {
+    public AdyenApplePayAuthorisePayloadFixture withReference(String reference) {
         this.reference = reference;
         return this;
     }
 
-    public AdyenApplePayAuthoriseRequestFixture withAmount(Amount amount) {
+    public AdyenApplePayAuthorisePayloadFixture withAmount(Amount amount) {
         this.amount = amount;
         return this;
     }
 
-    public AdyenApplePayAuthoriseRequestFixture withPaymentMethod(AdyenApplePayPaymentMethod paymentMethod) {
+    public AdyenApplePayAuthorisePayloadFixture withPaymentMethod(AdyenApplePayPaymentMethod paymentMethod) {
         this.paymentMethod = paymentMethod;
         return this;
     }
 
-    public AdyenApplePayAuthoriseRequestFixture withReturnUrl(String returnUrl) {
+    public AdyenApplePayAuthorisePayloadFixture withReturnUrl(String returnUrl) {
         this.returnUrl = returnUrl;
         return this;
     }

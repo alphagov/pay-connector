@@ -42,8 +42,8 @@ import uk.gov.pay.connector.gateway.model.ApplePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GooglePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
-import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequestFixture;
-import uk.gov.pay.connector.gateway.model.request.records.AdyenGooglePayAuthoriseRequestFixture;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorisePayloadFixture;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenGooglePayAuthorisePayloadFixture;
 import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.request.records.GooglePayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -290,7 +290,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
     void doAuthoriseCard_applePay_with_AdyenApplePayAuthoriseRequest_shouldRespondAuthorisationSuccess() throws Exception {
         
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
-        ApplePayAuthoriseRequest applePayAuthoriseRequest = AdyenApplePayAuthoriseRequestFixture.anAdyenApplePayAuthoriseRequestFixture().build();
+        ApplePayAuthoriseRequest applePayAuthoriseRequest = AdyenApplePayAuthorisePayloadFixture.anAdyenApplePayAuthorisePayloadFixture().build();
 
         charge.setPaymentProvider(ADYEN.getName());
 
@@ -349,7 +349,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
     void doAuthoriseCard_googlePay_with_AdyenGooglePayAuthoriseRequest_shouldRespondAuthorisationSuccess() throws Exception {
 
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
-        GooglePayAuthoriseRequest googlePayAuthoriseRequest = AdyenGooglePayAuthoriseRequestFixture.anAdyenGooglePayAuthoriseRequestFixture().build();
+        GooglePayAuthoriseRequest googlePayAuthoriseRequest = AdyenGooglePayAuthorisePayloadFixture.anAdyenGooglePayAuthorisePayloadFixture().build();
 
         charge.setPaymentProvider(ADYEN.getName());
 

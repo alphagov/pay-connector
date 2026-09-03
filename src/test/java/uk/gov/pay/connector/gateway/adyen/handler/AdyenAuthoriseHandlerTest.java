@@ -26,7 +26,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.adyen.utils.AdyenAuthoriseRequestToGatewayOrderConverter;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequestFixture;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthorisePayloadFixture;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -316,7 +316,7 @@ class AdyenAuthoriseHandlerTest {
     void should_return_a_GatewayResponse_for_successful_AydenAuthoriseRequest_authorisation() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
         givenAdyenReturnsASuccessResponse();
  
-        AdyenAuthoriseRequest adyenAuthoriseRequest = AdyenApplePayAuthoriseRequestFixture.anAdyenApplePayAuthoriseRequestFixture().build();
+        AdyenAuthoriseRequest adyenAuthoriseRequest = AdyenApplePayAuthorisePayloadFixture.anAdyenApplePayAuthorisePayloadFixture().build();
 
         GatewayResponse<BaseAuthoriseResponse> response = authoriseHandler.authorise(adyenAuthoriseRequest, GatewayAccountType.TEST);
 

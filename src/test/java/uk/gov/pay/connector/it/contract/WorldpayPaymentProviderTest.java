@@ -88,7 +88,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequestFixture.aWorldpayMotoAuthoriseRequestFixture;
+import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthorisePayloadFixture.aWorldpayMotoAuthorisePayloadFixture;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -506,7 +506,7 @@ class WorldpayPaymentProviderTest {
 
         @SuppressWarnings("unchecked")
         Map<String, String> worldpayCredentials = (Map<String, String>) validCredentials.get(ONE_OFF_CUSTOMER_INITIATED);
-        WorldpayMotoAuthorisePayload worldpayMotoAuthorisePayload = aWorldpayMotoAuthoriseRequestFixture()
+        WorldpayMotoAuthorisePayload worldpayMotoAuthorisePayload = aWorldpayMotoAuthorisePayloadFixture()
                 .withMerchantCode(worldpayCredentials.get(CREDENTIALS_MERCHANT_CODE))
                 .withUsername(worldpayCredentials.get(CREDENTIALS_USERNAME))
                 .withPassword(worldpayCredentials.get(CREDENTIALS_PASSWORD))

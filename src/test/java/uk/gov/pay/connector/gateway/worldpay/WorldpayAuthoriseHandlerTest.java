@@ -80,7 +80,7 @@ import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgre
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequestFixture.aWorldpayMotoAuthoriseRequestFixture;
+import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthorisePayloadFixture.aWorldpayMotoAuthorisePayloadFixture;
 import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.DO_NOT_SEND_EXEMPTION_REQUEST;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY;
@@ -173,7 +173,7 @@ class WorldpayAuthoriseHandlerTest {
         String password = "password"; // pragma: allowlist secret
         String worldpayRequestBody = "<xml><authorise this=\"payment\"></xml>";
 
-        WorldpayAuthoriseRequest worldpayAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture()
+        WorldpayAuthoriseRequest worldpayAuthoriseRequest = aWorldpayMotoAuthorisePayloadFixture()
                 .withUsername(username).withPassword(password).build();
 
         when(worldpayRequestTemplateBuilder.buildWith(WorldpayAuthoriseHandler.MOTO_TEMPLATE_PATH, 
