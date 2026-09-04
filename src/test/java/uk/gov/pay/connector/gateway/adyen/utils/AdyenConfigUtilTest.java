@@ -4,6 +4,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
@@ -11,6 +13,7 @@ import uk.gov.pay.connector.app.adyen.ApiKeys;
 import uk.gov.pay.connector.app.adyen.BaseUrls;
 import uk.gov.pay.connector.app.adyen.HmacKeys;
 import uk.gov.pay.connector.app.adyen.WebhookHmacKeys;
+import uk.gov.pay.connector.gateway.adyen.webhook.AdyenWebhookType;
 
 import java.util.Optional;
 
@@ -20,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getHmacKeyForWebhookType;
+import static uk.gov.pay.connector.gateway.adyen.webhook.AdyenWebhookType.TOKENS;
 
 @ExtendWith(MockitoExtension.class)
 class AdyenConfigUtilTest {
@@ -143,6 +148,23 @@ class AdyenConfigUtilTest {
 
             assertThat(exception.getMessage(), is("Missing primary Adyen HMAC key"));
         }
+        
+        @ParameterizedTest
+        @EnumSource(AdyenWebhookType.class)
+        void shouldGetHMACKeyBasedOnType(AdyenWebhookType adyenWebhookType) {
+            var expectedValue = "live-hmac-key";
+            when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(mockHmacKeys);
+            var mockHmacKey =  adyenWebhookType == TOKENS ? mockHmacKeys.tokens() : mockHmacKeys.payments();
+            when(mockHmacKey).thenReturn(mockKeyPair);
+            when(mockKeyPair.live()).thenReturn(mockLiveKeys);
+            when(mockLiveKeys.getPrimary()).thenReturn(Optional.of(expectedValue));
+            var hmacKey = getHmacKeyForWebhookType(mockAdyenGatewayConfig, adyenWebhookType, true);
+
+            assertThat(hmacKey, is(expectedValue));
+
+            verify(mockKeyPair).live();
+        }
+        
     }
     
     @Nested
@@ -188,6 +210,5 @@ class AdyenConfigUtilTest {
             verify(mockKeyPair).test();
             verify(mockKeyPair, never()).live();
         }
-        
     }
 }
