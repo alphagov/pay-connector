@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.app;
 
 
+import jakarta.ws.rs.client.Client;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.app.config.RestClientConfig;
 
 import javax.net.ssl.SSLContext;
-import jakarta.ws.rs.client.Client;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -26,7 +26,8 @@ class RestClientFactoryTest {
 
         //then
         SSLContext sslContext = client.getSslContext();
-        assertThat(sslContext.getProtocol(), is("TLSv1.2"));
+        assertThat(sslContext.getProtocol(), is("TLSv1.3"));
+
 
     }
 
@@ -40,6 +41,6 @@ class RestClientFactoryTest {
         Client client = RestClientFactory.buildClient(clientConfiguration, null);
 
         //then
-        assertThat(client.getSslContext().getProtocol(), is(not("TLSv1.2")));
+        assertThat(client.getSslContext().getProtocol(), is(not("TLSv1.3")));
     }
 }
