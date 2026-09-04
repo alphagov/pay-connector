@@ -13,7 +13,7 @@ import uk.gov.pay.connector.app.adyen.ApiKeys;
 import uk.gov.pay.connector.app.adyen.BaseUrls;
 import uk.gov.pay.connector.app.adyen.HmacKeys;
 import uk.gov.pay.connector.app.adyen.WebhookHmacKeys;
-import uk.gov.pay.connector.gateway.adyen.webhook.AdyenWebhookType;
+import uk.gov.pay.connector.gateway.adyen.webhook.model.AdyenWebhookType;
 
 import java.util.Optional;
 
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getHmacKeyForWebhookType;
-import static uk.gov.pay.connector.gateway.adyen.webhook.AdyenWebhookType.TOKENS;
+import static uk.gov.pay.connector.gateway.adyen.webhook.model.AdyenWebhookType.TOKENS;
 
 @ExtendWith(MockitoExtension.class)
 class AdyenConfigUtilTest {
@@ -154,7 +154,7 @@ class AdyenConfigUtilTest {
         void shouldGetHMACKeyBasedOnType(AdyenWebhookType adyenWebhookType) {
             var expectedValue = "live-hmac-key";
             when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(mockHmacKeys);
-            var mockHmacKey =  adyenWebhookType == TOKENS ? mockHmacKeys.tokens() : mockHmacKeys.payments();
+            var mockHmacKey = adyenWebhookType == TOKENS ? mockHmacKeys.tokens() : mockHmacKeys.payments();
             when(mockHmacKey).thenReturn(mockKeyPair);
             when(mockKeyPair.live()).thenReturn(mockLiveKeys);
             when(mockLiveKeys.getPrimary()).thenReturn(Optional.of(expectedValue));
@@ -166,7 +166,7 @@ class AdyenConfigUtilTest {
         }
         
     }
-    
+
     @Nested
     class TestGetsTokenHmacKeys {
 

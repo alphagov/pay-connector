@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.adyen.utils;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.app.adyen.HmacKeys;
 import uk.gov.pay.connector.app.adyen.WebhookHmacKeys;
-import uk.gov.pay.connector.gateway.adyen.webhook.AdyenWebhookType;
+import uk.gov.pay.connector.gateway.adyen.webhook.model.AdyenWebhookType;
 
 public class AdyenConfigUtil {
 
