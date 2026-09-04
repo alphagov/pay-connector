@@ -350,7 +350,7 @@
         <dependency>
             <groupId>com.adyen</groupId>
             <artifactId>adyen-java-api-library</artifactId>
-            <version>43.0.0</version>
+            <version>43.1.0</version>
         </dependency>
 
         <!-- Test dependencies that are imported from one of the BOMs specified
