@@ -5,6 +5,8 @@ import com.codahale.metrics.httpclient5.InstrumentedHttpClientConnectionManager;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.util.Duration;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Client;
 import org.apache.hc.client5.http.SystemDefaultDnsResolver;
 import org.apache.hc.client5.http.impl.io.ManagedHttpClientConnectionFactory;
 import org.apache.hc.client5.http.io.HttpClientConnectionManager;
@@ -19,9 +21,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.OperationOverrides;
 import uk.gov.service.payments.logging.RestClientLoggingFilter;
 
-import jakarta.inject.Inject;
 import javax.net.ssl.SSLContext;
-import jakarta.ws.rs.client.Client;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
@@ -90,10 +90,15 @@ public class ClientFactory {
                                                                 Duration connectionTimeToLive) {
 
         SSLConnectionSocketFactory sslConnectionSocketFactory;
+
+        var supportedProtocals = (operation.equals("capture") && gatewayName.equals("worldpay"))
+                ? new String[]{"TLSv1.3"}
+                : new String[]{"TLSv1.3", "TLSv1.2"};
+
         try {
             sslConnectionSocketFactory = new SSLConnectionSocketFactory(
                     SSLContext.getDefault(),
-                    new String[]{"TLSv1.2", "TLSv1.3"},
+                    supportedProtocals,
                     null,
                     null
             );
