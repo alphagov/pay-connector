@@ -91,14 +91,10 @@ public class ClientFactory {
 
         SSLConnectionSocketFactory sslConnectionSocketFactory;
 
-        var supportedProtocals = (operation.equals("capture") && gatewayName.equals("worldpay"))
-                ? new String[]{"TLSv1.3"}
-                : new String[]{"TLSv1.3", "TLSv1.2"};
-
         try {
             sslConnectionSocketFactory = new SSLConnectionSocketFactory(
                     SSLContext.getDefault(),
-                    supportedProtocals,
+                    new String[]{"TLSv1.3"},
                     null,
                     null
             );
@@ -106,7 +102,7 @@ public class ClientFactory {
             throw new RuntimeException("Unable to create SSL connection socket factory", e);
         }
 
-       return InstrumentedHttpClientConnectionManager.builder(metricRegistry)
+        return InstrumentedHttpClientConnectionManager.builder(metricRegistry)
                 .socketFactoryRegistry(RegistryBuilder.<ConnectionSocketFactory>create()
                         .register("http", PlainConnectionSocketFactory.getSocketFactory())
                         .register("https", sslConnectionSocketFactory)
