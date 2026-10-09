@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.charge.util;
 
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -8,16 +10,23 @@ import uk.gov.pay.connector.charge.model.domain.FeeSubType;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.queue.tasks.handlers.adyen.fee.AdyenFeeTransferType;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.pay.connector.charge.model.domain.FeeSubType.FIXED;
+import static uk.gov.pay.connector.charge.model.domain.FeeSubType.INTERCHANGE;
+import static uk.gov.pay.connector.charge.model.domain.FeeSubType.SCHEME_FEE;
+import static uk.gov.pay.connector.charge.model.domain.FeeSubType.VARIABLE;
 import static uk.gov.pay.connector.charge.model.domain.FeeType.FRAUD_PROTECTION;
 import static uk.gov.pay.connector.charge.model.domain.FeeType.GATEWAY;
 import static uk.gov.pay.connector.charge.model.domain.FeeType.TRANSACTION;
 import static uk.gov.pay.connector.charge.util.AdyenFeeCalculator.generateFeeList;
+import static uk.gov.pay.connector.charge.util.AdyenFeeCalculator.hasAllExpectedFeeRecordsForAdyen;
 import static uk.gov.pay.connector.queue.tasks.handlers.adyen.fee.AdyenFeeTransferType.FIXED_COMMISSION;
 import static uk.gov.pay.connector.queue.tasks.handlers.adyen.fee.AdyenFeeTransferType.UNSUPPORTED;
 
@@ -89,5 +98,128 @@ class AdyenFeeCalculatorTest {
 
         assertEquals("Cannot calculate fees for UNSUPPORTED", exception.getMessage());
     }
+    
+    @Nested
+    @DisplayName("hasAllExpectedFeeRecordsForAdyen")
+    class HasAllExpectedFeeRecordsForAdyen {
+        
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("validAdyenChargesWithExpectedFeeRecords")
+        void shouldReportAllExpectedAdyenFeeRecordsAsAvailableForEachValidTransactionCombination(String testName,
+                                                                                                 List<Fee> fees) {
+            assertTrue(hasAllExpectedFeeRecordsForAdyen(fees));
+        }
 
+        private static Stream<Arguments> validAdyenChargesWithExpectedFeeRecords() {
+
+            return Stream.of(
+                    Arguments.of("fixed and variable",
+                            List.of(
+                                    Fee.of(GATEWAY, 5L),
+                                    Fee.of(FRAUD_PROTECTION, 1L),
+                                    Fee.of(TRANSACTION, 7L, FIXED),
+                                    Fee.of(TRANSACTION, 3L, VARIABLE)
+                            )),
+                    Arguments.of("fixed, interchange and scheme fee",
+                            List.of(
+                                    Fee.of(GATEWAY, 5L),
+                                    Fee.of(FRAUD_PROTECTION, 1L),
+                                    Fee.of(TRANSACTION, 7L, FIXED),
+                                    Fee.of(TRANSACTION, 2L, INTERCHANGE),
+                                    Fee.of(TRANSACTION, 1L, SCHEME_FEE))
+                    ),
+                    Arguments.of("variable",
+                            List.of(
+                                    Fee.of(GATEWAY, 5L),
+                                    Fee.of(FRAUD_PROTECTION, 1L),
+                                    Fee.of(TRANSACTION, 3L, VARIABLE))
+                    ),
+                    Arguments.of("only use transaction fees with a valid sub type",
+                            List.of(
+                                    Fee.of(GATEWAY, 5L),
+                                    Fee.of(FRAUD_PROTECTION, 1L),
+                                    Fee.of(TRANSACTION, 10L),
+                                    Fee.of(TRANSACTION, 7L, VARIABLE)
+                            )
+                    )
+            );
+        }
+
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("invalidAdyenChargesWithMissingOrUnsupportedFeeRecords")
+        void shouldReportAdyenFeeRecordsAsUnavailableForInvalidFeeCombinations(String testName,
+                                                                               List<Fee> fees) {
+            assertFalse(hasAllExpectedFeeRecordsForAdyen(fees));
+        }
+
+        private static Stream<Arguments> invalidAdyenChargesWithMissingOrUnsupportedFeeRecords() {
+
+            return Stream.of(
+                    Arguments.of("missing variable for fixed transaction fee",
+                            List.of(
+                                    Fee.of(GATEWAY, 5L),
+                                    Fee.of(FRAUD_PROTECTION, 1L),
+                                    Fee.of(TRANSACTION, 7L, FIXED)
+                            )
+                    ),
+                    Arguments.of(" missing gateway fee type",
+                            List.of(
+                                    Fee.of(FRAUD_PROTECTION, 1L),
+                                    Fee.of(TRANSACTION, 7L, VARIABLE)
+                            )
+                    ),
+                    Arguments.of("missing fraud protection fee type",
+                            List.of(
+                                    Fee.of(GATEWAY, 5L),
+                                    Fee.of(TRANSACTION, 7L, VARIABLE)
+                            )
+                    ),
+                    Arguments.of("missing fixed or variable fee for interchange and scheme fee",
+                            List.of(
+                                    Fee.of(GATEWAY, 5L),
+                                    Fee.of(FRAUD_PROTECTION, 1L),
+                                    Fee.of(TRANSACTION, 7L, INTERCHANGE),
+                                    Fee.of(TRANSACTION, 7L, SCHEME_FEE)
+                            )
+                    ),
+                    Arguments.of("missing transaction fee records",
+                            List.of(
+                                    Fee.of(GATEWAY, 5L),
+                                    Fee.of(FRAUD_PROTECTION, 1L)
+                            )
+                    ),
+                    Arguments.of("fixed, variable and interchange",
+                            List.of(
+                                    Fee.of(GATEWAY, 5L),
+                                    Fee.of(FRAUD_PROTECTION, 1L),
+                                    Fee.of(TRANSACTION, 7L, FIXED),
+                                    Fee.of(TRANSACTION, 7L, VARIABLE),
+                                    Fee.of(TRANSACTION, 7L, INTERCHANGE)
+                            )
+                    ),
+                    Arguments.of("fee type null",
+                            List.of(
+                                    Fee.of(GATEWAY, 5L),
+                                    Fee.of(FRAUD_PROTECTION, 1L),
+                                    Fee.of(null, 7L, VARIABLE)
+                            )
+                    ),
+                    Arguments.of("fee type null",
+                            List.of(
+                                    Fee.of(GATEWAY, 5L),
+                                    Fee.of(FRAUD_PROTECTION, 1L),
+                                    Fee.of(null, 7L, VARIABLE)
+                            )
+                    )
+            );
+        }
+
+        @Test
+        void shouldReturnFalseWhenFeeListIsNullOrEmpty() {
+            assertFalse(hasAllExpectedFeeRecordsForAdyen(null));
+            assertFalse(hasAllExpectedFeeRecordsForAdyen(List.of()));
+            assertFalse(hasAllExpectedFeeRecordsForAdyen(Collections.singletonList(null)));
+        }
+    }
 }
