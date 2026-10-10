@@ -18,10 +18,15 @@ import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.model.domain.FeeSubType;
+import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.eventdetails.charge.FeeIncurredEventDetails;
+import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
 import uk.gov.pay.connector.events.model.refund.RefundFeeIncurredEvent;
 import uk.gov.pay.connector.fee.dao.FeeDao;
+import uk.gov.pay.connector.fee.dao.FeeProcessingLockDao;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.adyen.response.AdyenTransferDataFixture;
 import uk.gov.pay.connector.gateway.adyen.webhook.json.transfer.AdyenPlatformPaymentCategory;
@@ -40,6 +45,8 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,6 +60,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.FeeSubType.FIXED;
 import static uk.gov.pay.connector.charge.model.domain.FeeSubType.INTERCHANGE;
 import static uk.gov.pay.connector.charge.model.domain.FeeSubType.SCHEME_FEE;
@@ -78,11 +86,12 @@ class AdyenTransferNotificationHandlerForFeesTest {
     private FeeDao mockFeeDao;
     @Mock
     private InstantSource instantSource;
-
-    private ChargeEntity chargeEntity;
+    @Mock
+    private FeeProcessingLockDao mockFeeProcessingLockDao;
 
     private AdyenTransferNotificationHandlerForFees handler;
     private final ArgumentCaptor<FeeEntity> argumentCaptor = ArgumentCaptor.forClass(FeeEntity.class);
+    private final ArgumentCaptor<Event> argumentCaptorForEvent = ArgumentCaptor.forClass(Event.class);
 
     private static final Instant NOW = Instant.parse("2026-01-01T12:00:00Z");
 
@@ -91,19 +100,29 @@ class AdyenTransferNotificationHandlerForFeesTest {
 
     @BeforeEach
     void setUp() {
-        chargeEntity = aValidChargeEntity()
-                .withId(secureRandomLong())
-                .build();
         handler = new AdyenTransferNotificationHandlerForFees(mockAdyenGatewayConfig,
                 mockChargeService,
                 mockRefundService,
                 mockEventService,
                 mockFeeDao,
+                mockFeeProcessingLockDao,
                 instantSource);
     }
 
     @Nested
     class TestPaymentFeeTransferEventProcessing {
+        private ChargeEntity chargeEntity;
+        private static final String CHARGE_EXTERNAL_ID = "charge-external-id-123";
+
+        @BeforeEach
+        void setUp() {
+            chargeEntity = aValidChargeEntity()
+                    .withExternalId(CHARGE_EXTERNAL_ID)
+                    .withAmount(1000L)
+                    .withStatus(CAPTURED)
+                    .withId(secureRandomLong())
+                    .build();
+        }
 
         @Test
         void shouldSkipCaptureTransferForUnsupportedFeeType() {
@@ -117,20 +136,21 @@ class AdyenTransferNotificationHandlerForFeesTest {
 
         @Test
         void shouldProcessCaptureTransferForFixedCommission() {
-            var chargeExternalId = "charge-external-id-123";
-            AdyenTransferNotification adyenTransferNotification = buildNotification(chargeExternalId, null,
+            AdyenTransferNotification adyenTransferNotification = buildNotification(CHARGE_EXTERNAL_ID, null,
                     "capture", "captured", "Commission", "Fixed", 100L, "test");
 
-            when(mockChargeService.findChargeByExternalId(chargeExternalId)).thenReturn(chargeEntity);
+            when(mockChargeService.findChargeByExternalId(CHARGE_EXTERNAL_ID)).thenReturn(chargeEntity);
             when(mockAdyenGatewayConfig.getPaymentOrRefundGatewayFeeInPence()).thenReturn(10);
             when(mockAdyenGatewayConfig.getFraudAvoidanceFeeInPence()).thenReturn(20);
             when(instantSource.instant()).thenReturn(NOW);
 
             handler.process(adyenTransferNotification);
 
-            verify(mockChargeService).findChargeByExternalId(chargeExternalId);
+            verify(mockChargeService).findChargeByExternalId(CHARGE_EXTERNAL_ID);
             verify(mockFeeDao, times(3))
                     .insertChargeFeeIfAbsent(argumentCaptor.capture(), eq(chargeEntity.getId()));
+            verify(mockFeeProcessingLockDao).insertIfAbsent(chargeEntity.getId());
+            verify(mockFeeProcessingLockDao).lockForProcessing(chargeEntity.getId());
 
             List<FeeEntity> feeEntities = argumentCaptor.getAllValues();
 
@@ -156,25 +176,117 @@ class AdyenTransferNotificationHandlerForFeesTest {
         void shouldProcessCaptureTransferForAllNonFixedFeeTypes(String platformPaymentType,
                                                                 String description,
                                                                 FeeSubType expectedFeeSubType) {
-            var chargeExternalId = "charge-external-id-123";
-            AdyenTransferNotification adyenTransferNotification = buildNotification(chargeExternalId, null,
+            AdyenTransferNotification adyenTransferNotification = buildNotification(CHARGE_EXTERNAL_ID, null,
                     "capture", "captured", platformPaymentType, description, 100L, "test");
 
-            when(mockChargeService.findChargeByExternalId(chargeExternalId)).thenReturn(chargeEntity);
+            when(mockChargeService.findChargeByExternalId(CHARGE_EXTERNAL_ID)).thenReturn(chargeEntity);
             when(mockAdyenGatewayConfig.getPaymentOrRefundGatewayFeeInPence()).thenReturn(10);
             when(mockAdyenGatewayConfig.getFraudAvoidanceFeeInPence()).thenReturn(20);
             when(instantSource.instant()).thenReturn(NOW);
 
             handler.process(adyenTransferNotification);
 
-            verify(mockChargeService).findChargeByExternalId(chargeExternalId);
+            verify(mockChargeService).findChargeByExternalId(CHARGE_EXTERNAL_ID);
             verify(mockFeeDao, times(1))
                     .insertChargeFeeIfAbsent(argumentCaptor.capture(), eq(chargeEntity.getId()));
+            verify(mockFeeProcessingLockDao).insertIfAbsent(chargeEntity.getId());
+            verify(mockFeeProcessingLockDao).lockForProcessing(chargeEntity.getId());
 
             FeeEntity feeEntity = argumentCaptor.getValue();
             assertThat(feeEntity.getFeeType(), is(TRANSACTION));
             assertThat(feeEntity.getFeeSubType(), is(expectedFeeSubType));
             assertThat(feeEntity.getAmountDue(), is(100L));
+        }
+
+        @Test
+        void shouldEmitFeeIncurredEvent() throws QueueException {
+            AdyenTransferNotification adyenTransferNotification = buildNotification(CHARGE_EXTERNAL_ID, null,
+                    "capture", "captured", "Commission", "Fixed", 100L, "test");
+
+            when(instantSource.instant()).thenReturn(NOW);
+            chargeEntity.addFee(createFeeEntity(chargeEntity, TRANSACTION, FIXED, 10L));
+            chargeEntity.addFee(createFeeEntity(chargeEntity, TRANSACTION, VARIABLE, 5L));
+            chargeEntity.addFee(createFeeEntity(chargeEntity, GATEWAY, null, 1L));
+            chargeEntity.addFee(createFeeEntity(chargeEntity, FRAUD_PROTECTION, null, 1L));
+
+            when(mockAdyenGatewayConfig.getPaymentOrRefundGatewayFeeInPence()).thenReturn(10);
+            when(mockAdyenGatewayConfig.getFraudAvoidanceFeeInPence()).thenReturn(20);
+            when(mockFeeDao.insertChargeFeeIfAbsent(any(FeeEntity.class), eq(chargeEntity.getId()))).thenReturn(true);
+            when(mockChargeService.findChargeByExternalId(CHARGE_EXTERNAL_ID)).thenReturn(chargeEntity);
+
+            handler.process(adyenTransferNotification);
+
+            verify(mockEventService).emitEvent(argumentCaptorForEvent.capture(), eq(false));
+
+            FeeIncurredEvent event = (FeeIncurredEvent) argumentCaptorForEvent.getAllValues().getFirst();
+
+            assertThat(event.getEventType(), is("FEE_INCURRED_EVENT"));
+            assertThat(event.getResourceExternalId(), is(CHARGE_EXTERNAL_ID));
+
+            FeeIncurredEventDetails eventDetails = (FeeIncurredEventDetails) event.getEventDetails();
+            assertThat(eventDetails.getFee(), is(17L));
+            assertThat(eventDetails.getNetAmount(), is(983L));
+            assertThat(eventDetails.getFeeBreakdown(), hasSize(4));
+
+            assertThat(eventDetails.getFeeBreakdown(), containsInAnyOrder(
+                    Fee.of(TRANSACTION, 5L, VARIABLE),
+                    Fee.of(TRANSACTION, 10L, FIXED),
+                    Fee.of(GATEWAY, 1L, null),
+                    Fee.of(FRAUD_PROTECTION, 1L, null)
+            ));
+        }
+
+        @Test
+        void shouldNotEmitFeeIncurredEventIfFeesIsNotInserted() {
+            AdyenTransferNotification adyenTransferNotification = buildNotification(CHARGE_EXTERNAL_ID, null,
+                    "capture", "captured", "Commission", "Fixed", 100L, "test");
+
+            when(mockChargeService.findChargeByExternalId(CHARGE_EXTERNAL_ID)).thenReturn(chargeEntity);
+            when(mockFeeDao.insertChargeFeeIfAbsent(any(FeeEntity.class), eq(chargeEntity.getId()))).thenReturn(false);
+
+            handler.process(adyenTransferNotification);
+
+            verifyNoInteractions(mockEventService);
+        }
+
+        @Test
+        void shouldNotEmitFeeIncurredEventWhenAllExceptedFeeRecordsAreNotAvailable() {
+            AdyenTransferNotification adyenTransferNotification = buildNotification(CHARGE_EXTERNAL_ID, null,
+                    "capture", "captured", "Commission", "Fixed", 100L, "test");
+
+            when(instantSource.instant()).thenReturn(NOW);
+            chargeEntity.addFee(createFeeEntity(chargeEntity, TRANSACTION, FIXED, 10L));
+            chargeEntity.addFee(createFeeEntity(chargeEntity, GATEWAY, null, 1L));
+            chargeEntity.addFee(createFeeEntity(chargeEntity, FRAUD_PROTECTION, null, 1L));
+
+            when(mockFeeDao.insertChargeFeeIfAbsent(any(FeeEntity.class), eq(chargeEntity.getId()))).thenReturn(true);
+            when(mockChargeService.findChargeByExternalId(CHARGE_EXTERNAL_ID)).thenReturn(chargeEntity);
+
+            handler.process(adyenTransferNotification);
+
+            verifyNoInteractions(mockEventService);
+        }
+
+        @Test
+        void shouldHandleQueueExceptionWhenEmittingFeeIncurredEvent() throws QueueException {
+            AdyenTransferNotification adyenTransferNotification = buildNotification(CHARGE_EXTERNAL_ID, null,
+                    "capture", "captured", "Commission", "Fixed", 100L, "test");
+
+            when(instantSource.instant()).thenReturn(NOW);
+            chargeEntity.addFee(createFeeEntity(chargeEntity, TRANSACTION, FIXED, 10L));
+            chargeEntity.addFee(createFeeEntity(chargeEntity, TRANSACTION, VARIABLE, 5L));
+            chargeEntity.addFee(createFeeEntity(chargeEntity, GATEWAY, null, 1L));
+            chargeEntity.addFee(createFeeEntity(chargeEntity, FRAUD_PROTECTION, null, 1L));
+
+            when(mockFeeDao.insertChargeFeeIfAbsent(any(FeeEntity.class), eq(chargeEntity.getId()))).thenReturn(true);
+            when(mockChargeService.findChargeByExternalId(CHARGE_EXTERNAL_ID)).thenReturn(chargeEntity);
+            doThrow(new QueueException("Event emission failed"))
+                    .when(mockEventService)
+                    .emitEvent(any(FeeIncurredEvent.class), eq(false));
+
+            assertThrows(RuntimeException.class, () -> handler.process(adyenTransferNotification));
+
+            logs.assertContains("Error emitting FEE_INCURRED event");
         }
 
         private static Stream<Arguments> expectedFeeSubTypesForFeeTransferType() {
@@ -183,6 +295,11 @@ class AdyenTransferNotificationHandlerForFeesTest {
                     Arguments.of("Interchange", "Some desc", INTERCHANGE),
                     Arguments.of("SchemeFee", "Some desc", SCHEME_FEE)
             );
+        }
+
+        private FeeEntity createFeeEntity(ChargeEntity chargeEntity, FeeType feeType, FeeSubType feeSubType, long amount) {
+            Fee fee = Fee.of(feeType, amount, feeSubType);
+            return new FeeEntity(chargeEntity, instantSource.instant(), fee);
         }
     }
 
