@@ -11,6 +11,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.exception.EventCreationException;
+import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.refund.RefundFeeIncurredEvent;
 import uk.gov.pay.connector.fee.dao.FeeDao;
 import uk.gov.pay.connector.fee.model.Fee;
@@ -19,6 +21,7 @@ import uk.gov.pay.connector.gateway.adyen.webhook.json.transfer.AdyenTransferNot
 import uk.gov.pay.connector.refund.exception.RefundNotFoundRuntimeException;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import java.time.InstantSource;
 import java.util.List;
@@ -29,8 +32,6 @@ import static uk.gov.pay.connector.charge.util.AdyenFeeCalculator.generateFeeLis
 import static uk.gov.pay.connector.gateway.adyen.webhook.model.AdyenEnvironment.LIVE;
 import static uk.gov.pay.connector.queue.tasks.handlers.adyen.fee.AdyenFeeTransferClassifier.classify;
 import static uk.gov.pay.connector.queue.tasks.handlers.adyen.fee.AdyenFeeTransferType.UNSUPPORTED;
-import static uk.gov.pay.connector.queue.tasks.handlers.adyen.fee.AdyenTransactionTypeForTransfer.CAPTURE;
-import static uk.gov.pay.connector.queue.tasks.handlers.adyen.fee.AdyenTransactionTypeForTransfer.REFUND;
 import static uk.gov.pay.connector.queue.tasks.handlers.adyen.fee.AdyenTransactionTypeForTransfer.from;
 import static uk.gov.pay.connector.queue.tasks.handlers.adyen.fee.AdyenTransferNotificationValidator.validate;
 import static uk.gov.service.payments.logging.LoggingKeys.LEDGER_EVENT_TYPE;
@@ -75,17 +76,22 @@ public class AdyenTransferNotificationHandlerForFees {
 
             from(adyenTransferData.type(), adyenTransferData.status())
                     .ifPresentOrElse(transactionTypeForTransfer -> {
-                                if (transactionTypeForTransfer == CAPTURE) {
-                                    processPaymentTransferEvent(adyenTransferData);
-                                } else if (transactionTypeForTransfer == REFUND) {
-                                    processRefundTransferEvent(adyenTransferData, transferNotification.environment());
+                                switch (transactionTypeForTransfer) {
+                                    case CAPTURE:
+                                        processPaymentTransferEvent(adyenTransferData);
+                                        break;
+                                    case REFUND:
+                                        processRefundTransferEvent(adyenTransferData, transferNotification.environment());
+                                        break;
                                 }
                             },
                             () -> LOGGER.atInfo()
                                     .setMessage("Ignored transfer notification for unknown type or status")
                                     .log());
         } finally {
-            List.of(LOGGING_KEY_PLATFORM_PAYMENT_TYPE, PAYMENT_EXTERNAL_ID)
+            List.of(LOGGING_KEY_PLATFORM_PAYMENT_TYPE,
+                            PAYMENT_EXTERNAL_ID,
+                            REFUND_EXTERNAL_ID)
                     .forEach(MDC::remove);
         }
     }
@@ -136,7 +142,8 @@ public class AdyenTransferNotificationHandlerForFees {
         }
 
         RefundEntity refundEntity = mayBeRefund.get();
-        
+        MDC.put(REFUND_EXTERNAL_ID, refundExternalId);
+
         var feeAmount = adyenTransferData.amount().value();
         var refundFee = Fee.of(GATEWAY, feeAmount, null);
         FeeEntity feeEntity = new FeeEntity(refundEntity, instantSource.instant(), refundFee);
@@ -145,12 +152,12 @@ public class AdyenTransferNotificationHandlerForFees {
 
         if (feeInserted) {
             mayBeRefund = refundService.findRefundByExternalId(refundExternalId);
-            
-            if (mayBeRefund.isPresent()){
+
+            if (mayBeRefund.isPresent()) {
                 refundEntity = mayBeRefund.get();
                 emitFeeEventForRefund(refundEntity);
 
-                checkFeeEqualsConfigAndLog(environment, feeAmount);
+                checkRefundFeeEqualsConfigAndLog(environment, feeAmount);
 
                 LOGGER.atInfo()
                         .setMessage("Processed transfer notification for refund fees")
@@ -164,7 +171,7 @@ public class AdyenTransferNotificationHandlerForFees {
         }
     }
 
-    private void checkFeeEqualsConfigAndLog(String environment, Long feeAmount) {
+    private void checkRefundFeeEqualsConfigAndLog(String environment, Long feeAmount) {
         if (adyenGatewayConfig.getPaymentOrRefundGatewayFeeInPence() != feeAmount) {
             var loggingMessage = "Refund fee does not match Adyen gateway config fee value";
             Level logLevel = LIVE.name().equalsIgnoreCase(environment) ? Level.ERROR : Level.WARN;
@@ -183,22 +190,30 @@ public class AdyenTransferNotificationHandlerForFees {
 
     private void emitFeeEventForRefund(RefundEntity refundEntity) {
         try {
-            RefundFeeIncurredEvent event = RefundFeeIncurredEvent.from(refundEntity);
-            eventService.emitAndRecordEvent(event);
-
-            LOGGER.atInfo()
-                    .setMessage("Fee incurred event sent to event queue")
-                    .addKeyValue(REFUND_EXTERNAL_ID, refundEntity.getExternalId())
-                    .addKeyValue(LEDGER_EVENT_TYPE, event.getEventType())
-                    .log();
-        } catch (Exception e) {
+            emitEvent(RefundFeeIncurredEvent.from(refundEntity));
+        } catch (EventCreationException e) {
             LOGGER.atWarn()
-                    .setMessage("Error emitting FEE_INCURRED event for refund")
-                    .addKeyValue(REFUND_EXTERNAL_ID, refundEntity.getExternalId())
+                    .setMessage("Error creating REFUND_FEE_INCURRED event")
                     .setCause(e)
                     .log();
             throw new RuntimeException(e);
         }
-
     }
+
+    private void emitEvent(Event event) {
+        try {
+            eventService.emitEvent(event, false);
+            LOGGER.atInfo()
+                    .setMessage("Fee incurred event sent to event queue")
+                    .addKeyValue(LEDGER_EVENT_TYPE, event.getEventType())
+                    .log();
+        } catch (QueueException e) {
+            LOGGER.atWarn()
+                    .setMessage("Error emitting FEE_INCURRED event")
+                    .setCause(e)
+                    .log();
+            throw new RuntimeException(e);
+        }
+    }
+
 }
