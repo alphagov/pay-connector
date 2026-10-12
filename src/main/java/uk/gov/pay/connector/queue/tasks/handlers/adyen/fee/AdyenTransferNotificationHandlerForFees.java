@@ -16,6 +16,7 @@ import uk.gov.pay.connector.fee.dao.FeeDao;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.adyen.webhook.json.transfer.AdyenTransferData;
 import uk.gov.pay.connector.gateway.adyen.webhook.json.transfer.AdyenTransferNotification;
+import uk.gov.pay.connector.refund.exception.RefundNotFoundRuntimeException;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
 
@@ -131,11 +132,7 @@ public class AdyenTransferNotificationHandlerForFees {
         Optional<RefundEntity> mayBeRefund = refundService.findRefundByExternalId(refundExternalId);
 
         if (mayBeRefund.isEmpty()) {
-            LOGGER.atWarn()
-                    .setMessage("Refund not found for Adyen transfer webhook notification")
-                    .addKeyValue(REFUND_EXTERNAL_ID, refundExternalId)
-                    .log();
-            return;
+            throw new RefundNotFoundRuntimeException("Refund not found for Adyen transfer webhook notification");
         }
 
         RefundEntity refundEntity = mayBeRefund.get();
