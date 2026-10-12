@@ -27,6 +27,7 @@ import uk.gov.pay.connector.gateway.adyen.webhook.json.transfer.AdyenPlatformPay
 import uk.gov.pay.connector.gateway.adyen.webhook.json.transfer.AdyenTransferData;
 import uk.gov.pay.connector.gateway.adyen.webhook.json.transfer.AdyenTransferNotification;
 import uk.gov.pay.connector.gateway.adyen.webhook.json.transfer.Amount;
+import uk.gov.pay.connector.refund.exception.RefundNotFoundRuntimeException;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
 
@@ -288,14 +289,14 @@ class AdyenTransferNotificationHandlerForFeesTest {
     }
 
     @Test
-    void shouldSkipRefundTransferWhenRefundEntityNotFound() {
+    void shouldThrowExceptionWhenRefundEntityNotFound() {
         var refundExternalId = "refund-external-id-123";
         AdyenTransferNotification adyenTransferNotification = buildNotification(refundExternalId, refundExternalId,
                 "refund", "refunded", "PaymentFee", "Refund Fee", 10L, "test");
 
         when(mockRefundService.findRefundByExternalId(refundExternalId)).thenReturn(Optional.empty());
 
-        handler.process(adyenTransferNotification);
+        assertThrows(RefundNotFoundRuntimeException.class, () -> handler.process(adyenTransferNotification));
 
         verifyNoInteractions(mockFeeDao, mockEventService, instantSource);
     }
