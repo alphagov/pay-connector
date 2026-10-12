@@ -74,7 +74,7 @@ public class AdyenFeeCalculator {
     }
 
     public static boolean hasAllExpectedFeeRecordsForAdyen(List<Fee> fees) {
-        if(fees == null || fees.isEmpty()) {
+        if (fees == null || fees.isEmpty()) {
             return false;
         }
         
@@ -82,7 +82,7 @@ public class AdyenFeeCalculator {
         Set<FeeSubType> transactionFeeSubTypes = EnumSet.noneOf(FeeSubType.class);
 
         for (Fee fee : fees) {
-            if(fee == null || fee.feeType() == null) {
+            if (fee == null || fee.feeType() == null) {
                 return  false;
             }
             foundFeeTypes.add(fee.feeType());

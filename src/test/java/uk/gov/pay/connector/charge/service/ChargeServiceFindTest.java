@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.charge.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.core.UriInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,7 +51,6 @@ import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
@@ -84,10 +84,13 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.charge.model.domain.FeeType.FRAUD_PROTECTION;
+import static uk.gov.pay.connector.charge.model.domain.FeeType.GATEWAY;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CAPTURABLE;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 @ExtendWith(MockitoExtension.class)
@@ -344,6 +347,34 @@ class ChargeServiceFindTest {
 
         assertThat(chargeResponse.getNetAmount(), is(amount - fee));
         assertThat(chargeResponse.getAmount(), is(amount));
+    }
+
+    @Test
+    void shouldNotReturnFeeOrNetAmountForSuccessfulAdyenChargeWhenExpectedFeeRecordsAreNotPresent() {
+        Long chargeId = 101L;
+        
+        ChargeEntity charge = aValidChargeEntity(ADYEN)
+                .withId(chargeId)
+                .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(CAPTURED)
+                .withAmount(1000L)
+                .withFee(Fee.of(GATEWAY, 5L))
+                .withFee(Fee.of(FRAUD_PROTECTION, 1L))
+                .build();
+        
+        String externalId = charge.getExternalId();
+        
+        doAnswer(invocation -> fromUri(SERVICE_HOST)).when(mockedUriInfo).getBaseUriBuilder();
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(charge));
+        
+        Optional<ChargeResponse> chargeResponseForAccount = chargeService.findChargeForAccount(externalId, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+        
+        assertThat(chargeResponseForAccount.isPresent(), is(true));
+        ChargeResponse chargeResponse = chargeResponseForAccount.get();
+        assertThat(chargeResponse.getFee(), is(nullValue()));
+        assertThat(chargeResponse.getNetAmount(), is(nullValue()));
     }
 
     @Test
