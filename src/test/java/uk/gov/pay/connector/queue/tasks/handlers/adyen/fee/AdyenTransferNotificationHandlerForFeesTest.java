@@ -289,7 +289,7 @@ class AdyenTransferNotificationHandlerForFeesTest {
     }
 
     @Test
-    void shouldSkipRefundTransferWhenRefundEntityNotFound() {
+    void shouldThrowExceptionWhenRefundEntityNotFound() {
         var refundExternalId = "refund-external-id-123";
         AdyenTransferNotification adyenTransferNotification = buildNotification(refundExternalId, refundExternalId,
                 "refund", "refunded", "PaymentFee", "Refund Fee", 10L, "test");
