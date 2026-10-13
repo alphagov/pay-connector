@@ -304,6 +304,22 @@ public class DatabaseTestHelper {
         return refundId;
     }
 
+    public void addRefundFee(String externalId, long refundId, long feeDue, long feeCollected,
+                             ZonedDateTime createdDate, String gatewayTransactionId, FeeType feeType) {
+        jdbi.withHandle(handle ->
+                handle
+                        .createUpdate("INSERT INTO fees(external_id, refund_id, amount_due, amount_collected, created_date, gateway_transaction_id, fee_type) VALUES (:external_id, :refund_id, :amount_due, :amount_collected, :created_date, :gateway_transaction_id, :fee_type)")
+                        .bind("external_id", externalId)
+                        .bind("refund_id", refundId)
+                        .bind("amount_due", feeDue)
+                        .bind("amount_collected", feeCollected)
+                        .bind("created_date", Timestamp.from(createdDate.toInstant()))
+                        .bind("gateway_transaction_id", gatewayTransactionId)
+                        .bind("fee_type", feeType.getName())
+                        .execute()
+        );
+    }
+    
     public void addRefundHistory(long id, String externalId, String gatewayTransactionId, long amount, String status, ZonedDateTime createdDate, ZonedDateTime historyStartDate, ZonedDateTime historyEndDate, String submittedByUserExternalId, String userEmail, String chargeExternalId) {
         jdbi.withHandle(handle ->
                 handle

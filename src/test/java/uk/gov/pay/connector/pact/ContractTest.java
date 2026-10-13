@@ -625,9 +625,18 @@ public class ContractTest {
                 .withEmail("test@test.com")
                 .build());
 
-        dbHelper.addRefund(refundId, 100L, REFUNDED,
+        int internalRefundId = dbHelper.addRefund(refundId, 100L, REFUNDED,
                 randomAlphanumeric(10), createdDate,
                 Long.toString(paymentId));
+
+        dbHelper.addRefundFee(randomAlphanumeric(10),
+                
+                internalRefundId,
+                2L,
+                2L,
+                createdDate,
+                randomAlphanumeric(10),
+                FeeType.TRANSACTION);
     }
 
     @State("a charge with corporate surcharge exists")
