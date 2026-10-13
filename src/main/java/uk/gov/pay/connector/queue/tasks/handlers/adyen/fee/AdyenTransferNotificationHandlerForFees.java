@@ -13,8 +13,10 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.exception.EventCreationException;
 import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
 import uk.gov.pay.connector.events.model.refund.RefundFeeIncurredEvent;
 import uk.gov.pay.connector.fee.dao.FeeDao;
+import uk.gov.pay.connector.fee.dao.FeeProcessingLockDao;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.adyen.webhook.json.transfer.AdyenTransferData;
 import uk.gov.pay.connector.gateway.adyen.webhook.json.transfer.AdyenTransferNotification;
@@ -29,6 +31,7 @@ import java.util.Optional;
 
 import static uk.gov.pay.connector.charge.model.domain.FeeType.GATEWAY;
 import static uk.gov.pay.connector.charge.util.AdyenFeeCalculator.generateFeeList;
+import static uk.gov.pay.connector.charge.util.AdyenFeeCalculator.hasAllExpectedFeeRecordsForAdyen;
 import static uk.gov.pay.connector.gateway.adyen.webhook.model.AdyenEnvironment.LIVE;
 import static uk.gov.pay.connector.queue.tasks.handlers.adyen.fee.AdyenFeeTransferClassifier.classify;
 import static uk.gov.pay.connector.queue.tasks.handlers.adyen.fee.AdyenFeeTransferType.UNSUPPORTED;
@@ -46,6 +49,7 @@ public class AdyenTransferNotificationHandlerForFees {
     private final RefundService refundService;
     private final EventService eventService;
     private final FeeDao feeDao;
+    private final FeeProcessingLockDao feeProcessingLockDao;
     private final InstantSource instantSource;
     private static final Logger LOGGER = LoggerFactory.getLogger(AdyenTransferNotificationHandlerForFees.class);
 
@@ -56,12 +60,15 @@ public class AdyenTransferNotificationHandlerForFees {
                                                    ChargeService chargeService,
                                                    RefundService refundService,
                                                    EventService eventService,
-                                                   FeeDao feeDao, InstantSource instantSource) {
+                                                   FeeDao feeDao,
+                                                   FeeProcessingLockDao feeProcessingLockDao,
+                                                   InstantSource instantSource) {
         this.adyenGatewayConfig = adyenGatewayConfig;
         this.chargeService = chargeService;
         this.refundService = refundService;
         this.eventService = eventService;
         this.feeDao = feeDao;
+        this.feeProcessingLockDao = feeProcessingLockDao;
         this.instantSource = instantSource;
     }
 
@@ -118,7 +125,7 @@ public class AdyenTransferNotificationHandlerForFees {
                 adyenGatewayConfig.getFraudAvoidanceFeeInPence()
         );
 
-        fees.forEach(fee -> insertFeeForCharge(chargeEntity, fee));
+        insertPaymentFeesAndEmitFeeIncurredEvent(chargeEntity, fees);
 
         LOGGER.atInfo()
                 .setMessage("Processed transfer notification for fees")
@@ -183,9 +190,44 @@ public class AdyenTransferNotificationHandlerForFees {
         }
     }
 
-    private void insertFeeForCharge(ChargeEntity chargeEntity, Fee fee) {
-        FeeEntity feeEntity = new FeeEntity(chargeEntity, instantSource.instant(), fee);
-        feeDao.insertChargeFeeIfAbsent(feeEntity, chargeEntity.getId());
+    private void insertPaymentFeesAndEmitFeeIncurredEvent(ChargeEntity chargeEntity, List<Fee> feesToInsert) {
+        feeProcessingLockDao.insertIfAbsent(chargeEntity.getId());
+        feeProcessingLockDao.lockForProcessing(chargeEntity.getId());
+
+        boolean feeRecordInserted = false;
+        for (Fee fee : feesToInsert) {
+            FeeEntity feeEntity = new FeeEntity(chargeEntity, instantSource.instant(), fee);
+            boolean inserted = feeDao.insertChargeFeeIfAbsent(feeEntity, chargeEntity.getId());
+            feeRecordInserted = inserted || feeRecordInserted;
+        }
+
+        if (feeRecordInserted) {
+            chargeEntity = chargeService.findChargeByExternalId(chargeEntity.getExternalId());
+            List<Fee> feeList = chargeEntity.getFees()
+                    .stream()
+                    .map(feeEntity -> new Fee(feeEntity.getFeeType(), feeEntity.getAmountCollected(), feeEntity.getFeeSubType()))
+                    .toList();
+
+            if (hasAllExpectedFeeRecordsForAdyen(feeList)) {
+                emitFeeEventForPayment(chargeEntity);
+            }
+        } else {
+            LOGGER.atInfo()
+                    .setMessage("No fee records inserted")
+                    .log();
+        }
+    }
+
+    private void emitFeeEventForPayment(ChargeEntity chargeEntity) {
+        try {
+            FeeIncurredEvent event = FeeIncurredEvent.from(chargeEntity);
+            emitEvent(event);
+        } catch (EventCreationException e) {
+            LOGGER.atWarn()
+                    .setMessage("Error creating FEE_INCURRED event from charge entity")
+                    .log();
+            throw new RuntimeException(e);
+        }
     }
 
     private void emitFeeEventForRefund(RefundEntity refundEntity) {

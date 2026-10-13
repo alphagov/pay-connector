@@ -15,10 +15,14 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.fail;
 import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_TRANSFER_NOTIFICATION_FOR_FEES;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
@@ -78,7 +82,6 @@ class AdyenTransferNotificationHandlerIT {
 
         Map<String, Object> transactionFeeRecord = getFeeRecord(feesForCharge, "transaction");
         assertFeeDetails(transactionFeeRecord, "transaction", 43, is("fixed"));
-
     }
 
     @ParameterizedTest
@@ -103,6 +106,48 @@ class AdyenTransferNotificationHandlerIT {
     }
 
     @Test
+    void shouldSaveFeesWhenProcessingMultipleTransferNotificationsConcurrently() throws InterruptedException {
+        DatabaseFixtures.TestCharge charge = app.getDatabaseFixtures()
+                .aTestCharge()
+                .withTestAccount(defaultTestAccount)
+                .withChargeId(secureRandomLong())
+                .withExternalChargeId(RandomIdGenerator.newId())
+                .insert();
+
+        String fixedFeeTransferNotification = createPaymentFeeTransferNotification(charge, "Commission", "Fixed");
+        String variableFeeTransferNotification = createPaymentFeeTransferNotification(charge, "Commission", "Variable");
+
+        List<Callable<Void>> authoriseTasks = List.of(
+                () -> {
+                    adyenTransferNotificationHandler.process(fixedFeeTransferNotification);
+                    return null;
+                },
+                () -> {
+                    adyenTransferNotificationHandler.process(variableFeeTransferNotification);
+                    return null;
+                }
+        );
+
+        invokeAll(authoriseTasks);
+
+        List<Map<String, Object>> feesForCharge = app.getDatabaseTestHelper().getFeesByChargeId(charge.getChargeId());
+
+        assertThat(feesForCharge.size(), is(4));
+
+        Map<String, Object> feeRecord = getFeeRecord(feesForCharge, "gateway");
+        assertFeeDetails(feeRecord, "gateway", 10, is(nullValue()));
+
+        feeRecord = getFeeRecord(feesForCharge, "fraud_protection");
+        assertFeeDetails(feeRecord, "fraud_protection", 20, is(nullValue()));
+
+        feeRecord = getFeeRecord(feesForCharge, "transaction", "fixed");
+        assertFeeDetails(feeRecord, "transaction", 43, is("fixed"));
+
+        feeRecord = getFeeRecord(feesForCharge, "transaction", "variable");
+        assertFeeDetails(feeRecord, "transaction", 73, is("variable"));
+    }
+
+    @Test
     void shouldProcessRefundFeeNotificationsForPaymentFee() {
         var refundExternalId = RandomIdGenerator.newId();
         DatabaseFixtures.TestCharge testCharge = app.getDatabaseFixtures()
@@ -111,7 +156,7 @@ class AdyenTransferNotificationHandlerIT {
                 .withChargeId(secureRandomLong())
                 .withExternalChargeId(RandomIdGenerator.newId())
                 .insert();
-        
+
         var refund = app.getDatabaseFixtures()
                 .aTestRefund()
                 .withTestCharge(testCharge)
@@ -123,7 +168,7 @@ class AdyenTransferNotificationHandlerIT {
         payload = payload.replace("73", Long.toString(feeAmount));
 
         adyenTransferNotificationHandler.process(payload);
-        
+
         List<Map<String, Object>> feesForRefund = app.getDatabaseTestHelper().getFeesByRefundId(refund.getId());
 
         assertThat(feesForRefund.size(), is(1));
@@ -174,6 +219,13 @@ class AdyenTransferNotificationHandlerIT {
                 .findFirst().get();
     }
 
+    private static Map<String, Object> getFeeRecord(List<Map<String, Object>> feesForCharge, String feeType, String feeSubType) {
+        return feesForCharge.stream()
+                .filter(row -> row.get("fee_type").equals(feeType))
+                .filter(row -> row.get("fee_sub_type").equals(feeSubType))
+                .findFirst().get();
+    }
+
     private String getFeeTransactionNotificationPayload(String chargeExternalId,
                                                         String refundExternalId,
                                                         String platformPaymentType,
@@ -189,4 +241,9 @@ class AdyenTransferNotificationHandlerIT {
                 .replace("{{description}}", description);
     }
 
+    private void invokeAll(List<Callable<Void>> tasks) throws InterruptedException {
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            executor.invokeAll(tasks);
+        }
+    }
 }
