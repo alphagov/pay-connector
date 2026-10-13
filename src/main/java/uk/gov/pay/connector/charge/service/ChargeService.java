@@ -71,6 +71,7 @@ import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.model.agreement.AgreementInactivated;
+import uk.gov.pay.connector.events.model.charge.CardDetailsObtained;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
@@ -943,6 +944,10 @@ public class ChargeService {
 
             if (auth3dsRequiredDetails != null && isNotBlank(auth3dsRequiredDetails.getThreeDsVersion())) {
                 eventService.emitAndRecordEvent(Gateway3dsInfoObtained.from(charge, Instant.now()));
+            }
+            
+            if (cardExpiryDate != null) {
+                eventService.emitAndRecordEvent(CardDetailsObtained.from(charge, Instant.now()));
             }
 
             return charge;
