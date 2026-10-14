@@ -25,17 +25,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.charge.model.domain.FeeSubType.FIXED;
-import static uk.gov.pay.connector.charge.model.domain.FeeSubType.SCHEME_FEE;
+import static uk.gov.pay.connector.charge.model.domain.FeeSubType.VARIABLE;
 import static uk.gov.pay.connector.charge.model.domain.FeeType.TRANSACTION;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_STARTED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.service.payments.logging.LoggingKeys.AGREEMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.AUTHORISATION_MODE;
@@ -89,97 +88,67 @@ class ChargeEntityTest {
     @Test
     void shouldRejectAnInvalidStatusTransition() {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity().withStatus(CREATED).build();
-        assertThrows( InvalidStateTransitionException.class, () -> chargeCreated.setStatus(CAPTURED));
+        assertThrows(InvalidStateTransitionException.class, () -> chargeCreated.setStatus(CAPTURED));
     }
 
     @Test
-    void shouldReturnRightAmountOfFees() {
+    void shouldReturnFeeAmountFromChargeFee() {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
                 .withFee(Fee.of(FeeType.TRANSACTION, 100L))
                 .withFee(Fee.of(FeeType.RADAR, 10L))
                 .withFee(Fee.of(FeeType.THREE_D_S, 20L))
-                .withStatus(CAPTURED).build();
-
-        Optional<Long> totalFee = chargeCreated.getFeeAmount();
-        assertTrue(totalFee.isPresent());
-        assertEquals(130L, totalFee.get().longValue());
+                .withStatus(CAPTURED)
+                .build();
+        assertTrue(chargeCreated.getFeeAmount().isPresent());
+        assertThat(chargeCreated.getFeeAmount().get(), is(130L));
     }
 
     @Test
-    void shouldIgnoreDuplicateFees() {
-        ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
-                .withFee(Fee.of(TRANSACTION, 100L, FIXED))
-                .withFee(Fee.of(TRANSACTION, 50L, FIXED))
-                .withFee(Fee.of(TRANSACTION, 10L, SCHEME_FEE))
-                .withFee(Fee.of(FeeType.RADAR, 10L))
-                .withFee(Fee.of(FeeType.RADAR, 10L))
-                .withFee(Fee.of(FeeType.THREE_D_S, 20L))
-                .withStatus(CAPTURED).build();
-
-        Optional<Long> totalFee = chargeCreated.getFeeAmount();
-        assertTrue(totalFee.isPresent());
-        assertEquals(140L, totalFee.get().longValue());
-    }
-
-    @Test
-    void shouldReturnNoFee() {
-        ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity().withStatus(CREATED).build();
-        Optional<Long> totalFee = chargeCreated.getFeeAmount();
-        assertFalse(totalFee.isPresent());
-    }
-
-    @Test
-    void shouldReturnAmountMinusFeeForSuccessfulPayment() {
+    void shouldReturnNetAmountFromChargeAmountAndFees() {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(1000L)
                 .withFee(Fee.of(FeeType.TRANSACTION, 100L))
                 .withFee(Fee.of(FeeType.RADAR, 10L))
                 .withFee(Fee.of(FeeType.THREE_D_S, 20L))
-                .withStatus(CAPTURED).build();
-
-        Optional<Long> netAmount = chargeCreated.getNetAmount();
-        assertThat(netAmount.isPresent(), is(true));
-        assertThat(netAmount.get(), is(870L));
+                .withStatus(CAPTURED)
+                .build();
+        
+        assertTrue(chargeCreated.getNetAmount().isPresent());
+        assertThat(chargeCreated.getNetAmount().get(), is(870L));
     }
 
     @Test
-    void shouldReturnTotalAmountMinusFeeForSuccessfulPaymentWithCorporateSurcharge() {
+    void shouldReturnEmptyFeeAndNetAmountForSuccessfulPaymentWhenExpectedFeeRecordsAreMissing() {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
+                .withPaymentProvider(ADYEN.getName())
                 .withAmount(1000L)
-                .withCorporateSurcharge(250L)
-                .withFee(Fee.of(FeeType.TRANSACTION, 100L))
-                .withFee(Fee.of(FeeType.RADAR, 10L))
-                .withFee(Fee.of(FeeType.THREE_D_S, 20L))
+                .withFee(Fee.of(FeeType.GATEWAY, 5L))
+                .withFee(Fee.of(FeeType.FRAUD_PROTECTION, 1L))
                 .withStatus(CAPTURED).build();
 
-        Optional<Long> netAmount = chargeCreated.getNetAmount();
-        assertThat(netAmount.isPresent(), is(true));
-        assertThat(netAmount.get(), is(1120L));
+        assertFalse(chargeCreated.getFeeAmount().isPresent());
+        assertFalse(chargeCreated.getNetAmount().isPresent());
     }
 
-    @Test
-    void shouldReturnNegativeNetAmountForFailedPaymentWithFees() {
-        ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
-                .withAmount(1000L)
-                .withCorporateSurcharge(250L)
-                .withFee(Fee.of(FeeType.TRANSACTION, 100L))
-                .withFee(Fee.of(FeeType.RADAR, 10L))
-                .withFee(Fee.of(FeeType.THREE_D_S, 20L))
-                .withStatus(AUTHORISATION_REJECTED).build();
-
-        Optional<Long> netAmount = chargeCreated.getNetAmount();
-        assertThat(netAmount.isPresent(), is(true));
-        assertThat(netAmount.get(), is(-130L));
-    }
 
     @Test
-    void shouldReturnEmptyOptionalWhenThereAreNoFees() {
+    void shouldReturnFeeAndNetAmountForSuccessfulPaymentWhenExpectedFeeRecordsArePresent() {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity()
+                .withPaymentProvider(ADYEN.getName())
                 .withAmount(1000L)
+                .withFee(Fee.of(FeeType.GATEWAY, 5L))
+                .withFee(Fee.of(FeeType.FRAUD_PROTECTION, 1L))
+                .withFee(Fee.of(TRANSACTION, 3L, VARIABLE))
                 .withStatus(CAPTURED).build();
 
+        Optional<Long> feeAmount = chargeCreated.getFeeAmount();
         Optional<Long> netAmount = chargeCreated.getNetAmount();
-        assertThat(netAmount.isPresent(), is(false));
+
+        assertTrue(feeAmount.isPresent());
+        assertThat(feeAmount.get(), is(9L));
+        assertTrue(netAmount.isPresent());
+        assertThat(netAmount.get(), is(991L));
+
     }
 
     @Test
@@ -251,7 +220,7 @@ class ChargeEntityTest {
 
         assertTrue(chargeEntity.getRequires3ds());
     }
-    
+
     @Test
     void shouldReturnGatewayRejectionReason() {
         ChargeEntity chargeCreated = ChargeEntityFixture

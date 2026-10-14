@@ -56,7 +56,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -64,8 +63,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
-import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions.isValidTransition;
+import static uk.gov.pay.connector.util.ChargeFeeCalculator.calculateFeeAmount;
+import static uk.gov.pay.connector.util.ChargeFeeCalculator.calculateNetAmount;
 import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.service.payments.logging.LoggingKeys.AGREEMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.AUTHORISATION_MODE;
@@ -186,9 +186,9 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     @Column(name = "service_id")
     private String serviceId;
-    
+
     @ManyToOne
-    @JoinColumn(name = "agreement_external_id", referencedColumnName="external_id", updatable = false, nullable = true)
+    @JoinColumn(name = "agreement_external_id", referencedColumnName = "external_id", updatable = false, nullable = true)
     private AgreementEntity agreementEntity;
 
     @Column(name = "agreement_payment_type")
@@ -201,7 +201,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @OneToOne
     @JoinColumn(name = "payment_instrument_id", nullable = true)
     private PaymentInstrumentEntity paymentInstrument;
-    
+
     @Column(name = "authorisation_mode")
     @Enumerated(EnumType.STRING)
     private AuthorisationMode authorisationMode;
@@ -215,7 +215,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     @Column(name = "requires_3ds")
     private Boolean requires3ds;
-    
+
     @Column(name = "gateway_rejection_reason")
     private String gatewayRejectionReason;
 
@@ -249,7 +249,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
             AuthorisationMode authorisationMode,
             Boolean canRetry,
             Boolean requires3ds
-   
+
     ) {
         this.amount = amount;
         this.status = status.getValue();
@@ -305,7 +305,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
     public String getStatus() {
         return status;
     }
-    
+
     public ChargeStatus getChargeStatus() {
         return ChargeStatus.fromString(status);
     }
@@ -421,7 +421,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         logger.info(logMessage, getStructuredLoggingArgs());
         this.status = targetStatus.getValue();
     }
-    
+
     public Object[] getStructuredLoggingArgs() {
         ArrayList<StructuredArgument> structuredArguments = new ArrayList<>(List.of(
                 kv(PAYMENT_EXTERNAL_ID, externalId),
@@ -461,7 +461,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
     public void setWalletType(WalletType walletType) {
         this.walletType = walletType;
     }
-    
+
     public void setAgreementEntity(AgreementEntity agreementEntity) {
         this.agreementEntity = agreementEntity;
     }
@@ -541,26 +541,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
     }
 
     public Optional<Long> getFeeAmount() {
-        return fees.isEmpty() ? Optional.empty() :
-                Optional.of(fees.stream()
-                        .collect(Collectors.toMap(
-                                fee -> Arrays.asList(fee.getFeeType(), fee.getFeeSubType()),
-                                FeeEntity::getAmountCollected,
-                                (existing, _) -> existing
-                        ))
-                        .values()
-                        .stream()
-                        .mapToLong(Long::longValue)
-                        .sum());
+        return calculateFeeAmount(this);
     }
 
     public Optional<Long> getNetAmount() {
-        return getFeeAmount().map(fee -> {
-            if (getChargeStatus().toExternal() == EXTERNAL_SUCCESS) {
-                return getAmount() + getCorporateSurcharge().orElse(0L) - fee;
-            }
-            return -fee;
-        });
+        return calculateNetAmount(this);
     }
 
     public List<FeeEntity> getFees() {
@@ -591,7 +576,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
     public void setServiceId(String serviceId) {
         this.serviceId = serviceId;
     }
-    
+
     public Optional<AgreementEntity> getAgreement() {
         return Optional.ofNullable(agreementEntity);
     }
@@ -599,7 +584,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
     public AgreementPaymentType getAgreementPaymentType() {
         return agreementPaymentType;
     }
-    
+
     public void setAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
         this.agreementPaymentType = agreementPaymentType;
     }
@@ -751,12 +736,12 @@ public class ChargeEntity extends AbstractVersionedEntity {
             this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
             return this;
         }
-        
+
         public WebChargeEntityBuilder withAuthorisationMode(AuthorisationMode authorisationMode) {
             this.authorisationMode = authorisationMode;
             return this;
         }
-        
+
         public WebChargeEntityBuilder withAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
             this.agreementPaymentType = agreementPaymentType;
             return this;
@@ -873,12 +858,12 @@ public class ChargeEntity extends AbstractVersionedEntity {
             this.agreementEntity = agreementEntity;
             return this;
         }
-        
+
         public TelephoneChargeEntityBuilder withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
             this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
             return this;
         }
-        
+
         public ChargeEntity build() {
             return new ChargeEntity(
                     amount,
