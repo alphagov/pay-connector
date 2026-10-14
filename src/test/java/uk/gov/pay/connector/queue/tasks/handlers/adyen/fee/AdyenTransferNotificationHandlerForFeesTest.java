@@ -420,6 +420,8 @@ class AdyenTransferNotificationHandlerForFeesTest {
             assertThrows(RefundNotFoundRuntimeException.class, () -> handler.process(adyenTransferNotification));
 
             verifyNoInteractions(mockFeeDao, mockEventService, instantSource);
+            logs.assertContains("Refund not found for Adyen transfer webhook notification");
+            
         }
 
         @Test
