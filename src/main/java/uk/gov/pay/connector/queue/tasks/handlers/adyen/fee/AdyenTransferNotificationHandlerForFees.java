@@ -142,14 +142,17 @@ public class AdyenTransferNotificationHandlerForFees {
         }
 
         var refundExternalId = adyenTransferData.categoryData().modificationMerchantReference();
+        MDC.put(REFUND_EXTERNAL_ID, refundExternalId);
         Optional<RefundEntity> mayBeRefund = refundService.findRefundByExternalId(refundExternalId);
 
         if (mayBeRefund.isEmpty()) {
-            throw new RefundNotFoundRuntimeException("Refund not found for Adyen transfer webhook notification");
+            LOGGER.atWarn()
+                    .setMessage("Refund not found for Adyen transfer webhook notification")
+                    .log();
+            throw new RefundNotFoundRuntimeException(refundExternalId);
         }
 
         RefundEntity refundEntity = mayBeRefund.get();
-        MDC.put(REFUND_EXTERNAL_ID, refundExternalId);
 
         var feeAmount = adyenTransferData.amount().value();
         var refundFee = Fee.of(GATEWAY, feeAmount, null);
