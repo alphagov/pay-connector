@@ -39,6 +39,8 @@ import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.model.ResourceType;
+import uk.gov.pay.connector.events.model.charge.CardDetailsObtained;
+import uk.gov.pay.connector.events.model.charge.CardDetailsObtainedEventDetails;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationErrorToMatchGatewayStatus;
@@ -101,6 +103,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.CardDetailsEntityFixture.aCardDetailsEntityFixture;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -124,7 +127,6 @@ import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificati
 
 @ExtendWith(MockitoExtension.class)
 class ChargeServiceTest {
-
     private static final String SERVICE_HOST = "http://my-service";
     private static final long GATEWAY_ACCOUNT_ID = 10L;
     private static final String[] EXTERNAL_CHARGE_ID = new String[1];
@@ -583,6 +585,41 @@ class ChargeServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
     }
 
+    @Test
+    void shouldEmitEventIfCardExpiryDateIsNotNull() {
+        ArgumentCaptor<CardDetailsObtained> eventCaptor = ArgumentCaptor.forClass(CardDetailsObtained.class);
+
+        CardExpiryDate expiryDate = CardExpiryDate.valueOf("03/30");
+        CardDetailsEntity cardDetails = aCardDetailsEntityFixture().withExpiryDate(expiryDate).build();
+        ChargeEntity charge = aValidChargeEntity()
+                .withStatus(AUTHORISATION_3DS_READY)
+                .withCardDetails(cardDetails)
+                .build();
+
+        final String chargeEntityExternalId = charge.getExternalId();
+        when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(charge));
+
+        chargeService.updateChargePost3dsAuthorisation(charge.getExternalId(), AUTHORISATION_REJECTED, AUTHORISATION_3DS, null,
+                null, null, null, null, expiryDate);
+
+        verify(mockEventService).emitAndRecordEvent(eventCaptor.capture());
+
+        CardDetailsObtained capturedEvent = eventCaptor.getValue();
+        assertThat(((CardDetailsObtainedEventDetails) capturedEvent.getEventDetails()).getExpiryDate(), is(expiryDate));
+    }
+    
+    @Test
+    void shouldNotEmitEventIfCardExpiryDateIsNull() {
+        ChargeEntity charge = aValidChargeEntity().withStatus(AUTHORISATION_3DS_READY).build();
+
+        final String chargeEntityExternalId = charge.getExternalId();
+        when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(charge));
+
+        chargeService.updateChargePost3dsAuthorisation(charge.getExternalId(), AUTHORISATION_REJECTED, AUTHORISATION_3DS, null,
+                null, null, null, null, null);
+        
+        verifyNoInteractions(mockEventService);
+    }
 
     @Test
     void shouldUpdateChargePost3dsAuthorisationIf3dsRequiredAgainAndTransactionId() {
