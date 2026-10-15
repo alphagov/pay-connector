@@ -1,27 +1,20 @@
 package uk.gov.pay.connector.gateway.adyen.webhook;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.adyen.model.notification.NotificationRequest;
 import com.adyen.model.notification.NotificationRequestItem;
 import com.adyen.util.HMACValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hamcrest.core.Is;
+import io.github.netmikey.logunit.api.LogCapturer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.app.adyen.HmacKeys;
 import uk.gov.pay.connector.app.adyen.WebhookHmacKeys;
@@ -32,15 +25,11 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.security.SignatureException;
-import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.adyen.webhook.model.AdyenEnvironment.TEST;
@@ -58,11 +47,8 @@ class AdyenNotificationValidatorTest {
     @Mock
     private IpDomainMatcher ipDomainMatcher;
 
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
-
-    @Captor
-    private ArgumentCaptor<LoggingEvent> loggingEventCaptor;
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(AdyenNotificationValidator.class);
 
     @Mock
     private AdyenGatewayConfig gatewayConfig;
@@ -79,10 +65,6 @@ class AdyenNotificationValidatorTest {
     void setUp() {
         when(gatewayConfig.getNotificationDomain()).thenReturn(NOTIFICATION_DOMAIN);
         adyenNotificationValidator = new AdyenNotificationValidator(gatewayConfig, ipDomainMatcher, hmacValidator, mockAdyenWebhookDeserialiser);
-
-        Logger logger = (Logger) LoggerFactory.getLogger(AdyenNotificationValidator.class);
-        logger.setLevel(Level.INFO);
-        logger.addAppender(mockAppender);
     }
 
     private static final String FORWARDED_IP = "192.168.1.1";
@@ -102,11 +84,7 @@ class AdyenNotificationValidatorTest {
         void shouldLogMissingXForwardedForHeaderWhenForwardedIpAddressesIsBlankOrNull(String forwardedIpAddresses) {
             adyenNotificationValidator.isValidIpAddress(forwardedIpAddresses);
 
-            verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
-            LoggingEvent loggingEvent = loggingEventCaptor.getValue();
-            assertThat(loggingEvent.getLevel(), is(Level.INFO));
-            assertThat(loggingEvent.getMessage(),
-                    is("Adyen notification missing X-Forwarded-For header"));
+            logs.assertContains("Adyen notification missing X-Forwarded-For header");
         }
 
         @Test
@@ -125,13 +103,8 @@ class AdyenNotificationValidatorTest {
             boolean result = adyenNotificationValidator.isValidIpAddress(FORWARDED_IP);
 
             assertFalse(result);
-            verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
-            LoggingEvent loggingEvent = loggingEventCaptor.getValue();
-            assertThat(loggingEvent.getLevel(), is(Level.INFO));
-            assertThat(loggingEvent.getMessage(),
-                    is("Adyen notification from ip '{}' not matching configured domain '{}'"));
-            assertThat(loggingEvent.getArgumentArray()[0], is(FORWARDED_IP));
-            assertThat(loggingEvent.getArgumentArray()[1], Is.is(NOTIFICATION_DOMAIN));
+
+            logs.assertContains("Adyen notification from ip '192.168.1.1' not matching configured domain 'notification.adyen.com'");
         }
     }
 
@@ -173,15 +146,7 @@ class AdyenNotificationValidatorTest {
             assertThrows(AdyenNotificationException.class,
                     () -> adyenNotificationValidator.validateHmacSignature(notification, load(ADYEN_TOKEN_NOTIFICATION), ""));
 
-            verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
-
-            List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
-            assertThat(loggingEvents
-                    .stream()
-                    .anyMatch(event -> event
-                            .getFormattedMessage()
-                            .equals("Hmac signature is missing, rejecting Adyen token notification")), is(true));
-
+            logs.assertContains("Hmac signature is missing, rejecting Adyen token notification");
         }
 
         @Test
@@ -203,14 +168,8 @@ class AdyenNotificationValidatorTest {
             var result = adyenNotificationValidator.isValidHmac(item, INVALID_HMAC_SIGNATURE);
 
             assertFalse(result);
-            verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
 
-            List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
-            assertThat(loggingEvents
-                    .stream()
-                    .anyMatch(event -> event
-                            .getFormattedMessage()
-                            .equals("Invalid HMAC signature in the payload for Adyen notification")), is(true));
+            logs.assertContains("Invalid HMAC signature in the payload for Adyen notification");
         }
 
         @Test
@@ -221,14 +180,7 @@ class AdyenNotificationValidatorTest {
                     adyenNotificationValidator.isValidHmac(new NotificationRequestItem(), validHmacSignature)
             );
 
-            verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
-
-            List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
-            assertThat(loggingEvents
-                    .stream()
-                    .anyMatch(event -> event
-                            .getFormattedMessage()
-                            .equals("Failed to validate HMAC signature")), is(true));
+            logs.assertContains("Failed to validate HMAC signature");
         }
 
         private NotificationRequestItem loadNotificationItem(String hmacSignature) {
@@ -273,14 +225,7 @@ class AdyenNotificationValidatorTest {
                             "some payload")
             );
 
-            verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
-
-            List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
-            assertThat(loggingEvents
-                    .stream()
-                    .anyMatch(event -> event
-                            .getFormattedMessage()
-                            .equals("Failed to validate HMAC signature for token notification")), is(true));
+            logs.assertContains("Failed to validate HMAC signature for notification");
         }
     }
 

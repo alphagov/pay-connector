@@ -1,23 +1,18 @@
 package uk.gov.pay.connector.gateway.adyen.webhook;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.adyen.model.notification.NotificationRequest;
 import com.adyen.model.notification.NotificationRequestItem;
 import com.adyen.notification.WebhookHandler;
 import com.adyen.util.HMACValidator;
+import io.github.netmikey.logunit.api.LogCapturer;
 import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.adyen.webhook.model.AdyenWebhookEvent;
 import uk.gov.pay.connector.gateway.adyen.webhook.model.AdyenWebhookNotification;
 import uk.gov.pay.connector.gateway.exception.AdyenNotificationException;
@@ -28,7 +23,6 @@ import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.io.IOException;
 import java.security.SignatureException;
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -36,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -55,17 +48,10 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_TOKEN_N
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_TRANSFER_NOTIFICATION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
-
 @ExtendWith(MockitoExtension.class)
 class AdyenNotificationServiceTest {
 
     private AdyenNotificationService adyenNotificationService;
-
-    @Captor
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
-
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
 
     @Mock
     private TaskQueueService mockTaskQueueService;
@@ -79,6 +65,9 @@ class AdyenNotificationServiceTest {
     @Mock
     private AdyenBalanceReportNotificationHandler mockAdyenBalanceReportNotificationHandler;
 
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(AdyenNotificationService.class);
+
     private static final String FORWARDED_IP = "5.6.7.8";
     private static final String HMAC_SIGNATURE = "sha256=test-signature";
 
@@ -89,9 +78,6 @@ class AdyenNotificationServiceTest {
                 mockAdyenNotificationValidator,
                 mockAdyenWebhookNotificationParser,
                 mockAdyenBalanceReportNotificationHandler);
-        Logger root = (Logger) LoggerFactory.getLogger(AdyenNotificationService.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
     }
 
     @Test
@@ -119,19 +105,13 @@ class AdyenNotificationServiceTest {
     void shouldRejectNotificationWhenExceptionIsThrown() {
         String payload = TestTemplateResourceLoader.load(ADYEN_TOKEN_NOTIFICATION);
         when(mockAdyenNotificationValidator.isValidIpAddress(FORWARDED_IP)).thenReturn(true);
-        when(mockAdyenWebhookNotificationParser.parse(payload)).thenThrow(new AdyenNotificationException("error"));
+        when(mockAdyenWebhookNotificationParser.parse(payload)).thenThrow(new AdyenNotificationException("Error parsing payload"));
 
         boolean result = adyenNotificationService.handleNotificationFor(payload, FORWARDED_IP, HMAC_SIGNATURE);
 
         assertFalse(result);
-        verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents
-                        .stream()
-                        .anyMatch(event -> event
-                                .getFormattedMessage()
-                                .equals("Failed to validate Adyen notification payload")),
-                is(true));
+
+        logs.assertContains("Failed to process Adyen notification - Error parsing payload");
     }
 
     @Test
@@ -175,11 +155,23 @@ class AdyenNotificationServiceTest {
         assertThat(exception
                 .getResponse()
                 .getStatus(), is(500));
-        verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents
-                .getFirst()
-                .getFormattedMessage(), is("Error sending Adyen webhook notification to task SQS queue"));
+        logs.assertContains("Error sending Adyen webhook notification to task SQS queue");
+    }
+
+    @Test
+    void shouldThrowWebApplicationExceptionWhenNotificationCannotBeParse() {
+        String payload = "invalid-json";
+        when(mockAdyenNotificationValidator.isValidIpAddress("5.6.7.8")).thenReturn(true);
+        when(mockAdyenWebhookNotificationParser.parse(payload)).thenThrow(new UnparseableAdyenWebhookException("No recognised field in the payload to process Adyen notification"));
+
+        WebApplicationException exception = assertThrows(WebApplicationException.class, () ->
+                adyenNotificationService.handleNotificationFor(payload, "5.6.7.8", null));
+
+        verifyNoInteractions(mockTaskQueueService);
+        assertThat(exception
+                .getResponse()
+                .getStatus(), is(500));
+        logs.assertContains("Unabled to parse Adyen notification - No recognised field in the payload to process Adyen notification");
     }
 
     @Test
@@ -190,7 +182,7 @@ class AdyenNotificationServiceTest {
 
         boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8", null);
 
-        assertFalse(result);
+        assertTrue(result);
         verifyNoInteractions(mockTaskQueueService);
     }
 
