@@ -295,6 +295,10 @@ public class ExpungeResourceIT {
                 .withUsed(false)
                 .insert();
         testToken.insert();
+        DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
+                .aTestFeeProcessingLock()
+                .withTestCharge(expungeableCharge1)
+                .insert();
         insertChargeEvent(expungeableCharge1);
         emittedEventDao.persist(anEmittedEventEntity()
                 .withResourceExternalId(expungeableCharge1.getExternalChargeId())
@@ -319,6 +323,8 @@ public class ExpungeResourceIT {
         assertThat(postFee, is(false));
         var postEmittedEvents = databaseTestHelper.containsEmittedEventWithExternalId(expungeableCharge1.getExternalChargeId());
         assertThat(postEmittedEvents, is(false));
+        var postFeeProcessingLock = databaseTestHelper.containsFeeProcessingLockWithChargeId(expungeableCharge1.getChargeId());
+        assertThat(postFeeProcessingLock, is(false));
     }
 
     @Test

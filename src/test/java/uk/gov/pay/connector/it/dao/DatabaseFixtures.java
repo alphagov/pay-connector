@@ -94,6 +94,10 @@ public class DatabaseFixtures {
     public TestFee aTestFee() {
         return new TestFee();
     }
+    
+    public TestFeeProcessingLock aTestFeeProcessingLock() {
+        return new TestFeeProcessingLock();
+    }
 
     public TestCardDetails aTestCardDetails() {
         return new TestCardDetails();
@@ -1209,6 +1213,22 @@ public class DatabaseFixtures {
             if (testCharge == null)
                 throw new IllegalStateException("Test charge must be provided.");
             databaseTestHelper.addFee(externalId, testCharge.getChargeId(), feeDue, feeCollected, createdDate, gatewayTransactionId, feeType);
+            return this;
+        }
+    }
+    
+    public class TestFeeProcessingLock {
+        TestCharge testCharge;
+
+        public TestFeeProcessingLock withTestCharge(TestCharge charge) {
+            this.testCharge = charge;
+            return this;
+        }
+
+        public TestFeeProcessingLock insert() {
+            if (testCharge == null)
+                throw new IllegalStateException("Test charge must be provided.");
+            databaseTestHelper.addTestFeeProcessingLock(testCharge.getChargeId());
             return this;
         }
     }

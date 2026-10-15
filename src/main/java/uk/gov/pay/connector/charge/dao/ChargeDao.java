@@ -335,6 +335,11 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .executeUpdate();
 
         entityManager.get()
+                .createNativeQuery("delete from fee_processing_lock where charge_id = ?1")
+                .setParameter(1, id)
+                .executeUpdate();
+
+        entityManager.get()
                 .createNativeQuery("delete from charges where id = ?1")
                 .setParameter(1, id)
                 .executeUpdate();
