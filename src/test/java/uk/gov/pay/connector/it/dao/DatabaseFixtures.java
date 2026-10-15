@@ -1226,8 +1226,9 @@ public class DatabaseFixtures {
         }
 
         public TestFeeProcessingLock insert() {
-            if (testCharge == null)
+            if (testCharge == null) {
                 throw new IllegalStateException("Test charge must be provided.");
+            }        
             databaseTestHelper.addTestFeeProcessingLock(testCharge.getChargeId());
             return this;
         }
