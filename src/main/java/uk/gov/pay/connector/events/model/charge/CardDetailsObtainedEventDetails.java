@@ -17,8 +17,8 @@ public class CardDetailsObtainedEventDetails extends EventDetails {
     }
     
     @JsonProperty("expiry_date")
-    public CardExpiryDate getExpiryDate() {
-        return expiryDate;
+    public String getExpiryDate() {
+        return expiryDate.toString();
     }
 
 }
