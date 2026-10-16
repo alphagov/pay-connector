@@ -605,7 +605,7 @@ class ChargeServiceTest {
         verify(mockEventService).emitAndRecordEvent(eventCaptor.capture());
 
         CardDetailsObtained capturedEvent = eventCaptor.getValue();
-        assertThat(((CardDetailsObtainedEventDetails) capturedEvent.getEventDetails()).getExpiryDate(), is(expiryDate));
+        assertThat(((CardDetailsObtainedEventDetails) capturedEvent.getEventDetails()).getExpiryDate(), is("03/30"));
     }
     
     @Test
