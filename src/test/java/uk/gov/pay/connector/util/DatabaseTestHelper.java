@@ -578,6 +578,15 @@ public class DatabaseTestHelper {
         return result > 0;
     }
 
+    public boolean containsFeeProcessingLockWithChargeId(Long chargeId) {
+        var result = jdbi.withHandle(h ->
+                h.createQuery("SELECT count(*) FROM fee_processing_lock WHERE charge_id = :charge_id")
+                        .bind("charge_id", chargeId)
+                        .mapTo(Integer.class)
+                        .first());
+        return result > 0;
+    }
+
     public boolean containsEmittedEventWithExternalId(String externalId) {
         var result = jdbi.withHandle(h ->
                 h.createQuery("SELECT count(*) FROM emitted_events WHERE resource_external_id = :external_id")
@@ -1091,6 +1100,15 @@ public class DatabaseTestHelper {
                         .bind("gateway_transaction_id", gatewayTransactionId)
                         .bind("fee_type", feeType.getName())
                         .execute()
+        );
+    }
+    
+    public void addTestFeeProcessingLock(long chargeId) {
+        jdbi.withHandle(handle -> 
+                handle
+                    .createUpdate("INSERT INTO fee_processing_lock(charge_id) VALUES (:chargeId)")
+                    .bind("chargeId", chargeId)
+                    .execute()
         );
     }
 
