@@ -13,9 +13,7 @@ import uk.gov.pay.connector.util.IpDomainMatcher;
 import java.security.SignatureException;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getHmacKeyForWebhookType;
-import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 
 public class AdyenNotificationValidator {
 
@@ -54,7 +52,6 @@ public class AdyenNotificationValidator {
                 LOGGER
                         .atInfo()
                         .setMessage("Hmac signature is missing, rejecting Adyen token notification")
-                        .addKeyValue(PROVIDER, ADYEN.getName())
                         .log();
                 throw new AdyenNotificationException("Missing hmacSignature for the notification");
             }
@@ -66,14 +63,12 @@ public class AdyenNotificationValidator {
         if (isBlank(forwardedIpAddresses)) {
             LOGGER.atInfo()
                     .setMessage("Adyen notification missing X-Forwarded-For header")
-                    .addKeyValue(PROVIDER, ADYEN.getName())
                     .log();
             return false;
         }
 
         if (!ipDomainMatcher.ipMatchesDomain(forwardedIpAddresses, notificationDomain)) {
             LOGGER.atInfo()
-                    .addKeyValue(PROVIDER, ADYEN.getName())
                     .addKeyValue(NOTIFICATION_SOURCE, forwardedIpAddresses)
                     .log("Adyen notification from ip '{}' not matching configured domain '{}'",
                             forwardedIpAddresses, notificationDomain);
@@ -88,7 +83,7 @@ public class AdyenNotificationValidator {
             boolean validSignature = hmacValidator.validateHMAC(item, hmacKey);
 
             if (!validSignature) {
-                LOGGER.atError()
+                LOGGER.atWarn()
                         .setMessage("Invalid HMAC signature in the payload for Adyen notification")
                         .addKeyValue("pspReference", item.getPspReference())
                         .addKeyValue("eventCode", item.getEventCode())
@@ -110,9 +105,9 @@ public class AdyenNotificationValidator {
             return hmacValidator.validateHMAC(hmacSignature, hmacKey, payload);
         } catch (IllegalArgumentException | SignatureException e) {
             LOGGER.atInfo()
-                    .setMessage("Failed to validate HMAC signature for token notification")
+                    .setMessage("Failed to validate HMAC signature for notification")
                     .log();
-            throw new AdyenNotificationException("Failed to validate HMAC signature for token notification", e);
+            throw new AdyenNotificationException("Failed to validate HMAC signature for notification", e);
         }
     }
 }

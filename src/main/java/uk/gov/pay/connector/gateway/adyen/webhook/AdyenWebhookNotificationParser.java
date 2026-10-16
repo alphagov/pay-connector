@@ -66,7 +66,7 @@ public class AdyenWebhookNotificationParser {
         } else {
             LOGGER.atWarn()
                     .setMessage("Unrecognised Adyen eventCode or type")
-                    .addKeyValue("eventCodeOrType", eventCodeOrType)
+                    .addKeyValue("adyen_event_code_or_type", eventCodeOrType)
                     .log();
             throw new UnrecognisedWebhookEventException(eventCodeOrType);
         }
