@@ -20,6 +20,8 @@ import uk.gov.pay.connector.queue.payout.PayoutReconcileMessage;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 import uk.gov.service.payments.commons.queue.model.QueueMessage;
 
+import java.time.Instant;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -67,6 +69,24 @@ class AdyenPayoutReconciliationHandlerTest {
         handler = new AdyenPayoutReconciliationHandler(mockPaymentProviders,
                 mockAdyenPayoutReportParser, eventService, payoutEmitterService);
         payoutReconcileMessage = mockPayoutReconcileMessage();
+    }
+    
+    @Test void shouldParseAdyenCreationDateWithTimeZoneOffsetWithoutSeconds() {
+        AdyenPayoutReconciliationPayload payload = new AdyenPayoutReconciliationPayload(
+                "balanceplatform_payout_report",
+                "pay_test",
+                "2026-09-24T00:04+02:00",
+                "https://some-url",
+                "balanceplatform_payout_report_2026_09_24",
+                "test");
+        payoutReconcileMessage = PayoutReconcileMessage.of(payload, mock(QueueMessage.class));
+        mockValidParsingOfPayoutReport(load(ADYEN_BALANCE_PLATFORM_REPORT));
+        
+        boolean result = handler.reconcile(payoutReconcileMessage);
+        
+        assertTrue(result);
+        verify(payoutEmitterService).emitPayoutEvent(payoutCaptor.capture(), eq("BA00000000000000000000001"));
+        assertEquals(Instant.parse("2026-09-23T22:04:00Z"), payoutCaptor.getValue().getTimestamp());
     }
 
     @Test
