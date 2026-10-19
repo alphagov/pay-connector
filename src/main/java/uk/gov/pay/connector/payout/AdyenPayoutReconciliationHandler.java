@@ -19,6 +19,7 @@ import uk.gov.pay.connector.queue.payout.PayoutReconcileMessage;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +69,7 @@ public class AdyenPayoutReconciliationHandler implements PayoutReconcileHandler 
 
             var balancePayoutReportRecords = adyenPayoutReportParser.parse(csv);
 
-            reconcileRecords(balancePayoutReportRecords, Instant.parse(payout.getCreationDate()));
+            reconcileRecords(balancePayoutReportRecords, OffsetDateTime.parse(payout.getCreationDate()).toInstant());
         } catch (Exception e) {
             LOGGER.atError()
                     .setMessage("Failed to reconcile Adyen balance platform payout report")
