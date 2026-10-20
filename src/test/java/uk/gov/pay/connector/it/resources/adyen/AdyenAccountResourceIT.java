@@ -16,7 +16,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
-import static com.adyen.model.management.PaymentMethodSetupInfo.TypeEnum.APPLEPAY;
 import static com.adyen.model.management.PaymentMethodSetupInfo.TypeEnum.GOOGLEPAY;
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
@@ -43,7 +42,6 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_APPLE_PAY_PAYMENT_METHOD_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_APPLY_SPLIT_CONFIG_TO_STORE_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_BALANCE_ACCOUNT_SWEEP_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_CREATE_INDIVIDUAL_REQUEST;
@@ -77,7 +75,6 @@ public class AdyenAccountResourceIT {
                 PaymentMethodSetupInfo.TypeEnum.DINERS,
                 PaymentMethodSetupInfo.TypeEnum.CUP, // China Union Pay
                 PaymentMethodSetupInfo.TypeEnum.PAYBYBANK,
-                PaymentMethodSetupInfo.TypeEnum.APPLEPAY,
                 PaymentMethodSetupInfo.TypeEnum.GOOGLEPAY);
     }
 
@@ -174,9 +171,7 @@ public class AdyenAccountResourceIT {
     private void verifyPaymentMethodsRequest(List<PaymentMethodSetupInfo.TypeEnum> paymentTypes, String merchantId) {
         for (PaymentMethodSetupInfo.TypeEnum paymentType : paymentTypes) {
             String template = ADYEN_PAYMENT_METHOD_REQUEST;
-            if (paymentType.equals(APPLEPAY)) {
-                template = ADYEN_APPLE_PAY_PAYMENT_METHOD_REQUEST;
-            } else if (paymentType.equals(GOOGLEPAY)) {
+            if (paymentType.equals(GOOGLEPAY)) {
                 template = ADYEN_GOOGLE_PAY_PAYMENT_METHOD_REQUEST;
             }
             app.getAdyenWireMockServer()

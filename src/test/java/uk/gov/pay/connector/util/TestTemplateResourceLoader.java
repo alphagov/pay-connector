@@ -162,7 +162,6 @@ public class TestTemplateResourceLoader {
     public static final String ADYEN_SIGN_PCI_QUESTIONNAIRE_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/sign_pci_questionnaire_response.json";
     public static final String ADYEN_ERROR_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/error_response.json";
     public static final String ADYEN_PAYMENT_METHOD_REQUEST = TEMPLATE_BASE_NAME + "/adyen/payment_method_request.json";
-    public static final String ADYEN_APPLE_PAY_PAYMENT_METHOD_REQUEST = TEMPLATE_BASE_NAME + "/adyen/payment_method_apple_pay_request.json";
     public static final String ADYEN_GOOGLE_PAY_PAYMENT_METHOD_REQUEST = TEMPLATE_BASE_NAME + "/adyen/payment_method_google_pay_request.json";
     public static final String ADYEN_TRANSFER_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/transfer_notification.json";
     public static final String ADYEN_TRANSFER_NOTIFICATION_FOR_FEES = TEMPLATE_BASE_NAME + "/adyen/transfer_notification_for_fees.json";
