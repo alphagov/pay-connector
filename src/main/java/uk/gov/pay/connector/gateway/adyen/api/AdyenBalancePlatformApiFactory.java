@@ -9,8 +9,8 @@ import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 
 import java.util.Objects;
 
-import static com.adyen.enums.Environment.TEST;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static uk.gov.pay.connector.gateway.adyen.api.AdyenHttpClientFactory.createAdyenHttpClientForTestEnvironment;
 
 public class AdyenBalancePlatformApiFactory {
 
@@ -20,7 +20,7 @@ public class AdyenBalancePlatformApiFactory {
 
     @Inject
     public AdyenBalancePlatformApiFactory(AdyenGatewayConfig adyenGatewayConfig) {
-        Client balancePlatformClient = new Client(adyenGatewayConfig.getApiKeys().balancePlatform().test(), TEST);
+        Client balancePlatformClient = createAdyenHttpClientForTestEnvironment(adyenGatewayConfig.getApiKeys().balancePlatform().test());
 
         accountHoldersApi = createAccountHoldersApi(balancePlatformClient, adyenGatewayConfig);
         balanceAccountsApi = createBalanceAccountsApi(balancePlatformClient, adyenGatewayConfig);
