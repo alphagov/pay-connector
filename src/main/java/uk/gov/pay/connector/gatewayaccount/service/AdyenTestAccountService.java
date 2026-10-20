@@ -5,6 +5,7 @@ import com.adyen.model.balanceplatform.AccountHolderInfo;
 import com.adyen.model.balanceplatform.BalanceAccount;
 import com.adyen.model.balanceplatform.BalanceAccountInfo;
 import com.adyen.model.balanceplatform.CreateSweepConfigurationV2;
+import com.adyen.model.balanceplatform.PlatformPaymentConfiguration;
 import com.adyen.model.balanceplatform.SweepConfigurationV2;
 import com.adyen.model.balanceplatform.SweepCounterparty;
 import com.adyen.model.balanceplatform.SweepSchedule;
@@ -219,18 +220,24 @@ public class AdyenTestAccountService {
         var balanceAccountsApi = adyenBalancePlatformApiFactory.getBalanceAccountsApi();
 
         try {
+            PlatformPaymentConfiguration platformPaymentConfiguration = new PlatformPaymentConfiguration();
+            platformPaymentConfiguration.setSettlementDelayDays(2);
+            platformPaymentConfiguration.setSalesDayClosingTime("00:00");
+
             BalanceAccountInfo balanceAccountInfo = new BalanceAccountInfo()
                     .accountHolderId(accountHolderId)
                     .description(String.format("Balance account for '%s' service", serviceName))
                     .defaultCurrencyCode("GBP")
-                    .timeZone("Europe/London");
+                    .timeZone("UTC")
+                    .platformPaymentConfiguration(platformPaymentConfiguration);
 
             BalanceAccount balanceAccount = balanceAccountsApi.createBalanceAccount(balanceAccountInfo);
             String balanceAccountId = balanceAccount.getId();
 
-            LOGGER.info("Balance account created",
-                    kv("balance_account_id", balanceAccountId)
-            );
+            LOGGER.atInfo()
+                    .setMessage("Balance account created")
+                    .addKeyValue("balance_account_id", balanceAccountId)
+                    .log();
 
             return balanceAccountId;
         } catch (ApiException | IOException e) {
