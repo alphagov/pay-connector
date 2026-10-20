@@ -11,7 +11,7 @@ import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 
 import java.util.Objects;
 
-import static com.adyen.enums.Environment.TEST;
+import static uk.gov.pay.connector.gateway.adyen.api.AdyenHttpClientFactory.createAdyenHttpClientForTestEnvironment;
 
 public class AdyenKycApiFactory {
 
@@ -20,11 +20,11 @@ public class AdyenKycApiFactory {
     private final LegalEntitiesApi legalEntitiesApi;
     private final BusinessLinesApi businessLinesApi;
     private final TransferInstrumentsApi transferInstrumentsApi;
-    
+
     @Inject
     public AdyenKycApiFactory(AdyenGatewayConfig adyenGatewayConfig) {
-        Client legalEntityManagementApiClient = new com.adyen.Client(adyenGatewayConfig.getApiKeys().legalEntityManagement().test(), TEST);
-        
+        Client legalEntityManagementApiClient = createAdyenHttpClientForTestEnvironment(adyenGatewayConfig.getApiKeys().legalEntityManagement().test());
+
         pciQuestionnairesApi = createPciQuestionnairesApi(legalEntityManagementApiClient, adyenGatewayConfig);
         termsOfServiceApi = createTermsOfServiceApi(legalEntityManagementApiClient, adyenGatewayConfig);
         legalEntitiesApi = createLegalEntitiesApi(legalEntityManagementApiClient, adyenGatewayConfig);

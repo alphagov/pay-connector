@@ -8,7 +8,7 @@ import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 
 import java.util.Objects;
 
-import static com.adyen.enums.Environment.TEST;
+import static uk.gov.pay.connector.gateway.adyen.api.AdyenHttpClientFactory.createAdyenHttpClientForTestEnvironment;
 
 public class AdyenCompanyAccountApiFactory {
     
@@ -17,7 +17,7 @@ public class AdyenCompanyAccountApiFactory {
     
     @Inject
     public AdyenCompanyAccountApiFactory(AdyenGatewayConfig adyenGatewayConfig) {
-        Client companyAccountClient = new Client(adyenGatewayConfig.getApiKeys().companyAccount().test(), TEST);
+        Client companyAccountClient = createAdyenHttpClientForTestEnvironment(adyenGatewayConfig.getApiKeys().companyAccount().test());
         
         accountStoreLevelApi = createAccountStoreLevelApi(companyAccountClient, adyenGatewayConfig);
         paymentMethodsMerchantLevelApi = createPaymentMethodsMerchantLevelApi(companyAccountClient, adyenGatewayConfig);
