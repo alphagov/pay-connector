@@ -2,25 +2,29 @@ package uk.gov.pay.connector.gateway.adyen.api;
 
 import com.adyen.Client;
 import com.adyen.httpclient.AdyenHttpClient;
+import io.github.netmikey.logunit.api.LogCapturer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static com.adyen.enums.Environment.TEST;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.gov.pay.connector.gateway.adyen.api.AdyenHttpClientFactory.PROXY_HOST_PROPERTY;
 import static uk.gov.pay.connector.gateway.adyen.api.AdyenHttpClientFactory.PROXY_PORT_PROPERTY;
 import static uk.gov.pay.connector.gateway.adyen.api.AdyenHttpClientFactory.createAdyenHttpClientForTestEnvironment;
 
 class AdyenHttpClientFactoryTest {
 
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(AdyenHttpClientFactory.class);
+
     @BeforeEach
     void setUp() {
-        System.clearProperty(PROXY_HOST_PROPERTY);
-        System.clearProperty(PROXY_PORT_PROPERTY);
+        clearProxyProperties();
     }
 
     @Test
@@ -66,11 +70,32 @@ class AdyenHttpClientFactoryTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenProxyPortIsInvalid() {
+    void shouldLogWarningWhenProxyPortIsInvalid() {
         System.setProperty(PROXY_HOST_PROPERTY, "localhost");
         System.setProperty(PROXY_PORT_PROPERTY, "invalid");
 
-        assertThrows(NumberFormatException.class,
-                () -> createAdyenHttpClientForTestEnvironment("test-api-key"));
+        createAdyenHttpClientForTestEnvironment("test-api-key");
+
+        logs.assertContains("Invalid proxy port configured. Creating AdyenHttpClient without proxy configuration");
+    }
+
+    @Test
+    void shouldLogWarningWhenProxyHostIsInvalid() {
+        System.setProperty(PROXY_HOST_PROPERTY, "");
+        System.setProperty(PROXY_PORT_PROPERTY, "1");
+
+        createAdyenHttpClientForTestEnvironment("test-api-key");
+
+        logs.assertContains("Proxy host is not configured. Creating AdyenHttpClient without proxy configuration");
+    }
+
+    @AfterEach
+    void tearDown() {
+        clearProxyProperties();
+    }
+
+    private static void clearProxyProperties() {
+        System.clearProperty(PROXY_HOST_PROPERTY);
+        System.clearProperty(PROXY_PORT_PROPERTY);
     }
 }
