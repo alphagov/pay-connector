@@ -34,7 +34,6 @@ import com.adyen.model.legalentitymanagement.TransferInstrument;
 import com.adyen.model.legalentitymanagement.TransferInstrumentInfo;
 import com.adyen.model.legalentitymanagement.UKLocalAccountIdentification;
 import com.adyen.model.legalentitymanagement.WebData;
-import com.adyen.model.management.ApplePayInfo;
 import com.adyen.model.management.GooglePayInfo;
 import com.adyen.model.management.PaymentMethodSetupInfo;
 import com.adyen.model.management.Store;
@@ -485,7 +484,6 @@ public class AdyenTestAccountService {
                 DINERS,
                 CUP, // China Union Pay
                 PAYBYBANK,
-                APPLEPAY,
                 GOOGLEPAY
         );
 
@@ -513,12 +511,6 @@ public class AdyenTestAccountService {
                 .businessLineId(businessLineId)
                 .storeIds(Collections.singletonList(storeId))
                 .currencies(List.of("GBP"));
-
-        if (paymentMethodSetupType.equals(APPLEPAY)) {
-            ApplePayInfo applePayInfo = new ApplePayInfo();
-            applePayInfo.addDomainsItem(frontendUrl);
-            paymentMethodSetupInfo.applePay(applePayInfo);
-        }
 
         if (paymentMethodSetupType.equals(GOOGLEPAY)) {
             GooglePayInfo googlePayInfo = new GooglePayInfo();
