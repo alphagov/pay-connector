@@ -107,7 +107,7 @@ public class AdyenNotificationValidator {
             LOGGER.atInfo()
                     .setMessage("Failed to validate HMAC signature for notification")
                     .log();
-            throw new AdyenNotificationException("Failed to validate HMAC signature for notification", e);
+            throw new AdyenNotificationException("Failed to validate HMAC signature for notification.");
         }
     }
 }
